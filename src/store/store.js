@@ -1,12 +1,16 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { filmsSlice } from './filmSlice';
-
-export const storeActions = {
-  films: filmsSlice.actions,
-};
+import authReducer from '../features/auth/slice';
+import perfilReducer from '../features/perfil/slice';
+import sesionesReducer from '../features/sesiones/slice';
+import feedReducer from '../features/feed/slice';
+import conexionesReducer from '../features/conexiones/slice';
 
 export const store = configureStore({
   reducer: {
-    films: filmsSlice.reducer,
+    auth: authReducer,
+    perfil: perfilReducer,
+    sesiones: sesionesReducer,
+    feed: feedReducer,
+    conexiones: conexionesReducer,
   },
 });

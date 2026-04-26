@@ -1,0 +1,25 @@
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from '../pages/Home';
+import Login from '../pages/Login';
+import Perfil from '../pages/Perfil';
+import Sesiones from '../pages/Sesiones';
+import Feed from '../pages/Feed';
+import Conexiones from '../pages/Conexiones';
+
+const AppRouter = () => {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/perfil" element={<Perfil />} />
+        <Route path="/sesiones" element={<Sesiones />} />
+        <Route path="/feed" element={<Feed />} />
+        <Route path="/conexiones" element={<Conexiones />} />
+      </Routes>
+    </Router>
+  );
+};
+
+export default AppRouter;
