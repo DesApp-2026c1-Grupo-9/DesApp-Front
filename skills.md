@@ -26,3 +26,11 @@ src/
 ├── routes/          # Configuración de rutas (AppRouter.jsx)
 ├── store/           # Configuración central de Redux (store.js)
 └── theme/           # Configuración del Theme de Material UI (MUI)
+
+## 3. Estándares de Templating y UI Reutilizable
+* **Layout Base:** Todo template de página debe seguir una estructura de composición: `Navbar` (superior), `Main` (contenido central con `Container` de MUI) y `Footer` (opcional).
+* **Paleta de Colores:** Los agentes deben basarse en el objeto `theme` de MUI. 
+    * Primary: #1976d2 (o el color que se elija para el proyecto).
+    * Background: #f4f4f4 para áreas de trabajo y #ffffff para tarjetas/componentes.
+* **Componentización Atómica:** Al generar el HTML/JSX base, identificar secciones candidatas a ser componentes reutilizables (ej: `StudentCard`, `SessionItem`, `NavbarLink`).
+* [cite_start]**Navegación:** La barra de navegación debe incluir accesos rápidos a las rutas definidas en el Sprint 1: Perfil, Sesiones, Conexiones y Feed[cite: 12, 15, 16, 17].
