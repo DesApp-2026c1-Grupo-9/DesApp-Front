@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Sesiones de Estudio - Sprint 1</title>
+</head>
+<body>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@emotion/react@11.11.4/dist/emotion-react.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@mui/material@5.15.11/umd/material-ui.production.min.js" crossorigin></script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { ThemeProvider, createTheme, Container, Box, Typography, Card, CardContent, TextField, Select, MenuItem, Button, List, ListItem, ListItemText } = MaterialUI;
+        const theme = createTheme({
+            palette: {
+                primary: { main: '#1976d2' },
+                secondary: { main: '#dc004e' }
+            }
+        });
+
+        const mockSesiones = [
+            { id: 1, materia: 'Algoritmos', tipo: 'Virtual', tema: 'Resolución TP3', fecha: '2026-05-10 14:00' },
+            { id: 2, materia: 'Base de Datos', tipo: 'Presencial', tema: 'Repaso Parcial', fecha: '2026-05-12 16:00' }
+        ];
+
+        function Sesiones() {
+            return (
+                <ThemeProvider theme={theme}>
+                    <Container maxWidth="lg">
+                        <Box sx={{ my: 4 }}>
+                            <Typography variant="h4" gutterBottom>Sesiones de Estudio</Typography>
+                            <Card sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>Nueva Sesión</Typography>
+                                    <TextField label="Materia" variant="outlined" size="small" sx={{ mr: 2, mb: 2 }} />
+                                    <Select defaultValue="virtual" size="small" sx={{ mr: 2, mb: 2, minWidth: 120 }}>
+                                        <MenuItem value="virtual">Virtual</MenuItem>
+                                        <MenuItem value="presencial">Presencial</MenuItem>
+                                    </Select>
+                                    <TextField label="Fecha y Hora" type="datetime-local" size="small" sx={{ mr: 2, mb: 2 }} />
+                                    <Button variant="contained">Crear Sesión</Button>
+                                </CardContent>
+                            </Card>
+                            <List>
+                                {mockSesiones.map((sesion) => (
+                                    <ListItem key={sesion.id} sx={{ border: '1px solid #ccc', mb: 1, borderRadius: 1 }}>
+                                        <ListItemText
+                                            primary={`${sesion.materia} - ${sesion.tema}`}
+                                            secondary={`${sesion.tipo} | ${sesion.fecha}`}
+                                        />
+                                        <Button size="small">Unirse</Button>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+
+        ReactDOM.render(<Sesiones />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Gestión de Carreras - Sprint 1</title>
+</head>
+<body>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@emotion/react@11.11.4/dist/emotion-react.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@mui/material@5.15.11/umd/material-ui.production.min.js" crossorigin></script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { ThemeProvider, createTheme, Container, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Card, CardContent } = MaterialUI;
+        const theme = createTheme({
+            palette: {
+                primary: { main: '#1976d2' },
+                secondary: { main: '#dc004e' }
+            }
+        });
+
+        const mockCarreras = [
+            { id: 1, nombre: 'Ingeniería en Sistemas', titulo: 'Ingeniero en Sistemas', instituto: 'UNLaM', duracion: '5 años' },
+            { id: 2, nombre: 'Licenciatura en Administración', titulo: 'Licenciado en Administración', instituto: 'UBA', duracion: '4 años' }
+        ];
+
+        function GestionCarreras() {
+            return (
+                <ThemeProvider theme={theme}>
+                    <Container maxWidth="lg">
+                        <Box sx={{ my: 4 }}>
+                            <Typography variant="h4" gutterBottom>Mock Gestión de Carreras</Typography>
+                            <Card sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>Nueva Carrera</Typography>
+                                    <TextField label="Nombre" variant="outlined" size="small" sx={{ mr: 2 }} />
+                                    <TextField label="Título" variant="outlined" size="small" sx={{ mr: 2 }} />
+                                    <Button variant="contained">Agregar</Button>
+                                </CardContent>
+                            </Card>
+                            <TableContainer component={Paper}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Nombre</TableCell>
+                                            <TableCell>Título</TableCell>
+                                            <TableCell>Instituto</TableCell>
+                                            <TableCell>Duración</TableCell>
+                                            <TableCell>Acciones</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {mockCarreras.map((carrera) => (
+                                            <TableRow key={carrera.id}>
+                                                <TableCell>{carrera.nombre}</TableCell>
+                                                <TableCell>{carrera.titulo}</TableCell>
+                                                <TableCell>{carrera.instituto}</TableCell>
+                                                <TableCell>{carrera.duracion}</TableCell>
+                                                <TableCell>
+                                                    <Button size="small">Editar</Button>
+                                                    <Button size="small" color="error">Eliminar</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Box>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+
+        ReactDOM.render(<GestionCarreras />, document.getElementById('root'));
+    </script>
+</body>
+</html>

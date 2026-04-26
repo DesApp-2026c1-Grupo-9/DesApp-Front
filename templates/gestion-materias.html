@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Gestión de Materias - Sprint 1</title>
+</head>
+<body>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@emotion/react@11.11.4/dist/emotion-react.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@mui/material@5.15.11/umd/material-ui.production.min.js" crossorigin></script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { ThemeProvider, createTheme, Container, Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, TextField, Select, MenuItem, Card, CardContent } = MaterialUI;
+        const theme = createTheme({
+            palette: {
+                primary: { main: '#1976d2' },
+                secondary: { main: '#dc004e' }
+            }
+        });
+
+        const mockMaterias = [
+            { id: 1, nombre: 'Algoritmos', año: 1, tipo: 'Anual', plan: 'Plan 2023' },
+            { id: 2, nombre: 'Base de Datos', año: 2, tipo: 'Cuatrimestral', plan: 'Plan 2023' }
+        ];
+
+        function GestionMaterias() {
+            return (
+                <ThemeProvider theme={theme}>
+                    <Container maxWidth="lg">
+                        <Box sx={{ my: 4 }}>
+                            <Typography variant="h4" gutterBottom>Mock Gestión de Materias</Typography>
+                            <Card sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>Nueva Materia</Typography>
+                                    <TextField label="Nombre" variant="outlined" size="small" sx={{ mr: 2 }} />
+                                    <Select defaultValue={1} size="small" sx={{ mr: 2, minWidth: 120 }}>
+                                        <MenuItem value={1}>1er Año</MenuItem>
+                                        <MenuItem value={2}>2do Año</MenuItem>
+                                    </Select>
+                                    <Button variant="contained">Agregar</Button>
+                                </CardContent>
+                            </Card>
+                            <TableContainer component={Paper}>
+                                <Table>
+                                    <TableHead>
+                                        <TableRow>
+                                            <TableCell>Nombre</TableCell>
+                                            <TableCell>Año</TableCell>
+                                            <TableCell>Tipo</TableCell>
+                                            <TableCell>Plan</TableCell>
+                                            <TableCell>Acciones</TableCell>
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {mockMaterias.map((materia) => (
+                                            <TableRow key={materia.id}>
+                                                <TableCell>{materia.nombre}</TableCell>
+                                                <TableCell>{materia.año}</TableCell>
+                                                <TableCell>{materia.tipo}</TableCell>
+                                                <TableCell>{materia.plan}</TableCell>
+                                                <TableCell>
+                                                    <Button size="small">Editar</Button>
+                                                    <Button size="small" color="error">Eliminar</Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        </Box>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+
+        ReactDOM.render(<GestionMaterias />, document.getElementById('root'));
+    </script>
+</body>
+</html>

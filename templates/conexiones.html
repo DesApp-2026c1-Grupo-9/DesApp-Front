@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Conexiones - Sprint 1</title>
+</head>
+<body>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@emotion/react@11.11.4/dist/emotion-react.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@mui/material@5.15.11/umd/material-ui.production.min.js" crossorigin></script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { ThemeProvider, createTheme, Container, Box, Typography, Card, CardContent, TextField, Button, List, ListItem, ListItemText, Tabs, Tab } = MaterialUI;
+        const theme = createTheme({
+            palette: {
+                primary: { main: '#1976d2' },
+                secondary: { main: '#dc004e' }
+            }
+        });
+
+        const mockConexiones = [
+            { id: 1, nombre: 'María López', estado: 'Conectado' },
+            { id: 2, nombre: 'Juan Martínez', estado: 'Conectado' }
+        ];
+
+        const mockSolicitudes = [
+            { id: 1, nombre: 'Ana García', fecha: '2026-04-25' }
+        ];
+
+        function Conexiones() {
+            return (
+                <ThemeProvider theme={theme}>
+                    <Container maxWidth="md">
+                        <Box sx={{ my: 4 }}>
+                            <Typography variant="h4" gutterBottom>Conexiones</Typography>
+                            <Card sx={{ mb: 3 }}>
+                                <CardContent>
+                                    <Typography variant="h6" gutterBottom>Enviar Invitación</Typography>
+                                    <TextField fullWidth label="Correo Electrónico" variant="outlined" sx={{ mb: 2 }} />
+                                    <Button variant="contained">Enviar Invitación</Button>
+                                </CardContent>
+                            </Card>
+                            <Typography variant="h6">Mis Conexiones</Typography>
+                            <List>
+                                {mockConexiones.map((conexion) => (
+                                    <ListItem key={conexion.id} sx={{ border: '1px solid #ccc', mb: 1, borderRadius: 1 }}>
+                                        <ListItemText primary={conexion.nombre} secondary={conexion.estado} />
+                                        <Button size="small" color="error">Eliminar</Button>
+                                    </ListItem>
+                                ))}
+                            </List>
+                            <Typography variant="h6" sx={{ mt: 3 }}>Solicitudes Pendientes</Typography>
+                            <List>
+                                {mockSolicitudes.map((solicitud) => (
+                                    <ListItem key={solicitud.id} sx={{ border: '1px solid #ccc', mb: 1, borderRadius: 1 }}>
+                                        <ListItemText primary={solicitud.nombre} secondary={`Enviada: ${solicitud.fecha}`} />
+                                        <Button size="small" color="primary">Aceptar</Button>
+                                        <Button size="small" color="error">Rechazar</Button>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Box>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+
+        ReactDOM.render(<Conexiones />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sistema de Acompañamiento Estudiantil</title>
+</head>
+<body>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/@emotion/react@11.11.4/dist/emotion-react.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@mui/material@5.15.11/umd/material-ui.production.min.js" crossorigin></script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { ThemeProvider, createTheme, Card, CardContent, TextField, Button, Typography, Box, Container } = MaterialUI;
+        const theme = createTheme({
+            palette: {
+                primary: { main: '#1976d2' },
+                secondary: { main: '#dc004e' }
+            }
+        });
+
+        function Login() {
+            return (
+                <ThemeProvider theme={theme}>
+                    <Container maxWidth="sm">
+                        <Box sx={{ my: 8 }}>
+                            <Card>
+                                <CardContent>
+                                    <Typography variant="h5" gutterBottom>Iniciar Sesión</Typography>
+                                    <Box component="form" sx={{ mt: 2 }}>
+                                        <TextField fullWidth label="Correo Electrónico" variant="outlined" margin="normal" type="email" />
+                                        <TextField fullWidth label="Contraseña" variant="outlined" margin="normal" type="password" />
+                                        <Button fullWidth variant="contained" sx={{ mt: 3, mb: 2 }}>Ingresar</Button>
+                                        <Button fullWidth href="home.html">Volver al Inicio</Button>
+                                    </Box>
+                                </CardContent>
+                            </Card>
+                        </Box>
+                    </Container>
+                </ThemeProvider>
+            );
+        }
+
+        ReactDOM.render(<Login />, document.getElementById('root'));
+    </script>
+</body>
+</html>
