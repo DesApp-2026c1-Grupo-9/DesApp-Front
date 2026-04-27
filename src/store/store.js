@@ -1,12 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { filmsSlice } from './filmSlice';
 
 export const storeActions = {
-  films: filmsSlice.actions,
+  // Los slices del sistema académico se agregarán aquí cuando se implementen
 };
 
 export const store = configureStore({
   reducer: {
-    films: filmsSlice.reducer,
+    // Los reducers del sistema académico se agregarán aquí cuando se implementen
   },
 });
