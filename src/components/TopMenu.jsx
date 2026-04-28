@@ -1,7 +1,7 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home } from '@mui/icons-material';
+import { School, Person, Book, Home, People, Groups, DynamicFeed } from '@mui/icons-material';
 
 export function TopMenu() {
   const navigate = useNavigate();
@@ -12,6 +12,9 @@ export function TopMenu() {
     { label: 'Perfil Estudiantil', path: '/estudiante', icon: <Person /> },
     { label: 'Carreras', path: '/carreras', icon: <School /> },
     { label: 'Materias', path: '/materias', icon: <Book /> },
+    { label: 'Feed', path: '/feed', icon: <DynamicFeed /> },
+    { label: 'Conexiones', path: '/conexiones', icon: <People /> },
+    { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },
   ];
 
   return (
