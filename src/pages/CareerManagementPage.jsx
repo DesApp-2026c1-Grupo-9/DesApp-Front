@@ -1,64 +1,24 @@
-import React, { useState } from 'react';
-import { Box, Card, CardContent, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Accordion, AccordionSummary,  AccordionDetails, List, ListItem, ListItemText, Divider} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { Box, Card, CardContent, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Accordion, AccordionSummary, AccordionDetails, List, ListItem, ListItemText, Divider } from '@mui/material';
 import { School, ExpandMore, Business, Schedule, Assignment } from '@mui/icons-material';
+import { fetchCarreras } from '../features/carreras/slice';
 
 export function CareerManagementPage() {
-  // Mock data de carreras y planes de estudio
-  const carreras = [
-    {
-      id: 1,
-      nombre: 'Licenciatura en Informática',
-      titulo: 'Licenciado/a en Informática',
-      instituto: 'Instituto de Tecnología',
-      duracionEstimada: 5,
-      cargaHorariaTotal: 3520,
-      planesEstudio: [
-        {
-          id: 1,
-          nombre: 'Plan 2026',
-          estado: 'Vigente',
-          materias: 45,
-          cargaHoraria: 3520
-        }
-      ]
-    },
-    {
-      id: 2,
-      nombre: 'Tecnicatura en Programación',
-      titulo: 'Técnico/a Superior en Programación',
-      instituto: 'Instituto de Tecnología',
-      duracionEstimada: 2.5,
-      creditosRequeridos: 35,
-      cargaHorariaTotal: 1408,
-      planesEstudio: [
-        {
-          id: 2,
-          nombre: 'Plan 2026',
-          estado: 'Vigente',
-          materias: 19,
-          cargaHoraria: 1408
-        }
-      ]
-    },
-    {
-      id: 3,
-      nombre: 'Tecnicatura en Inteligencia Artificial',
-      titulo: 'Técnico/a Superior en Inteligencia Artificial',
-      instituto: 'Instituto de Tecnología',
-      duracionEstimada: 2.5,
-      creditosRequeridos: 80,
-      cargaHorariaTotal: 1472,
-      planesEstudio: [
-        {
-          id: 3,
-          nombre: 'Plan 2026',
-          estado: 'Vigente',
-          materias: 22,
-          cargaHoraria: 1472
-        }
-      ]
-    }
-  ];
+  const dispatch = useDispatch();
+  const { carreras, loading, error } = useSelector((state) => state.carreras);
+
+  useEffect(() => {
+    dispatch(fetchCarreras());
+  }, [dispatch]);
+
+  if (loading) {
+    return <Typography variant="h6" sx={{ textAlign: 'center', mt: 4 }}>Cargando carreras...</Typography>;
+  }
+
+  if (error) {
+    return <Typography color="error" sx={{ textAlign: 'center', mt: 4 }}>Error: {error}</Typography>;
+  }
 
   const getEstadoPlanColor = (estado) => {
     switch (estado) {
@@ -202,7 +162,7 @@ export function CareerManagementPage() {
                                 />
                               </TableCell>
                               <TableCell align="center">{plan.materias}</TableCell>
-                              <TableCell align="center">{plan.cargaHoraria}</TableCell>
+                              <TableCell align="center">{plan.cargaHoraria || 'N/A'}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
