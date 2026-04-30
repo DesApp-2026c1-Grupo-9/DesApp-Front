@@ -11,6 +11,8 @@ import Conexiones from '../pages/Conexiones';
 import { StudentProfilePage } from '../pages/StudentProfilePage';
 import { CareerManagementPage } from '../pages/CareerManagementPage';
 import { SubjectManagementPage } from '../pages/SubjectManagementPage';
+import { EstudianteDashboard } from '../pages/EstudianteDashboard';
+import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import { TopMenu } from '../components/TopMenu';
 
 const AppRouter = () => {
@@ -27,6 +29,8 @@ const AppRouter = () => {
           <Route path="/conexiones" element={<Conexiones />} />
           {/* Rutas del sistema académico */}
           <Route path="/estudiante" element={<StudentProfilePage />} />
+          <Route path="/estudiante/:id" element={<EstudianteDashboard />} />
+          <Route path="/estudiante/:id/materias" element={<EstudianteMaterias />} />
           <Route path="/carreras" element={<CareerManagementPage />} />
           <Route path="/materias" element={<SubjectManagementPage />} />
         </Routes>
