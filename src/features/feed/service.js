@@ -1,13 +1,15 @@
 import api from '../../api/axiosConfig';
 
-export const getFeed = () => api.get('/feed');
+export const getFeed = (params = {}) => api.get('/novedades', { params });
 
-export const createPost = (data) => api.post('/feed', data);
+export const createPost = (data) => api.post('/novedades', data);
 
-export const deletePost = (postId) => api.delete(`/feed/${postId}`);
+export const deletePost = (postId) => api.delete(`/novedades/${postId}`);
 
-export const likePost = (postId, liked) => api.post(`/feed/${postId}/like`, { liked });
+export const likePost = (postId, autorId) => api.post(`/novedades/${postId}/like`, { autorId });
 
-export const getPostById = (postId) => api.get(`/feed/${postId}`);
+export const unlikePost = (postId, autorId) => api.post(`/novedades/${postId}/unlike`, { autorId });
 
-export const updatePost = (postId, data) => api.put(`/feed/${postId}`, data);
+export const getPostById = (postId) => api.get(`/novedades/${postId}`);
+
+export const updatePost = (postId, data) => api.put(`/novedades/${postId}`, data);

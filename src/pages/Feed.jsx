@@ -18,6 +18,9 @@ import {
   Chip,
   CircularProgress,
   Alert,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   ThumbUp,
@@ -28,8 +31,10 @@ import {
   CheckCircle,
   Edit,
   Send,
+  Person,
 } from '@mui/icons-material';
-import { fetchFeed, addPost, removePost, toggleLike, clearFeedError } from '../features/feed/slice';
+import { fetchFeed, addPost, removePost, toggleLike, clearFeedError, setCurrentUser } from '../features/feed/slice';
+import { switchStudent } from '../features/auth/slice';
 
 const TIPO_EVENTO = {
   INSCRIPCION: 'inscripcion',
@@ -105,7 +110,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike }) {
     return date.toLocaleDateString();
   };
 
-  if (post.tipo === 'evento_academico') {
+  if (post.tipo === TIPO_POST.EVENTO_ACADEMICO) {
     return (
       <Card sx={{ mb: 2, borderRadius: 2 }}>
         <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -117,7 +122,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike }) {
             {post.autor?.nombre?.charAt(0)}
           </Avatar>
           <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
               <Typography variant="subtitle1" fontWeight="bold">
                 {post.autor?.nombre}
               </Typography>
@@ -128,6 +133,9 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike }) {
                 color="primary"
                 variant="outlined"
               />
+              {post.esAutomatica && (
+                <Chip label="Automática" size="small" color="info" variant="outlined" sx={{ fontSize: '0.65rem' }} />
+              )}
             </Box>
             <Typography variant="body2" color="text.secondary">
               {formatFecha(post.fecha)}
@@ -138,13 +146,21 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike }) {
         <CardContent>
           <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <School color="primary" />
-            {post.materia?.nombre}
+            {post.materia?.nombre || 'Materia'}
           </Typography>
           {post.materia?.codigo && (
-            <Typography variant="caption" color="text.secondary">
+            <Typography variant="caption" color="text.secondary" display="block">
               Código: {post.materia.codigo}
             </Typography>
           )}
+          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+            <IconButton onClick={handleLike} color={post.liked ? 'primary' : 'default'} size="small">
+              {post.liked ? <ThumbUp fontSize="small" /> : <ThumbUpOutlined fontSize="small" />}
+            </IconButton>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+              {post.likesCount || 0}
+            </Typography>
+          </Box>
         </CardContent>
       </Card>
     );
@@ -186,9 +202,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike }) {
         </MenuItem>
       </Menu>
       <CardContent>
-        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-          {post.contenido}
-        </Typography>
+        {post.contenido && (
+          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+            {post.contenido}
+          </Typography>
+        )}
         {post.imagen && (
           <Box
             component="img"
@@ -210,30 +228,42 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike }) {
           {post.liked ? <ThumbUp /> : <ThumbUpOutlined />}
         </IconButton>
         <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
-          {post.likes?.length || 0}
+          {post.likesCount || 0}
         </Typography>
       </Box>
     </Card>
   );
 }
 
-function CreatePostForm({ onSubmit, loading }) {
+function CreatePostForm({ onSubmit, loading, currentStudent }) {
   const [contenido, setContenido] = useState('');
-  const [tipoPublicacion, setTipoPublicacion] = useState('publicacion');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!contenido.trim()) return;
     
+    const resumen = contenido.trim().length > 50
+      ? contenido.trim().substring(0, 50) + '...'
+      : contenido.trim();
+
     onSubmit({
-      contenido,
-      tipo: tipoPublicacion,
+      tipo: 'posteo',
+      titulo: resumen,
+      contenido: contenido.trim(),
     });
     setContenido('');
   };
 
   return (
     <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+        <Avatar src={currentStudent?.avatarUrl} sx={{ width: 36, height: 36 }}>
+          {currentStudent?.nombre?.charAt(0)}
+        </Avatar>
+        <Typography variant="body2" color="text.secondary">
+          Publicando como <strong>{currentStudent?.nombre} {currentStudent?.apellido}</strong>
+        </Typography>
+      </Box>
       <form onSubmit={handleSubmit}>
         <TextField
           fullWidth
@@ -262,11 +292,17 @@ function CreatePostForm({ onSubmit, loading }) {
 export default function Feed() {
   const dispatch = useDispatch();
   const { posts, loading, error } = useSelector((state) => state.feed);
-  const { user } = useSelector((state) => state.auth);
+  const { user, students } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(fetchFeed());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(setCurrentUser(user.id));
+    }
+  }, [user, dispatch]);
 
   useEffect(() => {
     if (error) {
@@ -278,7 +314,7 @@ export default function Feed() {
   }, [error, dispatch]);
 
   const handleCreatePost = (postData) => {
-    dispatch(addPost(postData));
+    dispatch(addPost({ postData, autorId: user?.id }));
   };
 
   const handleDeletePost = (postId) => {
@@ -286,14 +322,41 @@ export default function Feed() {
   };
 
   const handleToggleLike = (postId, currentLiked) => {
-    dispatch(toggleLike({ postId, liked: currentLiked }));
+    dispatch(toggleLike({ postId, currentlyLiked: currentLiked, autorId: user?.id }));
+  };
+
+  const handleStudentChange = (e) => {
+    dispatch(switchStudent(e.target.value));
   };
 
   return (
     <Container maxWidth="md" sx={{ py: 3 }}>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
-        Feed de Novedades
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Feed de Novedades
+        </Typography>
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel id="student-select-label">Estudiante</InputLabel>
+          <Select
+            labelId="student-select-label"
+            value={user?.id || ''}
+            label="Estudiante"
+            onChange={handleStudentChange}
+            startAdornment={<Person sx={{ mr: 1, color: 'action.active' }} />}
+          >
+            {students.map((student) => (
+              <MenuItem key={student.id} value={student.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Avatar src={student.avatarUrl} sx={{ width: 24, height: 24 }}>
+                    {student.nombre.charAt(0)}
+                  </Avatar>
+                  {student.nombre} {student.apellido}
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearFeedError())}>
@@ -301,7 +364,7 @@ export default function Feed() {
         </Alert>
       )}
 
-      <CreatePostForm onSubmit={handleCreatePost} loading={loading} />
+      <CreatePostForm onSubmit={handleCreatePost} loading={loading} currentStudent={user} />
 
       <Divider sx={{ my: 3 }} />
 

@@ -1,150 +1,88 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getFeed, createPost, deletePost, likePost } from './service';
+import { getFeed, createPost, deletePost, likePost, unlikePost } from './service';
 
-const MOCK_POSTS = [
-  {
-    id: 1,
-    tipo: 'publicacion',
-    contenido: '¡Buenas! Les comparto mis apuntes de Análisis Matemático I, fueron muy útiles para el parcial. ¡Suerte con los exámenes! 📚',
-    autor: {
-      id: 2,
-      nombre: 'María González',
-      avatar: null,
-    },
-    fecha: new Date(Date.now() - 1800000).toISOString(),
-    likes: ['3', '4', '5'],
-    liked: false,
-    imagen: null,
-  },
-  {
-    id: 2,
-    tipo: 'evento_academico',
-    tipoEvento: 'inscripcion',
-    autor: {
-      id: 3,
-      nombre: 'Juan Pérez',
-      avatar: null,
-    },
-    fecha: new Date(Date.now() - 7200000).toISOString(),
-    materia: {
-      nombre: 'Algoritmos y Estructuras de Datos',
-      codigo: 'AYED-201',
-    },
-  },
-  {
-    id: 3,
-    tipo: 'publicacion',
-    contenido: 'Alguien tiene resuelto el TP3 de Física II? Necesito ayuda con el ejercicio de momento de inercia 🥺',
-    autor: {
-      id: 4,
-      nombre: 'Sofia Rodriguez',
-      avatar: null,
-    },
-    fecha: new Date(Date.now() - 14400000).toISOString(),
-    likes: ['2'],
-    liked: true,
-    imagen: null,
-  },
-  {
-    id: 4,
-    tipo: 'evento_academico',
-    tipoEvento: 'aprobacion',
-    autor: {
-      id: 5,
-      nombre: 'Lucas Martínez',
-      avatar: null,
-    },
-    fecha: new Date(Date.now() - 28800000).toISOString(),
-    materia: {
-      nombre: 'Introducción a la Programación',
-      codigo: 'INTRO-101',
-    },
-  },
-  {
-    id: 5,
-    tipo: 'publicacion',
-    contenido: 'Quedó confirmada la sesión de estudio para mañana a las 18hs en el aula 305. Vamos a repasar para el parcial de Álgebra!',
-    autor: {
-      id: 2,
-      nombre: 'María González',
-      avatar: null,
-    },
-    fecha: new Date(Date.now() - 43200000).toISOString(),
-    likes: ['3', '4', '5', '6'],
-    liked: false,
-    imagen: null,
-  },
-  {
-    id: 6,
-    tipo: 'evento_academico',
-    tipoEvento: 'regularizacion',
-    autor: {
-      id: 6,
-      nombre: 'Ana López',
-      avatar: null,
-    },
-    fecha: new Date(Date.now() - 86400000).toISOString(),
-    materia: {
-      nombre: 'Química General',
-      codigo: 'QUIM-101',
-    },
-  },
-];
+const transformBackendNovedad = (novedad, currentUserId) => {
+  const tipoMap = {
+    posteo: 'publicacion',
+    inscripcion: 'evento_academico',
+    regularizacion: 'evento_academico',
+    aprobacion: 'evento_academico',
+  };
+
+  const autor = novedad.autor
+    ? {
+        id: novedad.autor.id,
+        nombre: `${novedad.autor.nombre} ${novedad.autor.apellido || ''}`.trim(),
+        avatar: novedad.autor.avatarUrl || null,
+      }
+    : { id: novedad.autorId, nombre: 'Estudiante', avatar: null };
+
+  const likesArray = Array.isArray(novedad.likes) ? novedad.likes : [];
+  const liked = currentUserId ? likesArray.includes(currentUserId) : false;
+
+  const base = {
+    id: novedad.id,
+    tipo: tipoMap[novedad.tipo] || 'publicacion',
+    titulo: novedad.titulo,
+    contenido: novedad.contenido || '',
+    autor,
+    fecha: novedad.createdAt,
+    likes: likesArray,
+    liked,
+    likesCount: likesArray.length,
+    imagen: novedad.imagenUrl || null,
+    esAutomatica: novedad.esAutomatica || false,
+  };
+
+  if (novedad.tipo !== 'posteo') {
+    base.tipoEvento = novedad.tipo;
+    base.materia = novedad.materia
+      ? { nombre: novedad.materia.nombre, codigo: novedad.materia.codigo }
+      : { nombre: 'Materia', codigo: `ID: ${novedad.materiaId || '-'}` };
+  }
+
+  return base;
+};
+
+const transformBackendList = (responseData, currentUserId) => {
+  const novedades = Array.isArray(responseData) ? responseData : (responseData.data || []);
+  return novedades.map((n) => transformBackendNovedad(n, currentUserId));
+};
 
 export const fetchFeed = createAsyncThunk(
   'feed/fetchFeed',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await getFeed();
-      return response.data;
-    } catch (error) {
-      return MOCK_POSTS;
-    }
+  async (_, { getState }) => {
+    const { currentUserId } = getState().feed;
+    const response = await getFeed();
+    return { novedades: transformBackendList(response.data, currentUserId) };
   }
 );
 
 export const addPost = createAsyncThunk(
   'feed/addPost',
-  async (postData, { rejectWithValue }) => {
-    try {
-      const response = await createPost(postData);
-      return response.data;
-    } catch (error) {
-      const newPost = {
-        id: Date.now(),
-        tipo: 'publicacion',
-        contenido: postData.contenido,
-        autor: { id: 1, nombre: 'Usuario Actual', avatar: null },
-        fecha: new Date().toISOString(),
-        likes: [],
-        liked: false,
-        imagen: null,
-      };
-      return newPost;
-    }
+  async ({ postData, autorId }, { rejectWithValue }) => {
+    const response = await createPost({ ...postData, autorId });
+    return response.data.data;
   }
 );
 
 export const removePost = createAsyncThunk(
   'feed/removePost',
   async (postId, { rejectWithValue }) => {
-    try {
-      await deletePost(postId);
-      return postId;
-    } catch (error) {
-      return postId;
-    }
+    await deletePost(postId);
+    return postId;
   }
 );
 
 export const toggleLike = createAsyncThunk(
   'feed/toggleLike',
-  async ({ postId, liked }, { rejectWithValue }) => {
-    try {
-      await likePost(postId, liked);
-      return { postId, liked };
-    } catch (error) {
-      return { postId, liked };
+  async ({ postId, currentlyLiked, autorId }, { rejectWithValue }) => {
+    if (currentlyLiked) {
+      const response = await unlikePost(postId, autorId);
+      return { postId, likesCount: response.data.data.likesCount };
+    } else {
+      const response = await likePost(postId, autorId);
+      return { postId, likesCount: response.data.data.likesCount };
     }
   }
 );
@@ -155,10 +93,14 @@ const feedSlice = createSlice({
     posts: [],
     loading: false,
     error: null,
+    currentUserId: null,
   },
   reducers: {
     clearFeedError: (state) => {
       state.error = null;
+    },
+    setCurrentUser: (state, action) => {
+      state.currentUserId = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -169,7 +111,7 @@ const feedSlice = createSlice({
       })
       .addCase(fetchFeed.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts = action.payload;
+        state.posts = action.payload.novedades;
       })
       .addCase(fetchFeed.rejected, (state, action) => {
         state.loading = false;
@@ -181,7 +123,8 @@ const feedSlice = createSlice({
       })
       .addCase(addPost.fulfilled, (state, action) => {
         state.loading = false;
-        state.posts.unshift(action.payload);
+        const newPost = transformBackendNovedad(action.payload, state.currentUserId);
+        state.posts.unshift(newPost);
       })
       .addCase(addPost.rejected, (state, action) => {
         state.loading = false;
@@ -191,20 +134,23 @@ const feedSlice = createSlice({
         state.posts = state.posts.filter(post => post.id !== action.payload);
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
-        const { postId, liked } = action.payload;
+        const { postId, likesCount } = action.payload;
         const post = state.posts.find(p => p.id === postId);
         if (post) {
+          const liked = !post.liked;
+          post.liked = liked;
+          post.likesCount = likesCount;
           if (liked) {
-            post.liked = false;
-            post.likes = post.likes.filter(id => id !== 'currentUser');
+            if (!post.likes.includes(state.currentUserId)) {
+              post.likes.push(state.currentUserId);
+            }
           } else {
-            post.liked = true;
-            post.likes.push('currentUser');
+            post.likes = post.likes.filter(id => id !== state.currentUserId);
           }
         }
       });
   },
 });
 
-export const { clearFeedError } = feedSlice.actions;
+export const { clearFeedError, setCurrentUser } = feedSlice.actions;
 export default feedSlice.reducer;
