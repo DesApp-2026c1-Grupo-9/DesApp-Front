@@ -295,8 +295,10 @@ export default function Feed() {
   const { user, students } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(fetchFeed());
-  }, [dispatch]);
+    if (user?.id) {
+      dispatch(fetchFeed(user.id));
+    }
+  }, [dispatch, user?.id]);
 
   useEffect(() => {
     if (user?.id) {
@@ -322,11 +324,13 @@ export default function Feed() {
   };
 
   const handleToggleLike = (postId, currentLiked) => {
-    dispatch(toggleLike({ postId, currentlyLiked: currentLiked, autorId: user?.id }));
+    dispatch(toggleLike({ postId, currentlyLiked: currentLiked, usuarioId: user?.id }));
   };
 
   const handleStudentChange = (e) => {
-    dispatch(switchStudent(e.target.value));
+    const newUserId = Number(e.target.value);
+    dispatch(switchStudent(newUserId));
+    dispatch(fetchFeed(newUserId));
   };
 
   return (

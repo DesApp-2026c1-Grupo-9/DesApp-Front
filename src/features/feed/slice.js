@@ -17,8 +17,8 @@ const transformBackendNovedad = (novedad, currentUserId) => {
       }
     : { id: novedad.autorId, nombre: 'Estudiante', avatar: null };
 
-  const likesArray = Array.isArray(novedad.likes) ? novedad.likes : [];
-  const liked = currentUserId ? likesArray.includes(currentUserId) : false;
+  const likesArray = Array.isArray(novedad.likes) ? novedad.likes.map(id => Number(id)) : [];
+  const liked = novedad.liked !== undefined ? novedad.liked : false;
 
   const base = {
     id: novedad.id,
@@ -29,7 +29,7 @@ const transformBackendNovedad = (novedad, currentUserId) => {
     fecha: novedad.createdAt,
     likes: likesArray,
     liked,
-    likesCount: likesArray.length,
+    likesCount: novedad.likesCount !== undefined ? novedad.likesCount : likesArray.length,
     imagen: novedad.imagenUrl || null,
     esAutomatica: novedad.esAutomatica || false,
   };
@@ -51,9 +51,9 @@ const transformBackendList = (responseData, currentUserId) => {
 
 export const fetchFeed = createAsyncThunk(
   'feed/fetchFeed',
-  async (_, { getState }) => {
-    const { currentUserId } = getState().feed;
-    const response = await getFeed();
+  async (usuarioId, { getState }) => {
+    const currentUserId = usuarioId || getState().feed.currentUserId;
+    const response = await getFeed({ usuarioId: currentUserId });
     return { novedades: transformBackendList(response.data, currentUserId) };
   }
 );
@@ -76,13 +76,13 @@ export const removePost = createAsyncThunk(
 
 export const toggleLike = createAsyncThunk(
   'feed/toggleLike',
-  async ({ postId, currentlyLiked, autorId }, { rejectWithValue }) => {
+  async ({ postId, currentlyLiked, usuarioId }, { rejectWithValue }) => {
     if (currentlyLiked) {
-      const response = await unlikePost(postId, autorId);
-      return { postId, likesCount: response.data.data.likesCount };
+      const response = await unlikePost(postId, usuarioId);
+      return { postId, likesCount: response.data.data.likesCount, liked: false };
     } else {
-      const response = await likePost(postId, autorId);
-      return { postId, likesCount: response.data.data.likesCount };
+      const response = await likePost(postId, usuarioId);
+      return { postId, likesCount: response.data.data.likesCount, liked: true };
     }
   }
 );
@@ -134,10 +134,9 @@ const feedSlice = createSlice({
         state.posts = state.posts.filter(post => post.id !== action.payload);
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
-        const { postId, likesCount } = action.payload;
+        const { postId, likesCount, liked } = action.payload;
         const post = state.posts.find(p => p.id === postId);
         if (post) {
-          const liked = !post.liked;
           post.liked = liked;
           post.likesCount = likesCount;
           if (liked) {

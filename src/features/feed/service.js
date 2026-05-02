@@ -6,9 +6,9 @@ export const createPost = (data) => api.post('/novedades', data);
 
 export const deletePost = (postId) => api.delete(`/novedades/${postId}`);
 
-export const likePost = (postId, autorId) => api.post(`/novedades/${postId}/like`, { autorId });
+export const likePost = (postId, usuarioId) => api.post(`/novedades/${postId}/like?usuarioId=${usuarioId}`);
 
-export const unlikePost = (postId, autorId) => api.post(`/novedades/${postId}/unlike`, { autorId });
+export const unlikePost = (postId, usuarioId) => api.post(`/novedades/${postId}/unlike?usuarioId=${usuarioId}`);
 
 export const getPostById = (postId) => api.get(`/novedades/${postId}`);
 
