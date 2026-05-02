@@ -15,9 +15,9 @@ export const fetchComentarios = createAsyncThunk(
 
 export const addComentario = createAsyncThunk(
   'comentarios/addComentario',
-  async ({ novedadId, contenido, usuarioId }, { rejectWithValue }) => {
+  async ({ novedadId, contenido, usuarioId, comentarioPadreId }, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/novedades/${novedadId}/comentarios`, { contenido, usuarioId });
+      const response = await api.post(`/novedades/${novedadId}/comentarios`, { contenido, usuarioId, comentarioPadreId });
       return { novedadId, comentario: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al crear comentario');
@@ -84,7 +84,15 @@ const comentariosSlice = createSlice({
         if (!state.byNovedad[novedadId]) {
           state.byNovedad[novedadId] = [];
         }
-        state.byNovedad[novedadId].push(comentario);
+        if (comentario.comentarioPadreId) {
+          const parent = state.byNovedad[novedadId].find(c => c.id === comentario.comentarioPadreId);
+          if (parent) {
+            if (!parent.respuestas) parent.respuestas = [];
+            parent.respuestas.push(comentario);
+          }
+        } else {
+          state.byNovedad[novedadId].push(comentario);
+        }
       })
       .addCase(removeComentario.fulfilled, (state, action) => {
         const { comentarioId, novedadId } = action.payload;
@@ -92,14 +100,28 @@ const comentariosSlice = createSlice({
           state.byNovedad[novedadId] = state.byNovedad[novedadId].filter(
             c => c.id !== comentarioId
           );
+          state.byNovedad[novedadId].forEach(c => {
+            if (c.respuestas) {
+              c.respuestas = c.respuestas.filter(r => r.id !== comentarioId);
+            }
+          });
         }
       })
       .addCase(editComentario.fulfilled, (state, action) => {
         const { novedadId, comentario } = action.payload;
         if (state.byNovedad[novedadId]) {
-          const index = state.byNovedad[novedadId].findIndex(c => c.id === comentario.id);
-          if (index !== -1) {
-            state.byNovedad[novedadId][index] = comentario;
+          const parent = state.byNovedad[novedadId].find(c => c.id === comentario.id);
+          if (parent) {
+            Object.assign(parent, comentario);
+          } else {
+            state.byNovedad[novedadId].forEach(c => {
+              if (c.respuestas) {
+                const idx = c.respuestas.findIndex(r => r.id === comentario.id);
+                if (idx !== -1) {
+                  c.respuestas[idx] = comentario;
+                }
+              }
+            });
           }
         }
       });
