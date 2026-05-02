@@ -12,4 +12,8 @@ export const unlikePost = (postId, usuarioId) => api.post(`/novedades/${postId}/
 
 export const getPostById = (postId) => api.get(`/novedades/${postId}`);
 
-export const updatePost = (postId, data) => api.put(`/novedades/${postId}`, data);
+export const updatePost = (postId, data, params = {}) => {
+  const queryString = new URLSearchParams(params).toString();
+  const url = queryString ? `/novedades/${postId}?${queryString}` : `/novedades/${postId}`;
+  return api.put(url, data);
+};

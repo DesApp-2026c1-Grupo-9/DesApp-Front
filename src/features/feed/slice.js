@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getFeed, createPost, deletePost, likePost, unlikePost } from './service';
+import { getFeed, createPost, deletePost, likePost, unlikePost, updatePost } from './service';
 
 const transformBackendNovedad = (novedad, currentUserId) => {
   const tipoMap = {
@@ -15,7 +15,9 @@ const transformBackendNovedad = (novedad, currentUserId) => {
         nombre: `${novedad.autor.nombre} ${novedad.autor.apellido || ''}`.trim(),
         avatar: novedad.autor.avatarUrl || null,
       }
-    : { id: novedad.autorId, nombre: 'Estudiante', avatar: null };
+    : novedad.autorId
+    ? { id: novedad.autorId, nombre: 'Estudiante', avatar: null }
+    : { id: null, nombre: 'Estudiante', avatar: null };
 
   const likesArray = Array.isArray(novedad.likes) ? novedad.likes.map(id => Number(id)) : [];
   const liked = novedad.liked !== undefined ? novedad.liked : false;
@@ -30,6 +32,7 @@ const transformBackendNovedad = (novedad, currentUserId) => {
     likes: likesArray,
     liked,
     likesCount: novedad.likesCount !== undefined ? novedad.likesCount : likesArray.length,
+    comentariosCount: novedad.comentariosCount || 0,
     imagen: novedad.imagenUrl || null,
     esAutomatica: novedad.esAutomatica || false,
   };
@@ -74,6 +77,19 @@ export const removePost = createAsyncThunk(
   }
 );
 
+export const editPost = createAsyncThunk(
+  'feed/editPost',
+  async ({ postId, postData }, { getState, rejectWithValue }) => {
+    const { currentUserId } = getState().feed;
+    try {
+      const response = await updatePost(postId, postData, { usuarioId: currentUserId });
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Error al editar la publicación');
+    }
+  }
+);
+
 export const toggleLike = createAsyncThunk(
   'feed/toggleLike',
   async ({ postId, currentlyLiked, usuarioId }, { rejectWithValue }) => {
@@ -101,6 +117,13 @@ const feedSlice = createSlice({
     },
     setCurrentUser: (state, action) => {
       state.currentUserId = action.payload;
+    },
+    updateComentariosCount: (state, action) => {
+      const { postId, comentariosCount } = action.payload;
+      const post = state.posts.find(p => p.id === postId);
+      if (post) {
+        post.comentariosCount = comentariosCount;
+      }
     },
   },
   extraReducers: (builder) => {
@@ -132,6 +155,16 @@ const feedSlice = createSlice({
       })
       .addCase(removePost.fulfilled, (state, action) => {
         state.posts = state.posts.filter(post => post.id !== action.payload);
+      })
+      .addCase(editPost.fulfilled, (state, action) => {
+        const updatedPost = transformBackendNovedad(action.payload, state.currentUserId);
+        const index = state.posts.findIndex(post => post.id === action.payload.id);
+        if (index !== -1) {
+          state.posts[index] = updatedPost;
+        }
+      })
+      .addCase(editPost.rejected, (state, action) => {
+        state.error = action.payload || 'Error al editar la publicación';
       })
       .addCase(toggleLike.fulfilled, (state, action) => {
         const { postId, likesCount, liked } = action.payload;
