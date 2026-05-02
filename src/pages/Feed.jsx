@@ -351,10 +351,10 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                   )}
                   {com.respuestas && com.respuestas.length > 0 && (
                     <List dense sx={{ ml: 4 }}>
-                      {com.respuestas.map((reply) => (
+                      {com.respuestas.filter(reply => reply && reply.id).map((reply) => (
                         <ListItem key={reply.id} alignItems="flex-start"
                           secondaryAction={
-                            String(reply.autor?.id) === String(currentUserId) && (
+                            reply.autor && String(reply.autor?.id) === String(currentUserId) && (
                               <IconButton edge="end" size="small" onClick={(e) => {
                                 setReplySeleccionada(reply);
                                 setReplyMenuEl(e.currentTarget);
@@ -540,19 +540,21 @@ export default function Feed() {
         </FormControl>
       </Box>
 
-      <CreatePostForm onSubmit={(data) => dispatch(addPost({ postData: data, autorId: user.id }))} loading={loading} currentStudent={user} />
-      
-      {posts.map(post => (
-        <PostCard 
-          key={post.id} 
-          post={post} 
-          currentUserId={user?.id}
-          onDelete={(id) => dispatch(removePost(id))}
-          onEdit={(id, data) => dispatch(editPost({ postId: id, postData: data }))}
-          onToggleLike={(id, liked) => dispatch(toggleLike({ postId: id, currentlyLiked: liked, usuarioId: user.id }))}
-          onUpdateComentariosCount={(id, count) => dispatch({ type: 'feed/updateComentariosCount', payload: { postId: id, comentariosCount: count } })}
-        />
-      ))}
+        {user?.id && (
+          <CreatePostForm onSubmit={(data) => dispatch(addPost({ postData: data, autorId: user.id }))} loading={loading} currentStudent={user} />
+        )}
+       
+       {posts.map(post => (
+         <PostCard 
+           key={post.id} 
+           post={post} 
+           currentUserId={user?.id}
+           onDelete={(id) => user?.id && dispatch(removePost(id))}
+           onEdit={(id, data) => user?.id && dispatch(editPost({ postId: id, postData: data, usuarioId: user.id }))}
+           onToggleLike={(id, liked) => user?.id && dispatch(toggleLike({ postId: id, currentlyLiked: liked, usuarioId: user.id }))}
+           onUpdateComentariosCount={(id, count) => dispatch({ type: 'feed/updateComentariosCount', payload: { postId: id, comentariosCount: count } })}
+         />
+       ))}
     </Container>
   );
 }

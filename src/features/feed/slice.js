@@ -79,10 +79,10 @@ export const removePost = createAsyncThunk(
 
 export const editPost = createAsyncThunk(
   'feed/editPost',
-  async ({ postId, postData }, { getState, rejectWithValue }) => {
-    const { currentUserId } = getState().feed;
+  async ({ postId, postData, usuarioId }, { getState, rejectWithValue }) => {
+    const userId = usuarioId || getState().auth.user?.id || getState().feed.currentUserId;
     try {
-      const response = await updatePost(postId, postData, { usuarioId: currentUserId });
+      const response = await updatePost(postId, postData, { usuarioId: userId });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al editar la publicación');
