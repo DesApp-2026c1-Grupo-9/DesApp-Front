@@ -71,9 +71,14 @@ export const addPost = createAsyncThunk(
 
 export const removePost = createAsyncThunk(
   'feed/removePost',
-  async (postId, { rejectWithValue }) => {
-    await deletePost(postId);
-    return postId;
+  async ({ postId, usuarioId }, { getState, rejectWithValue }) => {
+    const userId = usuarioId || getState().auth.user?.id || getState().feed.currentUserId;
+    try {
+      await deletePost(postId, userId);
+      return postId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Error al eliminar la publicación');
+    }
   }
 );
 

@@ -4,7 +4,9 @@ export const getFeed = (params = {}) => api.get('/novedades', { params });
 
 export const createPost = (data) => api.post('/novedades', data);
 
-export const deletePost = (postId) => api.delete(`/novedades/${postId}`);
+export const deletePost = (postId, usuarioId) => {
+  return api.delete(`/novedades/${postId}?usuarioId=${usuarioId}`);
+};
 
 export const likePost = (postId, usuarioId) => {
   return api.post(`/novedades/${postId}/like`, { usuarioId });

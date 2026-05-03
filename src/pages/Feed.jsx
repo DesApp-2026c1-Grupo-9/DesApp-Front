@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import {
   Container,
   Typography,
@@ -264,7 +265,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
           <>
             {isEvento ? (
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <School color="primary" /> {post.materia?.nombre}
+                < School color="primary" /> {post.materia?.nombre}
               </Typography>
             ) : (
               <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>{post.contenido}</Typography>
@@ -276,9 +277,23 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
       <Divider />
       <Box sx={{ display: 'flex', alignItems: 'center', p: 1.5 }}>
         <IconButton onClick={() => onToggleLike(post.id, post.liked)} color={post.liked ? 'primary' : 'default'}>
-          {post.liked ? <ThumbUp fontSize="small" /> : <ThumbUpOutlined fontSize="small" />}
+          <ThumbUp fontSize="small" />
         </IconButton>
-        <Typography variant="body2" sx={{ mr: 3 }}>{post.likesCount || 0}</Typography>
+        <Typography variant="body2" sx={{ mr: 1 }}>{post.likesCount || 0}</Typography>
+        
+        {/* 1. Cambio en POSTS: Renderizado de Avatares de likes con fallback */}
+        <Box sx={{ display: 'flex', alignItems: 'center', mr: 3 }}>
+          {post.likesDetails?.map((user) => (
+            <Avatar 
+              key={user.id} 
+              src={user.avatar || 'default.jpg'} 
+              sx={{ width: 20, height: 20, ml: -0.5, border: '1px solid white' }}
+            >
+              {user.nombre?.charAt(0)}
+            </Avatar>
+          ))}
+        </Box>
+
         <IconButton onClick={fetchComentarios} color={showComentarios ? 'primary' : 'default'}>
           <Comment fontSize="small" />
         </IconButton>
@@ -325,7 +340,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                     }
                   >
                     <ListItemAvatar>
-                      <Avatar src={com.autor?.avatarUrl} sx={{ width: 35, height: 35 }}>{com.autor?.nombre?.charAt(0)}</Avatar>
+                      <Avatar src={com.autor?.avatar} sx={{ width: 35, height: 35 }}>{com.autor?.nombre?.charAt(0)}</Avatar>
                     </ListItemAvatar>
                     
                     {editandoComentarioId === com.id ? (
@@ -354,7 +369,6 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                           }
                           secondary={<Typography variant="body2" color="text.primary">{com.contenido}</Typography>}
                         />
-                        {/* Todo junto a la IZQUIERDA (COMENTARIOS) */}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                           <IconButton 
                             size="small" 
@@ -363,12 +377,13 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                           >
                             <ThumbUp fontSize="small" />
                           </IconButton>
-                          <Typography variant="caption">{com.likesCount || 0}</Typography>
+                          <Typography variant="caption" sx={{ mr: 1 }}>{com.likesCount || 0}</Typography>
                           
+                          {/* 2. Cambio en COMENTARIOS: Renderizado de Avatares de likes con fallback */}
                           {com.likesDetails && com.likesDetails.map((user) => (
                             <Avatar 
                               key={user.id} 
-                              src={user.avatarUrl} 
+                              src={user.avatar || 'default.jpg'} 
                               sx={{ width: 20, height: 20 }}
                             >
                               {user.nombre?.charAt(0)}
@@ -406,7 +421,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                           }
                         >
                           <ListItemAvatar>
-                            <Avatar src={reply.autor?.avatarUrl} sx={{ width: 30, height: 30 }}>{reply.autor?.nombre?.charAt(0)}</Avatar>
+                            <Avatar src={reply.autor?.avatar} sx={{ width: 30, height: 30 }}>{reply.autor?.nombre?.charAt(0)}</Avatar>
                           </ListItemAvatar>
                           {editandoReplyId === reply.id ? (
                             <Box sx={{ flex: 1 }}>
@@ -443,7 +458,6 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                 }
                                 secondary={<Typography variant="body2" color="text.primary">{reply.contenido}</Typography>}
                               />
-                              {/* Todo junto a la IZQUIERDA (RESPUESTAS) */}
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                                 <IconButton 
                                   size="small" 
@@ -452,12 +466,13 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                 >
                                   <ThumbUp fontSize="small" />
                                 </IconButton>
-                                <Typography variant="caption">{reply.likesCount || 0}</Typography>
+                                <Typography variant="caption" sx={{ mr: 1 }}>{reply.likesCount || 0}</Typography>
                                 
+                                {/* 3. Cambio en RESPUESTAS: Renderizado de Avatares de likes con fallback */}
                                 {reply.likesDetails && reply.likesDetails.map((user) => (
                                   <Avatar 
                                     key={user.id} 
-                                    src={user.avatarUrl} 
+                                    src={user.avatar || 'default.jpg'} 
                                     sx={{ width: 20, height: 20 }}
                                   >
                                     {user.nombre?.charAt(0)}
@@ -539,7 +554,7 @@ function CreatePostForm({ onSubmit, loading, currentStudent }) {
   return (
     <Paper sx={{ p: 3, mb: 4, borderRadius: 2, boxShadow: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Avatar src={currentStudent?.avatarUrl} sx={{ width: 40, height: 40 }}>
+        <Avatar src={currentStudent?.avatar} sx={{ width: 40, height: 40 }}>
           {currentStudent?.nombre?.charAt(0)}
         </Avatar>
         <Typography variant="subtitle1" fontWeight="500">
@@ -586,7 +601,7 @@ export default function Feed() {
           key={post.id} 
           post={post} 
           currentUserId={user?.id}
-          onDelete={(id) => user?.id && dispatch(removePost(id))}
+          onDelete={(id) => user?.id && dispatch(removePost({ postId: id, usuarioId: user.id }))}
           onEdit={(id, data) => user?.id && dispatch(editPost({ postId: id, postData: data, usuarioId: user.id }))}
           onToggleLike={(id, liked) => user?.id && dispatch(toggleLike({ postId: id, currentlyLiked: liked, usuarioId: user.id }))}
           onUpdateComentariosCount={(id, count) => dispatch({ type: 'feed/updateComentariosCount', payload: { postId: id, comentariosCount: count } })}
@@ -606,7 +621,7 @@ function ProjectSelector({ user, students, onSwitch }) {
         const student = students.find(s => s.id === selected);
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src={student?.avatarUrl} sx={{ width: 24, height: 24 }}>{student?.nombre?.charAt(0)}</Avatar>
+            <Avatar src={student?.avatar} sx={{ width: 24, height: 24 }}>{student?.nombre?.charAt(0)}</Avatar>
             <Typography variant="body2" fontWeight="500">
               {student?.nombre} {student?.apellido}
             </Typography>
@@ -617,7 +632,7 @@ function ProjectSelector({ user, students, onSwitch }) {
       {students.map(s => (
         <MenuItem key={s.id} value={s.id}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar src={s.avatarUrl} sx={{ width: 28, height: 28 }}>{s.nombre.charAt(0)}</Avatar>
+            <Avatar src={s.avatar} sx={{ width: 28, height: 28 }}>{s.nombre.charAt(0)}</Avatar>
             <Typography>{s.nombre} {s.apellido}</Typography>
           </Box>
         </MenuItem>
