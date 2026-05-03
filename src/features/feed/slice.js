@@ -29,6 +29,7 @@ const transformBackendNovedad = (novedad, currentUserId) => {
     contenido: novedad.contenido || '',
     autor,
     fecha: novedad.createdAt,
+    editedAt: novedad.editedAt || null,
     likes: likesArray,
     liked,
     likesCount: novedad.likesCount !== undefined ? novedad.likesCount : likesArray.length,

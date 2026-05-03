@@ -100,13 +100,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const [editandoReplyId, setEditandoReplyId] = useState(null);
   const [editReplyContent, setEditReplyContent] = useState('');
 
-  // useEffect para limpiar comentarios cuando cambia el usuario
   useEffect(() => {
     setComentarios([]);
     setShowComentarios(false);
   }, [currentUserId]);
 
-  // Handlers de Post
   const handleMenuClick = (event) => { event.stopPropagation(); setAnchorEl(event.currentTarget); };
   const handleMenuClose = () => setAnchorEl(null);
   const handleDelete = () => { onDelete(post.id); handleMenuClose(); };
@@ -215,22 +213,29 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
     } catch (error) { console.error(error); }
   };
 
-  const formatFechaComentario = (fecha) => {
-    const date = new Date(fecha);
-    const now = new Date();
-    const diffMins = Math.floor((now - date) / 60000);
-    if (diffMins < 1) return 'ahora';
-    if (diffMins < 60) return `${diffMins}m`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h`;
-    return date.toLocaleDateString();
-  };
+const formatFechaComentario = (fecha) => {
+  const date = new Date(fecha);
+  const now = new Date();
+  const diffMins = Math.floor((now - date) / 60000);
+  if (diffMins < 1) return 'ahora';
+  if (diffMins < 60) return `${diffMins}m`;
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours < 24) return `${diffHours}h`;
+  return date.toLocaleDateString();
+};
+
+const formatFechaSeguro = (fecha) => {
+  if (!fecha) return 'Fecha no disponible';
+  const date = new Date(fecha);
+  if (isNaN(date.getTime())) return 'Fecha no disponible';
+  return date.toLocaleString();
+};
 
   const isEvento = post.tipo === TIPO_POST.EVENTO_ACADEMICO;
 
   return (
     <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2 }}>
-      {isEvento ? (
+       {isEvento ? (
         <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>{post.autor?.nombre?.charAt(0)}</Avatar>
           <Box sx={{ flex: 1 }}>
@@ -240,14 +245,30 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
               </Typography>
               <Chip icon={getIconForTipoEvento(post.tipoEvento)} label={getLabelForTipoEvento(post.tipoEvento)} size="small" color="primary" variant="outlined" />
             </Box>
-            <Typography variant="caption" color="text.secondary">{new Date(post.fecha).toLocaleString()}</Typography>
+            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="caption" color="text.secondary">{formatFechaSeguro(post.fecha)}</Typography>
+              {post.editedAt && (
+                <Typography component="span" variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  • editado
+                </Typography>
+              )}
+            </Box>
           </Box>
         </CardContent>
       ) : (
         <CardHeader
           avatar={<Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>{post.autor?.nombre?.charAt(0)}</Avatar>}
           title={<Typography variant="subtitle1" fontWeight="bold">{post.autor?.nombre} {post.autor?.apellido}</Typography>}
-          subheader={new Date(post.fecha).toLocaleString()}
+          subheader={
+            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {formatFechaSeguro(post.fecha)}
+              {post.editedAt && (
+                <Typography component="span" variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                  • editado
+                </Typography>
+              )}
+            </Box>
+          }
           action={isOwner && <IconButton onClick={handleMenuClick}><MoreVert /></IconButton>}
         />
       )}
@@ -281,7 +302,6 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         </IconButton>
         <Typography variant="body2" sx={{ mr: 1 }}>{post.likesCount || 0}</Typography>
         
-        {/* 1. Cambio en POSTS: Renderizado de Avatares de likes con fallback */}
         <Box sx={{ display: 'flex', alignItems: 'center', mr: 3 }}>
           {post.likesDetails?.map((user) => (
             <Avatar 
@@ -369,37 +389,55 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                           }
                           secondary={<Typography variant="body2" color="text.primary">{com.contenido}</Typography>}
                         />
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                        
+                        {/* FILA DE ACCIONES ALINEADA (LIKE, CONTADOR, RESPONDER) */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                           <IconButton 
                             size="small" 
                             onClick={() => handleLikeComentario(com.id, com.liked)}
                             color={com.liked ? 'primary' : 'default'}
+                            sx={{ p: 0.5 }}
                           >
-                            <ThumbUp fontSize="small" />
+                            <ThumbUp fontSize="inherit" style={{ fontSize: '1.1rem' }} />
                           </IconButton>
-                          <Typography variant="caption" sx={{ mr: 1 }}>{com.likesCount || 0}</Typography>
                           
-                          {/* 2. Cambio en COMENTARIOS: Renderizado de Avatares de likes con fallback */}
-                          {com.likesDetails && com.likesDetails.map((user) => (
-                            <Avatar 
-                              key={user.id} 
-                              src={user.avatar || 'default.jpg'} 
-                              sx={{ width: 20, height: 20 }}
-                            >
-                              {user.nombre?.charAt(0)}
-                            </Avatar>
-                          ))}
-                        </Box>
+                          <Typography variant="caption" sx={{ fontWeight: '500' }}>
+                            {com.likesCount || 0}
+                          </Typography>
 
-                        <Typography variant="caption" style={{ cursor: 'pointer', color: 'rgba(0, 0, 0, 0.6)', fontWeight: 'bold' }} onClick={() => setReplyingTo(replyingTo === com.id ? null : com.id)}>
-                          Responder
-                        </Typography>
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              cursor: 'pointer', 
+                              color: 'text.secondary', 
+                              fontWeight: 'bold', 
+                              ml: 1,
+                              '&:hover': { textDecoration: 'underline' }
+                            }} 
+                            onClick={() => setReplyingTo(replyingTo === com.id ? null : com.id)}
+                          >
+                            Responder
+                          </Typography>
+
+                          {/* Avatares de likes del comentario */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', ml: 'auto' }}>
+                             {com.likesDetails && com.likesDetails.map((user) => (
+                               <Avatar 
+                                 key={user.id} 
+                                 src={user.avatar || 'default.jpg'} 
+                                 sx={{ width: 16, height: 16, ml: -0.5, border: '1px solid white' }}
+                               >
+                                 {user.nombre?.charAt(0)}
+                               </Avatar>
+                             ))}
+                          </Box>
+                        </Box>
                       </Box>
                     )}
                   </ListItem>
 
                   {replyingTo === com.id && (
-                    <Box sx={{ display: 'flex', gap: 1, ml: 7, mb: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1, ml: 7, mb: 1, mt: 1 }}>
                       <TextField fullWidth size="small" placeholder="Escribe una respuesta..." value={replyText} onChange={(e) => setReplyText(e.target.value)} />
                       <Button size="small" variant="contained" onClick={() => handleReply(com.id, replyText)}>Responder</Button>
                     </Box>
@@ -454,30 +492,38 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                     <Typography variant="caption" fontWeight="bold">{reply.autor?.nombre} {reply.autor?.apellido}</Typography>
                                     <Typography variant="caption" color="text.secondary">• {formatFechaComentario(reply.createdAt)}</Typography>
+                                    {reply.editedAt && (
+                                      <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                        • editado
+                                      </Typography>
+                                    )}
                                   </Box>
                                 }
                                 secondary={<Typography variant="body2" color="text.primary">{reply.contenido}</Typography>}
                               />
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                              {/* Fila de acciones para la Respuesta */}
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                                 <IconButton 
                                   size="small" 
                                   onClick={() => handleLikeComentario(reply.id, reply.liked)}
                                   color={reply.liked ? 'primary' : 'default'}
+                                  sx={{ p: 0.5 }}
                                 >
-                                  <ThumbUp fontSize="small" />
+                                  <ThumbUp fontSize="inherit" style={{ fontSize: '1rem' }} />
                                 </IconButton>
-                                <Typography variant="caption" sx={{ mr: 1 }}>{reply.likesCount || 0}</Typography>
+                                <Typography variant="caption">{reply.likesCount || 0}</Typography>
                                 
-                                {/* 3. Cambio en RESPUESTAS: Renderizado de Avatares de likes con fallback */}
-                                {reply.likesDetails && reply.likesDetails.map((user) => (
-                                  <Avatar 
-                                    key={user.id} 
-                                    src={user.avatar || 'default.jpg'} 
-                                    sx={{ width: 20, height: 20 }}
-                                  >
-                                    {user.nombre?.charAt(0)}
-                                  </Avatar>
-                                ))}
+                                <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+                                  {reply.likesDetails && reply.likesDetails.map((user) => (
+                                    <Avatar 
+                                      key={user.id} 
+                                      src={user.avatar || 'default.jpg'} 
+                                      sx={{ width: 16, height: 16, ml: -0.5, border: '1px solid white' }}
+                                    >
+                                      {user.nombre?.charAt(0)}
+                                    </Avatar>
+                                  ))}
+                                </Box>
                               </Box>
                             </Box>
                           )}
@@ -491,6 +537,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         </Box>
       </Collapse>
 
+      {/* Menús Contextuales */}
       <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
         <MenuItem onClick={handleDelete}><Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar</MenuItem>
         {!post.esAutomatica && <MenuItem onClick={() => { setIsEditing(true); handleMenuClose(); }}><Edit fontSize="small" sx={{ mr: 1 }} /> Editar</MenuItem>}

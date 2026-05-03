@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Box, List, ListItem, ListItemAvatar, ListItemText, Avatar, TextField, Button, IconButton, Collapse, CircularProgress, Typography } from '@mui/material';
-import { Comment } from '@mui/icons-material';
+import { Comment, ThumbUp } from '@mui/icons-material';
 import api from '../api/axiosConfig';
 
 function CommentSection({ postId, currentUserId }) {
@@ -8,6 +8,8 @@ function CommentSection({ postId, currentUserId }) {
   const [showComentarios, setShowComentarios] = useState(false);
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [loading, setLoading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [replyText, setReplyText] = useState('');
 
   // Limpiar comentarios al cambiar de usuario para asegurar consistencia en la simulación
   useEffect(() => {
@@ -59,6 +61,31 @@ function CommentSection({ postId, currentUserId }) {
     }
   };
 
+  const handleAddReply = async (comentarioPadreId) => {
+    if (!replyText.trim() || !currentUserId) return;
+    try {
+      const response = await fetch(`http://localhost:3000/api/novedades/${postId}/comentarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contenido: replyText.trim(),
+          usuarioId: currentUserId,
+          comentarioPadreId,
+        }),
+      });
+      const data = await response.json();
+      setComentarios(comentarios.map(c =>
+        c.id === comentarioPadreId
+          ? { ...c, respuestas: [...(c.respuestas || []), data.data] }
+          : c
+      ));
+      setReplyText('');
+      setReplyingTo(null);
+    } catch (error) {
+      console.error('Error al agregar respuesta:', error);
+    }
+  };
+
   const handleAddComentario = async () => {
     if (!nuevoComentario.trim() || !currentUserId) return;
     try {
@@ -107,24 +134,25 @@ function CommentSection({ postId, currentUserId }) {
                       }
                       secondary={com.contenido}
                     />
-                    {/* Sección de Likes - Comentario Principal */}
-                    <Box 
-                      sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, cursor: 'pointer' }}
-                      onClick={() => handleLikeComentario(com.id, com.liked)}
-                    >
-                      {com.likes && com.likes.map((userId) => (
-                        <Avatar 
-                          key={userId} 
-                          src={com.likesDetails?.find(u => u.id === userId)?.avatarUrl} 
-                          sx={{ width: 20, height: 20, border: '1px solid white' }}
-                        >
-                          {com.likesDetails?.find(u => u.id === userId)?.nombre?.charAt(0)}
-                        </Avatar>
-                      ))}
-                      <Typography variant="caption" color={com.liked ? "primary" : "text.secondary"} sx={{ ml: 0.5 }}>
-                        {com.likesCount || 0}
-                      </Typography>
+                    {/* Sección de Likes y Responder - Comentario Principal */}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer' }} onClick={() => handleLikeComentario(com.id, com.liked)}>
+                        <ThumbUp sx={{ fontSize: 16, color: com.liked ? 'primary.main' : 'text.secondary' }} />
+                        <Typography variant="caption" color={com.liked ? 'primary' : 'text.secondary'}>
+                          {com.likesCount || 0}
+                        </Typography>
+                      </Box>
+                      <Button size="small" sx={{ textTransform: 'none', p: 0, minWidth: 0, fontSize: '0.75rem' }} onClick={() => { setReplyingTo(com.id); setReplyText(''); }}>
+                        Responder
+                      </Button>
                     </Box>
+                    {replyingTo === com.id && (
+                      <Box sx={{ display: 'flex', gap: 1, mt: 0.5, ml: 4 }}>
+                        <TextField size="small" placeholder="Escribe una respuesta..." value={replyText} onChange={(e) => setReplyText(e.target.value)} sx={{ flex: 1 }} />
+                        <Button size="small" variant="contained" onClick={() => handleAddReply(com.id)} disabled={!replyText.trim()}>Enviar</Button>
+                        <Button size="small" onClick={() => { setReplyingTo(null); setReplyText(''); }}>Cancelar</Button>
+                      </Box>
+                    )}
                   </Box>
                 </Box>
                 
@@ -142,24 +170,25 @@ function CommentSection({ postId, currentUserId }) {
                           <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>
                             {reply.contenido}
                           </Typography>
-                          {/* Sección de Likes - Respuesta */}
-                          <Box 
-                            sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, cursor: 'pointer' }}
-                            onClick={() => handleLikeComentario(reply.id, reply.liked)}
-                          >
-                            {reply.likes && reply.likes.map((userId) => (
-                              <Avatar 
-                                key={userId} 
-                                src={reply.likesDetails?.find(u => u.id === userId)?.avatarUrl} 
-                                sx={{ width: 20, height: 20, border: '1px solid white' }}
-                              >
-                                {reply.likesDetails?.find(u => u.id === userId)?.nombre?.charAt(0)}
-                              </Avatar>
-                            ))}
-                            <Typography variant="caption" color={reply.liked ? "primary" : "text.secondary"} sx={{ ml: 0.5 }}>
-                              {reply.likesCount || 0}
-                            </Typography>
+                          {/* Sección de Likes y Responder - Respuesta */}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, cursor: 'pointer' }} onClick={() => handleLikeComentario(reply.id, reply.liked)}>
+                              <ThumbUp sx={{ fontSize: 14, color: reply.liked ? 'primary.main' : 'text.secondary' }} />
+                              <Typography variant="caption" color={reply.liked ? 'primary' : 'text.secondary'}>
+                                {reply.likesCount || 0}
+                              </Typography>
+                            </Box>
+                            <Button size="small" sx={{ textTransform: 'none', p: 0, minWidth: 0, fontSize: '0.7rem' }} onClick={() => { setReplyingTo(reply.id); setReplyText(''); }}>
+                              Responder
+                            </Button>
                           </Box>
+                          {replyingTo === reply.id && (
+                            <Box sx={{ display: 'flex', gap: 1, mt: 0.5, ml: 3 }}>
+                              <TextField size="small" placeholder="Escribe una respuesta..." value={replyText} onChange={(e) => setReplyText(e.target.value)} sx={{ flex: 1 }} />
+                              <Button size="small" variant="contained" onClick={() => handleAddReply(reply.id)} disabled={!replyText.trim()}>Enviar</Button>
+                              <Button size="small" onClick={() => { setReplyingTo(null); setReplyText(''); }}>Cancelar</Button>
+                            </Box>
+                          )}
                         </Box>
                       </Box>
                     ))}
