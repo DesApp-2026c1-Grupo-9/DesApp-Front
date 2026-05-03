@@ -7,13 +7,11 @@ export const createPost = (data) => api.post('/novedades', data);
 export const deletePost = (postId) => api.delete(`/novedades/${postId}`);
 
 export const likePost = (postId, usuarioId) => {
-  const params = usuarioId ? { usuarioId } : {};
-  return api.post(`/novedades/${postId}/like`, null, { params });
+  return api.post(`/novedades/${postId}/like`, { usuarioId });
 };
 
 export const unlikePost = (postId, usuarioId) => {
-  const params = usuarioId ? { usuarioId } : {};
-  return api.post(`/novedades/${postId}/unlike`, null, { params });
+  return api.post(`/novedades/${postId}/unlike`, { usuarioId });
 };
 
 export const getPostById = (postId) => api.get(`/novedades/${postId}`);
