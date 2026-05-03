@@ -36,6 +36,9 @@ import {
   Edit,
   Comment,
 } from '@mui/icons-material';
+
+// Importaciones de Slices
+import { likeComentario, unlikeComentario } from '../features/feed/comentariosSlice';
 import { fetchFeed, addPost, removePost, toggleLike, editPost } from '../features/feed/slice';
 import { switchStudent } from '../features/auth/slice';
 
@@ -69,19 +72,24 @@ const getLabelForTipoEvento = (tipo) => {
 };
 
 function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdateComentariosCount }) {
+  const dispatch = useDispatch();
+  
+  // Estados para el Post
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.contenido || '');
   const isOwner = String(post.autor?.id) === String(currentUserId);
 
+  // Estados para Comentarios
   const [comentarios, setComentarios] = useState([]);
   const [showComentarios, setShowComentarios] = useState(false);
   const [visibleCount, setVisibleCount] = useState(1);
   const [nuevoComentario, setNuevoComentario] = useState('');
   const [loadingComentarios, setLoadingComentarios] = useState(false);
+  
+  // Estados para Respuestas y Menús
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
-
   const [comentarioMenuEl, setComentarioMenuEl] = useState(null);
   const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null);
   const [editandoComentarioId, setEditandoComentarioId] = useState(null);
@@ -91,6 +99,13 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const [editandoReplyId, setEditandoReplyId] = useState(null);
   const [editReplyContent, setEditReplyContent] = useState('');
 
+  // useEffect para limpiar comentarios cuando cambia el usuario
+  useEffect(() => {
+    setComentarios([]);
+    setShowComentarios(false);
+  }, [currentUserId]);
+
+  // Handlers de Post
   const handleMenuClick = (event) => { event.stopPropagation(); setAnchorEl(event.currentTarget); };
   const handleMenuClose = () => setAnchorEl(null);
   const handleDelete = () => { onDelete(post.id); handleMenuClose(); };
@@ -102,9 +117,8 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   };
 
   const fetchComentarios = async () => {
-    if (showComentarios) {
+    if (comentarios.length > 0 && showComentarios) {
       setShowComentarios(false);
-      setVisibleCount(1);
       return;
     }
     if (comentarios.length > 0) {
@@ -113,11 +127,15 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
     }
     setLoadingComentarios(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios`);
+      const response = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios?usuarioId=${currentUserId}`);
       const data = await response.json();
       setComentarios(data.data || []);
       setShowComentarios(true);
-    } catch (error) { console.error(error); } finally { setLoadingComentarios(false); }
+    } catch (error) { 
+      console.error('Error al cargar comentarios:', error); 
+    } finally { 
+      setLoadingComentarios(false); 
+    }
   };
 
   const handleAddComentario = async () => {
@@ -132,26 +150,6 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
       setComentarios([...comentarios, data.data]);
       setNuevoComentario('');
       setVisibleCount(prev => prev + 1);
-      if (onUpdateComentariosCount) onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
-    } catch (error) { console.error(error); }
-  };
-
-  const handleReply = async (comentarioPadreId, contenido) => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contenido, usuarioId: currentUserId, comentarioPadreId }),
-      });
-      const data = await response.json();
-      setComentarios(comentarios.map(c => {
-        if (c.id === comentarioPadreId) {
-          return { ...c, respuestas: [...(c.respuestas || []), data.data] };
-        }
-        return c;
-      }));
-      setReplyingTo(null);
-      setReplyText('');
       if (onUpdateComentariosCount) onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
     } catch (error) { console.error(error); }
   };
@@ -171,25 +169,49 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
     } catch (err) { console.error(err); }
   };
 
-  const handleDeleteReply = async () => {
-    if (!replySeleccionada) return;
-    try {
-      const res = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios/${replySeleccionada.id}`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usuarioId: currentUserId }),
-      });
-      if (res.ok) {
-        setComentarios(comentarios.map(c => {
-          if (c.respuestas) {
-            return { ...c, respuestas: c.respuestas.filter(r => r.id !== replySeleccionada.id) };
-          }
-          return c;
-        }));
-        onUpdateComentariosCount(post.id, Math.max(0, (post.comentariosCount || 0) - 1));
+  const handleLikeComentario = (comentarioId, liked) => {
+    if (liked) {
+      dispatch(unlikeComentario({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
+    } else {
+      dispatch(likeComentario({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
+    }
+
+    const actualizarLikes = (items) => items.map(item => {
+      if (item.id === comentarioId) {
+        return {
+          ...item,
+          liked: !liked,
+          likesCount: liked ? (item.likesCount || 1) - 1 : (item.likesCount || 0) + 1
+        };
       }
-    } catch (err) { console.error(err); }
-    setReplyMenuEl(null);
+      if (item.respuestas) {
+        return { ...item, respuestas: actualizarLikes(item.respuestas) };
+      }
+      return item;
+    });
+
+    setComentarios(actualizarLikes(comentarios));
+  };
+
+  const handleReply = async (comentarioPadreId, contenido) => {
+    if (!contenido.trim()) return;
+    try {
+      const response = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contenido, usuarioId: currentUserId, comentarioPadreId }),
+      });
+      const data = await response.json();
+      setComentarios(comentarios.map(c => {
+        if (c.id === comentarioPadreId) {
+          return { ...c, respuestas: [...(c.respuestas || []), data.data] };
+        }
+        return c;
+      }));
+      setReplyingTo(null);
+      setReplyText('');
+      if (onUpdateComentariosCount) onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
+    } catch (error) { console.error(error); }
   };
 
   const formatFechaComentario = (fecha) => {
@@ -332,23 +354,42 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                           }
                           secondary={<Typography variant="body2" color="text.primary">{com.contenido}</Typography>}
                         />
-                        <Typography variant="caption" sx={{ ml: 1, cursor: 'pointer', color: 'text.secondary' }} onClick={() => setReplyingTo(replyingTo === com.id ? null : com.id)}>
+                        {/* Todo junto a la IZQUIERDA (COMENTARIOS) */}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                          <IconButton 
+                            size="small" 
+                            onClick={() => handleLikeComentario(com.id, com.liked)}
+                            color={com.liked ? 'primary' : 'default'}
+                          >
+                            <ThumbUp fontSize="small" />
+                          </IconButton>
+                          <Typography variant="caption">{com.likesCount || 0}</Typography>
+                          
+                          {com.likesDetails && com.likesDetails.map((user) => (
+                            <Avatar 
+                              key={user.id} 
+                              src={user.avatarUrl} 
+                              sx={{ width: 20, height: 20 }}
+                            >
+                              {user.nombre?.charAt(0)}
+                            </Avatar>
+                          ))}
+                        </Box>
+
+                        <Typography variant="caption" style={{ cursor: 'pointer', color: 'rgba(0, 0, 0, 0.6)', fontWeight: 'bold' }} onClick={() => setReplyingTo(replyingTo === com.id ? null : com.id)}>
                           Responder
                         </Typography>
-                        {com.respuestas && com.respuestas.length > 0 && (
-                          <Typography variant="caption" sx={{ ml: 2, cursor: 'pointer', color: 'text.secondary' }}>
-                            {com.respuestas.length} respuesta{com.respuestas.length > 1 ? 's' : ''}
-                          </Typography>
-                        )}
                       </Box>
                     )}
                   </ListItem>
+
                   {replyingTo === com.id && (
                     <Box sx={{ display: 'flex', gap: 1, ml: 7, mb: 1 }}>
                       <TextField fullWidth size="small" placeholder="Escribe una respuesta..." value={replyText} onChange={(e) => setReplyText(e.target.value)} />
                       <Button size="small" variant="contained" onClick={() => handleReply(com.id, replyText)}>Responder</Button>
                     </Box>
                   )}
+
                   {com.respuestas && com.respuestas.length > 0 && (
                     <List dense sx={{ ml: 4 }}>
                       {com.respuestas.filter(reply => reply && reply.id).map((reply) => (
@@ -392,20 +433,38 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                               <Button size="small" onClick={() => setEditandoReplyId(null)}>Cancelar</Button>
                             </Box>
                           ) : (
-                            <ListItemText
-                              primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="caption" fontWeight="bold">{reply.autor?.nombre} {reply.autor?.apellido}</Typography>
-                                  <Typography variant="caption" color="text.secondary">• {formatFechaComentario(reply.createdAt)}</Typography>
-                                  {reply.editedAt && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                                      • editado
-                                    </Typography>
-                                  )}
-                                </Box>
-                              }
-                              secondary={<Typography variant="body2" color="text.primary">{reply.contenido}</Typography>}
-                            />
+                            <Box sx={{ flex: 1 }}>
+                              <ListItemText
+                                primary={
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                    <Typography variant="caption" fontWeight="bold">{reply.autor?.nombre} {reply.autor?.apellido}</Typography>
+                                    <Typography variant="caption" color="text.secondary">• {formatFechaComentario(reply.createdAt)}</Typography>
+                                  </Box>
+                                }
+                                secondary={<Typography variant="body2" color="text.primary">{reply.contenido}</Typography>}
+                              />
+                              {/* Todo junto a la IZQUIERDA (RESPUESTAS) */}
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleLikeComentario(reply.id, reply.liked)}
+                                  color={reply.liked ? 'primary' : 'default'}
+                                >
+                                  <ThumbUp fontSize="small" />
+                                </IconButton>
+                                <Typography variant="caption">{reply.likesCount || 0}</Typography>
+                                
+                                {reply.likesDetails && reply.likesDetails.map((user) => (
+                                  <Avatar 
+                                    key={user.id} 
+                                    src={user.avatarUrl} 
+                                    sx={{ width: 20, height: 20 }}
+                                  >
+                                    {user.nombre?.charAt(0)}
+                                  </Avatar>
+                                ))}
+                              </Box>
+                            </Box>
                           )}
                         </ListItem>
                       ))}
@@ -454,12 +513,10 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
               body: JSON.stringify({ usuarioId: currentUserId }),
             });
             if (res.ok) {
-              setComentarios(comentarios.map(c => {
-                if (c.respuestas) {
-                  return { ...c, respuestas: c.respuestas.filter(r => r.id !== replySeleccionada.id) };
-                }
-                return c;
-              }));
+              setComentarios(comentarios.map(c => ({
+                ...c,
+                respuestas: c.respuestas ? c.respuestas.filter(r => r.id !== replySeleccionada.id) : []
+              })));
               onUpdateComentariosCount(post.id, Math.max(0, (post.comentariosCount || 0) - 1));
             }
           } catch (err) { console.error(err); }
@@ -512,49 +569,59 @@ export default function Feed() {
         <Typography variant="h4" fontWeight="bold" color="primary">Novedades</Typography>
         <FormControl size="small" sx={{ minWidth: 220 }}>
           <InputLabel>Simular Usuario</InputLabel>
-          <Select 
-            value={user?.id || ''} 
-            label="Simular Usuario" 
-            onChange={(e) => dispatch(switchStudent(e.target.value))}
-            renderValue={(selected) => {
-              const student = students.find(s => s.id === selected);
-              return (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Avatar src={student?.avatarUrl} sx={{ width: 24, height: 24 }}>{student?.nombre?.charAt(0)}</Avatar>
-                  <Typography variant="body2" fontWeight="500">
-                    {student?.nombre} {student?.apellido}
-                  </Typography>
-                </Box>
-              );
-            }}
-          >
-            {students.map(s => (
-              <MenuItem key={s.id} value={s.id}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Avatar src={s.avatarUrl} sx={{ width: 28, height: 28 }}>{s.nombre.charAt(0)}</Avatar>
-                  <Typography>{s.nombre} {s.apellido}</Typography>
-                </Box>
-              </MenuItem>
-            ))}
-          </Select>
+          <ProjectSelector 
+            user={user}
+            students={students}
+            onSwitch={(val) => dispatch(switchStudent(val))}
+          />
         </FormControl>
       </Box>
 
-        {user?.id && (
-          <CreatePostForm onSubmit={(data) => dispatch(addPost({ postData: data, autorId: user.id }))} loading={loading} currentStudent={user} />
-        )}
-       
-       {posts.map(post => (
-         <PostCard 
-           key={post.id} 
-           post={post} 
-           currentUserId={user?.id}
-           onDelete={(id) => user?.id && dispatch(removePost(id))}
-           onEdit={(id, data) => user?.id && dispatch(editPost({ postId: id, postData: data, usuarioId: user.id }))}
-           onToggleLike={(id, liked) => user?.id && dispatch(toggleLike({ postId: id, currentlyLiked: liked, usuarioId: user.id }))}
-           onUpdateComentariosCount={(id, count) => dispatch({ type: 'feed/updateComentariosCount', payload: { postId: id, comentariosCount: count } })}
-         />
-       ))}
+      {user?.id && (
+        <CreatePostForm onSubmit={(data) => dispatch(addPost({ postData: data, autorId: user.id }))} loading={loading} currentStudent={user} />
+      )}
+      
+      {posts.map(post => (
+        <PostCard 
+          key={post.id} 
+          post={post} 
+          currentUserId={user?.id}
+          onDelete={(id) => user?.id && dispatch(removePost(id))}
+          onEdit={(id, data) => user?.id && dispatch(editPost({ postId: id, postData: data, usuarioId: user.id }))}
+          onToggleLike={(id, liked) => user?.id && dispatch(toggleLike({ postId: id, currentlyLiked: liked, usuarioId: user.id }))}
+          onUpdateComentariosCount={(id, count) => dispatch({ type: 'feed/updateComentariosCount', payload: { postId: id, comentariosCount: count } })}
+        />
+      ))}
     </Container>
+  );
+}
+
+function ProjectSelector({ user, students, onSwitch }) {
+  return (
+    <Select 
+      value={user?.id || ''} 
+      label="Simular Usuario" 
+      onChange={(e) => onSwitch(e.target.value)}
+      renderValue={(selected) => {
+        const student = students.find(s => s.id === selected);
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Avatar src={student?.avatarUrl} sx={{ width: 24, height: 24 }}>{student?.nombre?.charAt(0)}</Avatar>
+            <Typography variant="body2" fontWeight="500">
+              {student?.nombre} {student?.apellido}
+            </Typography>
+          </Box>
+        );
+      }}
+    >
+      {students.map(s => (
+        <MenuItem key={s.id} value={s.id}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar src={s.avatarUrl} sx={{ width: 28, height: 28 }}>{s.nombre.charAt(0)}</Avatar>
+            <Typography>{s.nombre} {s.apellido}</Typography>
+          </Box>
+        </MenuItem>
+      ))}
+    </Select>
   );
 }

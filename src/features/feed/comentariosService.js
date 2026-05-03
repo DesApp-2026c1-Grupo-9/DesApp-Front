@@ -7,3 +7,7 @@ export const createComentario = (novedadId, data) => api.post(`/novedades/${nove
 export const updateComentario = (novedadId, comentarioId, data) => api.put(`/novedades/${novedadId}/comentarios/${comentarioId}`, data);
 
 export const deleteComentario = (novedadId, comentarioId, usuarioId) => api.delete(`/novedades/${novedadId}/comentarios/${comentarioId}`, { data: { usuarioId } });
+
+export const likeComentario = (novedadId, comentarioId, usuarioId) => api.post(`/novedades/${novedadId}/comentarios/${comentarioId}/like`, { usuarioId });
+
+export const unlikeComentario = (novedadId, comentarioId, usuarioId) => api.post(`/novedades/${novedadId}/comentarios/${comentarioId}/unlike`, { usuarioId });

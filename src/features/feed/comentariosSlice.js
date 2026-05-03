@@ -1,5 +1,6 @@
 ﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api/axiosConfig';
+import { likeComentario as likeService, unlikeComentario as unlikeService } from './comentariosService';
 
 export const fetchComentarios = createAsyncThunk(
   'comentarios/fetchComentarios',
@@ -48,6 +49,30 @@ export const editComentario = createAsyncThunk(
       return { novedadId, comentario: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al editar comentario');
+    }
+  }
+);
+
+export const likeComentario = createAsyncThunk(
+  'comentarios/likeComentario',
+  async ({ novedadId, comentarioId, usuarioId }, { rejectWithValue }) => {
+    try {
+      await likeService(novedadId, comentarioId, usuarioId);
+      return { novedadId, comentarioId, liked: true };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Error al dar like al comentario');
+    }
+  }
+);
+
+export const unlikeComentario = createAsyncThunk(
+  'comentarios/unlikeComentario',
+  async ({ novedadId, comentarioId, usuarioId }, { rejectWithValue }) => {
+    try {
+      await unlikeService(novedadId, comentarioId, usuarioId);
+      return { novedadId, comentarioId, liked: false };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Error al quitar like al comentario');
     }
   }
 );
@@ -124,6 +149,42 @@ const comentariosSlice = createSlice({
             });
           }
         }
+      })
+      .addCase(likeComentario.fulfilled, (state, action) => {
+        const { comentarioId, liked } = action.payload;
+        Object.values(state.byNovedad).forEach(comentarios => {
+          comentarios.forEach(c => {
+            if (c.id === comentarioId) {
+              c.liked = liked;
+              c.likesCount = (c.likesCount || 0) + (liked ? 1 : -1);
+            }
+            if (c.respuestas) {
+              const reply = c.respuestas.find(r => r.id === comentarioId);
+              if (reply) {
+                reply.liked = liked;
+                reply.likesCount = (reply.likesCount || 0) + (liked ? 1 : -1);
+              }
+            }
+          });
+        });
+      })
+      .addCase(unlikeComentario.fulfilled, (state, action) => {
+        const { comentarioId, liked } = action.payload;
+        Object.values(state.byNovedad).forEach(comentarios => {
+          comentarios.forEach(c => {
+            if (c.id === comentarioId) {
+              c.liked = liked;
+              c.likesCount = (c.likesCount || 0) + (liked ? 1 : -1);
+            }
+            if (c.respuestas) {
+              const reply = c.respuestas.find(r => r.id === comentarioId);
+              if (reply) {
+                reply.liked = liked;
+                reply.likesCount = (reply.likesCount || 0) + (liked ? 1 : -1);
+              }
+            }
+          });
+        });
       });
   },
 });
