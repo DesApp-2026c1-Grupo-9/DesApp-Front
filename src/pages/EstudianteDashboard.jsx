@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -19,10 +19,11 @@ import {
   MenuBook as MenuBookIcon
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
+import { useAuth } from '../context/AuthContext';
 
 export const EstudianteDashboard = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
+  const { estudianteActual, loading: authLoading } = useAuth();
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,14 +31,36 @@ export const EstudianteDashboard = () => {
 
   useEffect(() => {
     const cargarDatosEstudiante = async () => {
+      if (!estudianteActual?.id) return;
+      
       try {
         setLoading(true);
         const [estudianteData, situacionData] = await Promise.all([
-          EstudianteService.obtenerEstudiante(id),
-          EstudianteService.obtenerMateriasEstudiante(id)
+          EstudianteService.obtenerEstudiante(estudianteActual.id),
+          EstudianteService.obtenerMateriasEstudiante(estudianteActual.id)
         ]);
-        setEstudiante(estudianteData);
-        setSituacionAcademica(situacionData);
+        
+        // Procesar datos del estudiante
+        const estudianteInfo = {
+          ...estudianteData.data,
+          ...estudianteData.data.usuario,
+          carreras: estudianteData.data.carreras
+        };
+        
+        // Procesar situación académica desde la nueva estructura
+        const situacionProcesada = {
+          carrera: situacionData.data?.carrera?.nombre,
+          estadisticas: {
+            materiasAprobadas: situacionData.data?.resumen?.aprobadas || 0,
+            materiasRegularizadas: situacionData.data?.resumen?.regularizadas || 0,
+            materiasCursando: 0, // Se puede calcular de las materias si es necesario
+            totalMaterias: situacionData.data?.resumen?.total || 0
+          },
+          situacionAcademica: Object.values(situacionData.data?.materiasPorAnio || {}).flat() || []
+        };
+        
+        setEstudiante(estudianteInfo);
+        setSituacionAcademica(situacionProcesada);
       } catch (err) {
         console.error('Error al cargar datos del estudiante:', err);
         setError('Error al cargar la información del estudiante');
@@ -46,10 +69,10 @@ export const EstudianteDashboard = () => {
       }
     };
 
-    if (id) {
+    if (estudianteActual) {
       cargarDatosEstudiante();
     }
-  }, [id]);
+  }, [estudianteActual]);
 
   const obtenerColorEstado = (estado) => {
     switch (estado) {
@@ -60,11 +83,13 @@ export const EstudianteDashboard = () => {
     }
   };
 
-  const navegarAOtroEstudiante = (nuevoId) => {
-    navigate(`/estudiante/${nuevoId}`);
+  const verMaterias = () => {
+    navigate('/mis-materias');
   };
 
-  if (loading) {
+  // Función navegarAOtroEstudiante removida - no es realista
+
+  if (authLoading || loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
         <CircularProgress />
@@ -90,32 +115,7 @@ export const EstudianteDashboard = () => {
 
   return (
     <Box p={3}>
-      {/* Navegación entre estudiantes */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Estudiantes Disponibles
-        </Typography>
-        <Box display="flex" gap={2}>
-          <Button 
-            variant={id === '1' ? 'contained' : 'outlined'}
-            onClick={() => navegarAOtroEstudiante(1)}
-          >
-            Juan Pérez (Avanzado)
-          </Button>
-          <Button 
-            variant={id === '2' ? 'contained' : 'outlined'}
-            onClick={() => navegarAOtroEstudiante(2)}
-          >
-            María González (Intermedio)
-          </Button>
-          <Button 
-            variant={id === '3' ? 'contained' : 'outlined'}
-            onClick={() => navegarAOtroEstudiante(3)}
-          >
-            Carlos López (Principiante)
-          </Button>
-        </Box>
-      </Paper>
+      {/* Navegación entre estudiantes - REMOVIDA para mayor realismo */}
 
       {/* Saludo personalizado */}
       <Typography variant="h4" gutterBottom>
@@ -166,40 +166,32 @@ export const EstudianteDashboard = () => {
               </Box>
               
               <Typography variant="h6" gutterBottom color="primary">
-                {situacionAcademica.carrera}
+                {situacionAcademica?.carrera || 'Cargando...'}
               </Typography>
 
               <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={6} sm={4}>
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h4" color="success.main">
-                      {situacionAcademica.estadisticas.materiasAprobadas}
+                      {situacionAcademica?.estadisticas?.materiasAprobadas || 0}
                     </Typography>
                     <Typography variant="caption">Aprobadas</Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={6} sm={4}>
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h4" color="warning.main">
-                      {situacionAcademica.estadisticas.materiasRegularizadas}
+                      {situacionAcademica?.estadisticas?.materiasRegularizadas || 0}
                     </Typography>
                     <Typography variant="caption">Regularizadas</Typography>
                   </Paper>
                 </Grid>
-                <Grid item xs={6} sm={3}>
+                <Grid item xs={6} sm={4}>
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h4" color="info.main">
-                      {situacionAcademica.estadisticas.materiasCursando}
+                      {situacionAcademica?.estadisticas?.materiasCursando || 0}
                     </Typography>
                     <Typography variant="caption">Cursando</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={6} sm={3}>
-                  <Paper sx={{ p: 2, textAlign: 'center' }}>
-                    <Typography variant="h4" color="primary.main">
-                      {situacionAcademica.estadisticas.promedioGeneral || 'N/A'}
-                    </Typography>
-                    <Typography variant="caption">Promedio</Typography>
                   </Paper>
                 </Grid>
               </Grid>
@@ -208,7 +200,7 @@ export const EstudianteDashboard = () => {
                 <Button 
                   variant="contained" 
                   startIcon={<MenuBookIcon />}
-                  onClick={() => navigate(`/estudiante/${id}/materias`)}
+                  onClick={() => navigate('/mis-materias')}
                   size="large"
                 >
                   Ver Detalle de Materias
@@ -226,7 +218,7 @@ export const EstudianteDashboard = () => {
                 Estado Actual de Materias
               </Typography>
               <Box display="flex" flexWrap="wrap" gap={1}>
-                {situacionAcademica.situacionAcademica
+                {(situacionAcademica?.situacionAcademica || [])
                   .slice(0, 8) // Mostrar solo las primeras 8
                   .map((materia, index) => (
                   <Chip

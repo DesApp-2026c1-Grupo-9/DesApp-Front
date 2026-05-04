@@ -13,29 +13,34 @@ import { CareerManagementPage } from '../pages/CareerManagementPage';
 import { SubjectManagementPage } from '../pages/SubjectManagementPage';
 import { EstudianteDashboard } from '../pages/EstudianteDashboard';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
+import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import { TopMenu } from '../components/TopMenu';
+import AuthProvider from '../context/AuthContext';
 
 const AppRouter = () => {
   return (
-    <Router>
-      <TopMenu />
-      <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/sesiones" element={<Sesiones />} />
-          <Route path="/feed" element={<Feed />} />
-          <Route path="/conexiones" element={<Conexiones />} />
-          {/* Rutas del sistema académico */}
-          <Route path="/estudiante" element={<StudentProfilePage />} />
-          <Route path="/estudiante/:id" element={<EstudianteDashboard />} />
-          <Route path="/estudiante/:id/materias" element={<EstudianteMaterias />} />
-          <Route path="/carreras" element={<CareerManagementPage />} />
-          <Route path="/materias" element={<SubjectManagementPage />} />
-        </Routes>
-      </Box>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <TopMenu />
+        <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/perfil" element={<Perfil />} />
+            <Route path="/sesiones" element={<Sesiones />} />
+            <Route path="/feed" element={<Feed />} />
+            <Route path="/conexiones" element={<Conexiones />} />
+            {/* Rutas del sistema académico - Solo para el estudiante actual */}
+            <Route path="/mi-perfil" element={<EstudianteDashboard />} />
+            <Route path="/mis-materias" element={<EstudianteMaterias />} />
+            <Route path="/carreras" element={<CareerManagementPage />} />
+            <Route path="/materias" element={<SubjectManagementPage />} />
+            {/* Ruta especial para demostración - cambiar estudiante */}
+            <Route path="/demo-selector" element={<SelectorEstudiante />} />
+          </Routes>
+        </Box>
+      </Router>
+    </AuthProvider>
   );
 };
 

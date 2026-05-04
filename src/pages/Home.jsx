@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EstudianteService from '../services/EstudianteService';
+import { useAuth } from '../context/AuthContext';
 import { 
   Box, 
   Typography, 
@@ -16,7 +17,8 @@ import {
   Divider,
   Alert,
   Button,
-  Avatar
+  Avatar,
+  Paper
 } from '@mui/material';
 import { 
   School, 
@@ -33,52 +35,55 @@ import {
 
 const Home = () => {
   const navigate = useNavigate();
-  const [currentStudentIndex, setCurrentStudentIndex] = useState(0);
-  const [studentsData, setStudentsData] = useState([]);
+  const { estudianteActual, loading: authLoading } = useAuth();
+  const [estudianteInfo, setEstudianteInfo] = useState(null);
+  const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Cargar datos de estudiantes al montar el componente
+  // Cargar datos del estudiante actual
   useEffect(() => {
-    const loadStudentsData = async () => {
+    const loadStudentData = async () => {
+      if (!estudianteActual?.id) return;
+      
       try {
-        // Cargar los 3 estudiantes
-        const estudiantes = await Promise.all([
-          EstudianteService.obtenerEstudiante(1),
-          EstudianteService.obtenerEstudiante(2),
-          EstudianteService.obtenerEstudiante(3)
+        setLoading(true);
+        const [estudianteData, materias] = await Promise.all([
+          EstudianteService.obtenerEstudiante(estudianteActual.id),
+          EstudianteService.obtenerMateriasEstudiante(estudianteActual.id)
         ]);
         
-        // Transformar datos para compatibilidad con la UI
-        const transformedStudents = estudiantes.map(estudiante => ({
-          id: estudiante.id,
-          name: `${estudiante.nombre} ${estudiante.apellido}`,
-          avatar: estudiante.avatar,
-          carrera: estudiante.carrera,
-          planEstudio: estudiante.planEstudio,
-          materiasAprobadas: estudiante.estadisticas.materiasAprobadas,
-          totalMaterias: estudiante.estadisticas.materiasAprobadas + estudiante.estadisticas.materiasRegularizadas + estudiante.estadisticas.materiasCursando + estudiante.estadisticas.materiasSinCursar,
-          promedio: estudiante.promedio,
-          materiasCursando: estudiante.situacionAcademica
-            .filter(m => m.estado === 'Cursando')
-            .map(m => ({ nombre: m.nombre, estado: m.estado })),
-          materiasRegularizadas: estudiante.situacionAcademica
-            .filter(m => m.estado === 'Regularizada')
-            .map(m => ({ nombre: m.nombre, vencimiento: 'Próximamente' }))
-        }));
+        // Procesar datos del estudiante
+        const estudianteInfo = {
+          ...estudianteData.data,
+          ...estudianteData.data.usuario,
+          carreras: estudianteData.data.carreras
+        };
         
-        setStudentsData(transformedStudents);
-        setLoading(false);
+        // Procesar situación académica desde la nueva estructura
+        const situacionProcesada = {
+          carrera: materias.data?.carrera?.nombre,
+          resumen: materias.data?.resumen || {},
+          materiasPorAnio: materias.data?.materiasPorAnio || {},
+          situacionAcademica: Object.values(materias.data?.materiasPorAnio || {}).flat() || []
+        };
+        
+        setEstudianteInfo(estudianteInfo);
+        setSituacionAcademica(situacionProcesada);
+        
       } catch (error) {
-        console.error('Error cargando estudiantes:', error);
+        console.error('Error al cargar datos:', error);
+      } finally {
         setLoading(false);
       }
     };
 
-    loadStudentsData();
-  }, []);
+    if (estudianteActual) {
+      loadStudentData();
+    }
+  }, [estudianteActual]);
 
   // Loading state
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
         <Typography>Cargando datos del estudiante...</Typography>
@@ -86,7 +91,7 @@ const Home = () => {
     );
   }
 
-  if (studentsData.length === 0) {
+  if (!estudianteInfo) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
         <Typography color="error">Error al cargar datos del estudiante</Typography>
@@ -94,13 +99,16 @@ const Home = () => {
     );
   }
 
-  const currentStudent = studentsData[currentStudentIndex];
-
   const proximasFechas = [
     { evento: 'Período de Finales', fecha: 'Julio 1-15, 2026', tipo: 'periodo' }
   ];
 
-  const progresoCarrera = (currentStudent.materiasAprobadas / currentStudent.totalMaterias) * 100;
+  // Calcular progreso basado en datos reales del backend
+  const materiasAprobadas = situacionAcademica?.resumen?.aprobadas || 0;
+  const materiasRegularizadas = situacionAcademica?.resumen?.regularizadas || 0;
+  const materiasCursando = []; // Por ahora empty array, se puede calcular si es necesario
+  const totalMaterias = situacionAcademica?.resumen?.total || 0;
+  const progresoCarrera = totalMaterias > 0 ? (materiasAprobadas / totalMaterias) * 100 : 0;
 
   const getEventIcon = (tipo) => {
     switch (tipo) {
@@ -118,40 +126,23 @@ const Home = () => {
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center">
             <Avatar 
-              src={currentStudent.avatar}
+              src={estudianteInfo.avatarUrl}
               sx={{ width: 80, height: 80, mr: 3 }}
             >
               <Person sx={{ fontSize: 40 }} />
             </Avatar>
             <Box>
               <Typography variant="h3" gutterBottom>
-                ¡Bienvenido, {currentStudent.name}!
+                ¡Bienvenido, {estudianteInfo.nombre} {estudianteInfo.apellido}!
               </Typography>
               <Typography variant="h6" color="text.secondary">
-                {currentStudent.carrera} - {currentStudent.planEstudio} • 1er Cuatrimestre 2026
+                {estudianteInfo.carreras?.[0]?.nombre || 'Sin carrera'} - 2024 • 1er Cuatrimestre 2026
               </Typography>
             </Box>
           </Box>
         </Box>
         
-        {/* Navegación entre estudiantes */}
-        <Box display="flex" gap={1} mt={2}>
-          {studentsData.map((student, index) => (
-            <Button
-              key={student.id}
-              variant={index === currentStudentIndex ? "contained" : "outlined"}
-              size="small"
-              onClick={() => setCurrentStudentIndex(index)}
-              startIcon={
-                <Avatar src={student.avatar} sx={{ width: 24, height: 24 }}>
-                  <Person sx={{ fontSize: 16 }} />
-                </Avatar>
-              }
-            >
-              {student.name}
-            </Button>
-          ))}
-        </Box>
+        {/* Navegación entre estudiantes - REMOVIDA para mayor realismo */}
       </Box>
 
       {/* Métricas Rápidas */}
@@ -161,13 +152,13 @@ const Home = () => {
             <CardContent sx={{ textAlign: 'center' }}>
               <CheckCircle sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
               <Typography variant="h4" color="success.main">
-                {currentStudent.materiasAprobadas}
+                {materiasAprobadas}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Materias Aprobadas
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                de {currentStudent.totalMaterias} total
+                de {totalMaterias} total
               </Typography>
             </CardContent>
           </Card>
@@ -178,7 +169,7 @@ const Home = () => {
             <CardContent sx={{ textAlign: 'center' }}>
               <PlayArrow sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
               <Typography variant="h4" color="info.main">
-                {currentStudent.materiasCursando.length}
+                {materiasCursando.length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Cursando Ahora
@@ -192,7 +183,7 @@ const Home = () => {
             <CardContent sx={{ textAlign: 'center' }}>
               <Warning sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
               <Typography variant="h4" color="warning.main">
-                {currentStudent.materiasRegularizadas.length}
+                {materiasRegularizadas}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Regularizadas
@@ -209,7 +200,7 @@ const Home = () => {
           color="primary" 
           size="large"
           startIcon={<School />}
-          onClick={() => navigate(`/estudiante/${currentStudent.id}/materias`)}
+          onClick={() => navigate('/mis-materias')}
           sx={{ px: 4, py: 1.5 }}
         >
           Ver Plan de Estudios Completo
@@ -225,7 +216,7 @@ const Home = () => {
                 Mi Cursada Actual (2026-1)
               </Typography>
               <List>
-                {currentStudent.materiasCursando.map((materia, index) => (
+                {materiasCursando.map((materia, index) => (
                   <ListItem key={index}>
                     <ListItemIcon>
                       <PlayArrow color="info" />
@@ -239,14 +230,14 @@ const Home = () => {
                 ))}
               </List>
               
-              {currentStudent.materiasRegularizadas.length > 0 && (
+              {materiasRegularizadas.length > 0 && (
                 <>
                   <Divider sx={{ my: 2 }} />
                   <Alert severity="warning" sx={{ mb: 2 }}>
                     <strong>Materias Regularizadas:</strong>
                   </Alert>
                   <List>
-                    {currentStudent.materiasRegularizadas.map((materia, index) => (
+                    {materiasRegularizadas.map((materia, index) => (
                       <ListItem key={index}>
                         <ListItemIcon>
                           <Warning color="warning" />
@@ -310,7 +301,7 @@ const Home = () => {
                 </Box>
               </Box>
               <Typography variant="body2" color="text.secondary">
-                Has completado {currentStudent.materiasAprobadas} de {currentStudent.totalMaterias} materias de la {currentStudent.carrera}
+                Has completado {materiasAprobadas} de {totalMaterias} materias de {estudianteInfo.carreras?.[0]?.nombre || 'tu carrera'}
               </Typography>
             </CardContent>
           </Card>
