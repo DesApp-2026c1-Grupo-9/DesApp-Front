@@ -73,7 +73,8 @@ export const EstudianteMaterias = () => {
               // Mapear estados del backend al frontend
               estado: materia.estado === 'aprobada' ? 'Aprobada' :
                       materia.estado === 'regularizada' ? 'Regularizada' :
-                      materia.estado === 'no_cursada' ? 'Disponible' : 'Disponible',
+                      materia.estado === 'no_cursada' && materia.disponible ? 'Disponible' :
+                      'No Disponible',
               disponible: materia.disponible !== false, // Por defecto disponible
               prerrequisitos: materia.prerrequisitos || []
             }));
@@ -126,7 +127,8 @@ export const EstudianteMaterias = () => {
             tipo: materia.tipo || 'cuatrimestral',
             estado: materia.estado === 'aprobada' ? 'Aprobada' :
                     materia.estado === 'regularizada' ? 'Regularizada' :
-                    materia.estado === 'no_cursada' ? 'Disponible' : 'Disponible',
+                    materia.estado === 'no_cursada' && materia.disponible ? 'Disponible' :
+                    'No Disponible',
             disponible: materia.disponible !== false,
             prerrequisitos: materia.prerrequisitos || []
           }));
@@ -176,6 +178,7 @@ export const EstudianteMaterias = () => {
       case 'Aprobada': return 'success';
       case 'Regularizada': return 'warning';
       case 'Disponible': return 'primary';
+      case 'No Disponible': return 'error';
       default: return 'default';
     }
   };
@@ -350,7 +353,7 @@ export const EstudianteMaterias = () => {
             <Tab label={`Aprobadas (${filtrarMateriasPorEstado('Aprobada').length})`} />
             <Tab label={`Regularizadas (${filtrarMateriasPorEstado('Regularizada').length})`} />
             <Tab label={`Disponibles (${filtrarMateriasPorEstado('Disponible').length})`} />
-            <Tab label={`No Disponibles (${filtrarMateriasPorEstado('No disponible').length})`} />
+            <Tab label={`No Disponibles (${filtrarMateriasPorEstado('No Disponible').length})`} />
           </Tabs>
         </Box>
 
@@ -577,7 +580,7 @@ export const EstudianteMaterias = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filtrarMateriasPorEstado('No disponible').map((materia, index) => (
+                  {filtrarMateriasPorEstado('No Disponible').map((materia, index) => (
                     <TableRow key={materia.id || index}>
                       <TableCell>
                         <Box display="flex" alignItems="center">
@@ -595,16 +598,16 @@ export const EstudianteMaterias = () => {
                       <TableCell>
                         <FormControl size="small" sx={{ minWidth: 120 }}>
                           <Select
-                            value={materia.estado}
-                            onChange={(e) => {
-                              const nuevoEstado = e.target.value;
-                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
-                            }}
+                            value="No Disponible"
+                            disabled={true}
                             size="small"
+                            sx={{
+                              '& .MuiSelect-select': { 
+                                color: 'text.disabled'
+                              }
+                            }}
                           >
-                            <MenuItem value="Disponible">Disponible</MenuItem>
-                            <MenuItem value="Regularizada">Regularizada</MenuItem>
-                            <MenuItem value="Aprobada">Aprobada</MenuItem>
+                            <MenuItem value="No Disponible">No Disponible</MenuItem>
                           </Select>
                         </FormControl>
                       </TableCell>
