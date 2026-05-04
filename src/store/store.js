@@ -5,6 +5,7 @@ import sesionesReducer from '../features/sesiones/slice';
 import feedReducer from '../features/feed/slice';
 import conexionesReducer from '../features/conexiones/slice';
 import academicoReducer from '../features/academico/slice';
+import comentariosReducer from '../features/feed/comentariosSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,5 +15,6 @@ export const store = configureStore({
     feed: feedReducer,
     conexiones: conexionesReducer,
     academico: academicoReducer,
+    comentarios: comentariosReducer,
   },
 });
