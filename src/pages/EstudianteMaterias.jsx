@@ -38,6 +38,13 @@ export const EstudianteMaterias = () => {
     mensaje: ''
   });
 
+  const [dialogoPrerrequisitos, setDialogoPrerrequisitos] = useState({
+    abierto: false,
+    materiaNombre: '',
+    prerequisitosIncumplidos: [],
+    accion: ''
+  });
+
   useEffect(() => {
     const cargarDatos = async () => {
       if (!estudianteActual?.id) return;
@@ -147,6 +154,17 @@ export const EstudianteMaterias = () => {
           materiasAfectadas: error.data.materiasAfectadas || [],
           mensaje: error.data.message
         });
+      } 
+      // Manejar prerrequisitos incumplidos
+      else if (error.tipo === 'PRERREQUISITOS_INCUMPLIDOS') {
+        const materiaNombre = situacionAcademica.materias.find(m => m.id === materiaId)?.nombre || 'Esta materia';
+        
+        setDialogoPrerrequisitos({
+          abierto: true,
+          materiaNombre: materiaNombre,
+          prerequisitosIncumplidos: error.data.prerequisitosIncumplidos || [],
+          accion: nuevoEstado === 'Aprobada' ? 'aprobar' : 'regularizar'
+        });
       } else {
         setError('Error al actualizar el estado de la materia');
       }
@@ -186,6 +204,15 @@ export const EstudianteMaterias = () => {
       nuevoEstado: null,
       materiasAfectadas: [],
       mensaje: ''
+    });
+  };
+
+  const handleCerrarPrerrequisitos = () => {
+    setDialogoPrerrequisitos({
+      abierto: false,
+      materiaNombre: '',
+      prerequisitosIncumplidos: [],
+      accion: ''
     });
   };
   // Mapear estados de UI a estados de base de datos
@@ -646,6 +673,56 @@ export const EstudianteMaterias = () => {
             startIcon={<WarningIcon />}
           >
             Confirmar Cambio en Cascada
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de información para prerrequisitos incumplidos */}
+      <Dialog 
+        open={dialogoPrerrequisitos.abierto} 
+        onClose={handleCerrarPrerrequisitos}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <WarningIcon color="error" sx={{ mr: 1 }} />
+            Prerrequisitos No Cumplidos
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent>
+          <DialogContentText>
+            ❌ No se puede <strong>{dialogoPrerrequisitos.accion}</strong> la materia "<strong>{dialogoPrerrequisitos.materiaNombre}</strong>" porque faltan las siguientes correlativas:
+          </DialogContentText>
+          
+          <Box mt={2}>
+            <List>
+              {dialogoPrerrequisitos.prerequisitosIncumplidos.map((prerrequisito, index) => (
+                <ListItem key={index}>
+                  <ListItemIcon>
+                    <BookIcon color="error" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={prerrequisito}
+                    secondary="Debe estar al menos regularizada"
+                  />
+                </ListItem>
+              ))}
+            </List>
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              Para poder {dialogoPrerrequisitos.accion} esta materia, primero debe aprobar o regularizar todas las materias correlativas listadas arriba.
+            </Alert>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions>
+          <Button 
+            onClick={handleCerrarPrerrequisitos}
+            variant="contained" 
+            color="primary"
+          >
+            Entendido
           </Button>
         </DialogActions>
       </Dialog>

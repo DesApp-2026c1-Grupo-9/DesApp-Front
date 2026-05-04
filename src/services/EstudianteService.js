@@ -156,6 +156,14 @@ class EstudianteService {
         };
       }
       
+      // Si son prerrequisitos incumplidos, devolver la información específica
+      if (error.response?.status === 400 && error.response?.data?.tipo === 'PRERREQUISITOS_INCUMPLIDOS') {
+        throw {
+          tipo: 'PRERREQUISITOS_INCUMPLIDOS',
+          data: error.response.data
+        };
+      }
+      
       throw new Error('Error al actualizar el estado de la materia');
     }
   }
