@@ -1,9 +1,16 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const MOCK_STUDENTS = [
-  { id: 1, nombre: 'Juana', apellido: 'Azurduy', email: 'juana.azurduy@estudiante.unahur.edu.ar', avatarUrl: 'http://www.laizquierdadiario.com/IMG/arton21559.jpg' },
-  { id: 2, nombre: 'José', apellido: 'Artigas', email: 'jose.artigas@estudiante.unahur.edu.ar', avatarUrl: 'https://www.famousbirthdays.com/faces/artigas-jose-image.jpg' },
-  { id: 3, nombre: 'Simón', apellido: 'Bolívar', email: 'simon.bolivar@estudiante.unahur.edu.ar', avatarUrl: 'https://img.goraymi.com/2019/01/15/95f0f23f742a6f7a28fd225745095d04_lg.jpg' },
+  { id: 1, nombre: 'Ana', apellido: 'García', email: 'ana.garcia@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Garcia&background=random' },
+  { id: 2, nombre: 'Carlos', apellido: 'Rodríguez', email: 'carlos.rodriguez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Carlos+Rodriguez&background=random' },
+  { id: 3, nombre: 'María', apellido: 'González', email: 'maria.gonzalez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=random' },
+  { id: 4, nombre: 'Juan', apellido: 'Martínez', email: 'juan.martinez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Juan+Martinez&background=random' },
+  { id: 5, nombre: 'Sofía', apellido: 'López', email: 'sofia.lopez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Sofia+Lopez&background=random' },
+  { id: 6, nombre: 'Diego', apellido: 'Fernández', email: 'diego.fernandez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Diego+Fernandez&background=random' },
+  { id: 7, nombre: 'Valentina', apellido: 'Pérez', email: 'valentina.perez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Valentina+Perez&background=random' },
+  { id: 8, nombre: 'Tomás', apellido: 'Silva', email: 'tomas.silva@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Tomas+Silva&background=random' },
+  { id: 9, nombre: 'Camila', apellido: 'Torres', email: 'camila.torres@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Camila+Torres&background=random' },
+  { id: 10, nombre: 'Nicolás', apellido: 'Morales', email: 'nicolas.morales@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Nicolas+Morales&background=random' },
 ];
 
 const storedStudentId = localStorage.getItem('mockStudentId');

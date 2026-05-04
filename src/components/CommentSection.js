@@ -90,7 +90,7 @@ export default function CommentSection({ postId, currentUserId }) {
     }
     setLoading(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${postId}/comentarios`);
+      const response = await fetch(`/api/novedades/${postId}/comentarios`);
       const data = await response.json();
       setComentarios(data.data || []);
       setShowComentarios(true);
@@ -104,7 +104,7 @@ export default function CommentSection({ postId, currentUserId }) {
   const handleAddComentario = async () => {
     if (!nuevoComentario.trim() || !currentUserId) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${postId}/comentarios`, {
+      const response = await fetch(`/api/novedades/${postId}/comentarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contenido: nuevoComentario.trim(), usuarioId: currentUserId }),
@@ -119,7 +119,7 @@ export default function CommentSection({ postId, currentUserId }) {
 
   const handleReply = async (comentarioPadreId, contenido) => {
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${postId}/comentarios`, {
+      const response = await fetch(`/api/novedades/${postId}/comentarios`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contenido, usuarioId: currentUserId, comentarioPadreId }),
