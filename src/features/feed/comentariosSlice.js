@@ -6,7 +6,7 @@ export const fetchComentarios = createAsyncThunk(
   'comentarios/fetchComentarios',
   async (novedadId, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/novedades/${novedadId}/comentarios`);
+      const response = await api.get(`/api/novedades/${novedadId}/comentarios`);
       return { novedadId, comentarios: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al cargar comentarios');
@@ -18,7 +18,7 @@ export const addComentario = createAsyncThunk(
   'comentarios/addComentario',
   async ({ novedadId, contenido, usuarioId, comentarioPadreId }, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/novedades/${novedadId}/comentarios`, { contenido, usuarioId, comentarioPadreId });
+      const response = await api.post(`/api/novedades/${novedadId}/comentarios`, { contenido, usuarioId, comentarioPadreId });
       return { novedadId, comentario: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al crear comentario');
@@ -30,7 +30,7 @@ export const removeComentario = createAsyncThunk(
   'comentarios/removeComentario',
   async ({ comentarioId, usuarioId, novedadId }, { rejectWithValue }) => {
     try {
-      await api.delete(`/novedades/${novedadId}/comentarios/${comentarioId}`, { data: { usuarioId } });
+      await api.delete(`/api/novedades/${novedadId}/comentarios/${comentarioId}`, { data: { usuarioId } });
       return { comentarioId, novedadId };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al eliminar comentario');
@@ -42,7 +42,7 @@ export const editComentario = createAsyncThunk(
   'comentarios/editComentario',
   async ({ novedadId, comentarioId, contenido, usuarioId }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/novedades/${novedadId}/comentarios/${comentarioId}`, {
+      const response = await api.put(`/api/novedades/${novedadId}/comentarios/${comentarioId}`, {
         contenido,
         usuarioId,
       });

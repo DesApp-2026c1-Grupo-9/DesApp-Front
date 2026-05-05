@@ -37,11 +37,12 @@ import {
   Edit,
   Comment,
 } from '@mui/icons-material';
+import api from '../api/axiosConfig';
 
 // Importaciones de Slices
 import { likeComentario, unlikeComentario } from '../features/feed/comentariosSlice';
 import { fetchFeed, addPost, removePost, toggleLike, editPost } from '../features/feed/slice';
-import { switchStudent } from '../features/auth/slice';
+import { switchStudent, fetchStudents } from '../features/auth/slice';
 
 const TIPO_EVENTO = {
   INSCRIPCION: 'inscripcion',
@@ -126,9 +127,8 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
     }
     setLoadingComentarios(true);
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios?usuarioId=${currentUserId}`);
-      const data = await response.json();
-      setComentarios(data.data || []);
+      const response = await api.get(`/api/novedades/${post.id}/comentarios?usuarioId=${currentUserId}`);
+      setComentarios(response.data.data || []);
       setShowComentarios(true);
     } catch (error) { 
       console.error('Error al cargar comentarios:', error); 
@@ -140,13 +140,8 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const handleAddComentario = async () => {
     if (!nuevoComentario.trim()) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contenido: nuevoComentario.trim(), usuarioId: currentUserId }),
-      });
-      const data = await response.json();
-      setComentarios([...comentarios, data.data]);
+      const response = await api.post(`/api/novedades/${post.id}/comentarios`, { contenido: nuevoComentario.trim(), usuarioId: currentUserId });
+      setComentarios([...comentarios, response.data.data]);
       setNuevoComentario('');
       setVisibleCount(prev => prev + 1);
       if (onUpdateComentariosCount) onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
@@ -155,16 +150,9 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
 
   const handleEditComentario = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios/${editandoComentarioId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contenido: editComentarioContent.trim(), usuarioId: currentUserId }),
-      });
-      if (res.ok) {
-        const d = await res.json();
-        setComentarios(comentarios.map(c => c.id === editandoComentarioId ? d.data : c));
-        setEditandoComentarioId(null);
-      }
+      const res = await api.put(`/api/novedades/${post.id}/comentarios/${editandoComentarioId}`, { contenido: editComentarioContent.trim(), usuarioId: currentUserId });
+      setComentarios(comentarios.map(c => c.id === editandoComentarioId ? res.data.data : c));
+      setEditandoComentarioId(null);
     } catch (err) { console.error(err); }
   };
 
@@ -195,15 +183,10 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const handleReply = async (comentarioPadreId, contenido) => {
     if (!contenido.trim()) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contenido, usuarioId: currentUserId, comentarioPadreId }),
-      });
-      const data = await response.json();
+      const response = await api.post(`/api/novedades/${post.id}/comentarios`, { contenido, usuarioId: currentUserId, comentarioPadreId });
       setComentarios(comentarios.map(c => {
         if (c.id === comentarioPadreId) {
-          return { ...c, respuestas: [...(c.respuestas || []), data.data] };
+          return { ...c, respuestas: [...(c.respuestas || []), response.data.data] };
         }
         return c;
       }));
@@ -464,25 +447,18 @@ const formatFechaSeguro = (fecha) => {
                           {editandoReplyId === reply.id ? (
                             <Box sx={{ flex: 1 }}>
                               <TextField fullWidth size="small" multiline value={editReplyContent} onChange={(e) => setEditReplyContent(e.target.value)} />
-                              <Button size="small" onClick={async () => {
-                                try {
-                                  const res = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios/${reply.id}`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ contenido: editReplyContent.trim(), usuarioId: currentUserId }),
-                                  });
-                                  if (res.ok) {
-                                    const d = await res.json();
-                                    setComentarios(comentarios.map(c => {
-                                      if (c.id === com.id) {
-                                        return { ...c, respuestas: c.respuestas.map(r => r.id === reply.id ? d.data : r) };
-                                      }
-                                      return c;
-                                    }));
-                                    setEditandoReplyId(null);
-                                  }
-                                } catch (err) { console.error(err); }
-                              }}>Guardar</Button>
+                               <Button size="small" onClick={async () => {
+                                 try {
+                                   const res = await api.put(`/api/novedades/${post.id}/comentarios/${reply.id}`, { contenido: editReplyContent.trim(), usuarioId: currentUserId });
+                                   setComentarios(comentarios.map(c => {
+                                     if (c.id === com.id) {
+                                       return { ...c, respuestas: c.respuestas.map(r => r.id === reply.id ? res.data.data : r) };
+                                     }
+                                     return c;
+                                   }));
+                                   setEditandoReplyId(null);
+                                 } catch (err) { console.error(err); }
+                               }}>Guardar</Button>
                               <Button size="small" onClick={() => setEditandoReplyId(null)}>Cancelar</Button>
                             </Box>
                           ) : (
@@ -549,15 +525,9 @@ const formatFechaSeguro = (fecha) => {
         </MenuItem>
         <MenuItem onClick={async () => {
            try {
-            const res = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios/${comentarioSeleccionado.id}`, {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ usuarioId: currentUserId }),
-            });
-            if (res.ok) {
-              setComentarios(comentarios.filter(c => c.id !== comentarioSeleccionado.id));
-              onUpdateComentariosCount(post.id, Math.max(0, (post.comentariosCount || 0) - 1));
-            }
+            const res = await api.delete(`/api/novedades/${post.id}/comentarios/${comentarioSeleccionado.id}`, { data: { usuarioId: currentUserId } });
+            setComentarios(comentarios.filter(c => c.id !== comentarioSeleccionado.id));
+            onUpdateComentariosCount(post.id, Math.max(0, (post.comentariosCount || 0) - 1));
           } catch (err) { console.error(err); }
           setComentarioMenuEl(null);
         }}><Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar</MenuItem>
@@ -569,18 +539,12 @@ const formatFechaSeguro = (fecha) => {
         </MenuItem>
         <MenuItem onClick={async () => {
            try {
-            const res = await fetch(`http://localhost:3000/api/novedades/${post.id}/comentarios/${replySeleccionada.id}`, {
-              method: 'DELETE',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ usuarioId: currentUserId }),
-            });
-            if (res.ok) {
-              setComentarios(comentarios.map(c => ({
-                ...c,
-                respuestas: c.respuestas ? c.respuestas.filter(r => r.id !== replySeleccionada.id) : []
-              })));
-              onUpdateComentariosCount(post.id, Math.max(0, (post.comentariosCount || 0) - 1));
-            }
+            await api.delete(`/api/novedades/${post.id}/comentarios/${replySeleccionada.id}`, { data: { usuarioId: currentUserId } });
+            setComentarios(comentarios.map(c => ({
+              ...c,
+              respuestas: c.respuestas ? c.respuestas.filter(r => r.id !== replySeleccionada.id) : []
+            })));
+            onUpdateComentariosCount(post.id, Math.max(0, (post.comentariosCount || 0) - 1));
           } catch (err) { console.error(err); }
           setReplyMenuEl(null);
         }}><Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar</MenuItem>
@@ -621,9 +585,19 @@ function CreatePostForm({ onSubmit, loading, currentStudent }) {
 export default function Feed() {
   const dispatch = useDispatch();
   const { posts, loading } = useSelector((state) => state.feed);
-  const { user, students } = useSelector((state) => state.auth);
+  const { user, students, loadingStudents } = useSelector((state) => state.auth);
 
+  useEffect(() => { dispatch(fetchStudents()); }, [dispatch]);
   useEffect(() => { if (user?.id) dispatch(fetchFeed(user.id)); }, [user, dispatch]);
+
+  if (loadingStudents || !user) {
+    return (
+      <Container sx={{ py: 6, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography>Cargando usuarios...</Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container sx={{ py: 6, maxWidth: '800px !important' }}>

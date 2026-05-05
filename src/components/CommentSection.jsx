@@ -20,9 +20,9 @@ function CommentSection({ postId, currentUserId }) {
   const handleLikeComentario = async (comentarioId, liked) => {
     try {
       if (liked) {
-        await api.post(`/novedades/${postId}/comentarios/${comentarioId}/unlike`, { usuarioId: currentUserId });
+        await api.post(`/api/novedades/${postId}/comentarios/${comentarioId}/unlike`, { usuarioId: currentUserId });
       } else {
-        await api.post(`/novedades/${postId}/comentarios/${comentarioId}/like`, { usuarioId: currentUserId });
+        await api.post(`/api/novedades/${postId}/comentarios/${comentarioId}/like`, { usuarioId: currentUserId });
       }
       
       const actualizarLista = (lista) => lista.map(c => {
@@ -49,10 +49,8 @@ function CommentSection({ postId, currentUserId }) {
 
     setLoading(true);
     try {
-      // Modificación aplicada: inclusión de usuarioId como query param
-      const response = await fetch(`http://localhost:3000/api/novedades/${postId}/comentarios?usuarioId=${currentUserId}`);
-      const data = await response.json();
-      setComentarios(data.data || []);
+      const response = await api.get(`/api/novedades/${postId}/comentarios?usuarioId=${currentUserId}`);
+      setComentarios(response.data.data || []);
       setShowComentarios(true);
     } catch (error) {
       console.error('Error al cargar comentarios:', error);
@@ -64,19 +62,14 @@ function CommentSection({ postId, currentUserId }) {
   const handleAddReply = async (comentarioPadreId) => {
     if (!replyText.trim() || !currentUserId) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${postId}/comentarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contenido: replyText.trim(),
-          usuarioId: currentUserId,
-          comentarioPadreId,
-        }),
+      const response = await api.post(`/api/novedades/${postId}/comentarios`, {
+        contenido: replyText.trim(),
+        usuarioId: currentUserId,
+        comentarioPadreId,
       });
-      const data = await response.json();
       setComentarios(comentarios.map(c =>
         c.id === comentarioPadreId
-          ? { ...c, respuestas: [...(c.respuestas || []), data.data] }
+          ? { ...c, respuestas: [...(c.respuestas || []), response.data.data] }
           : c
       ));
       setReplyText('');
@@ -89,13 +82,8 @@ function CommentSection({ postId, currentUserId }) {
   const handleAddComentario = async () => {
     if (!nuevoComentario.trim() || !currentUserId) return;
     try {
-      const response = await fetch(`http://localhost:3000/api/novedades/${postId}/comentarios`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contenido: nuevoComentario.trim(), usuarioId: currentUserId }),
-      });
-      const data = await response.json();
-      setComentarios([...comentarios, data.data]);
+      const response = await api.post(`/api/novedades/${postId}/comentarios`, { contenido: nuevoComentario.trim(), usuarioId: currentUserId });
+      setComentarios([...comentarios, response.data.data]);
       setNuevoComentario('');
     } catch (error) {
       console.error('Error al agregar comentario:', error);

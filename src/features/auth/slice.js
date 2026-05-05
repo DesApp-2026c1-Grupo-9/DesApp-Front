@@ -1,21 +1,34 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import api from '../../api/axiosConfig';
 
-const MOCK_STUDENTS = [
-  { id: 1, nombre: 'Juana', apellido: 'Azurduy', email: 'juana.azurduy@estudiante.unahur.edu.ar', avatarUrl: 'http://www.laizquierdadiario.com/IMG/arton21559.jpg' },
-  { id: 2, nombre: 'José', apellido: 'Artigas', email: 'jose.artigas@estudiante.unahur.edu.ar', avatarUrl: 'https://www.famousbirthdays.com/faces/artigas-jose-image.jpg' },
-  { id: 3, nombre: 'Simón', apellido: 'Bolívar', email: 'simon.bolivar@estudiante.unahur.edu.ar', avatarUrl: 'https://img.goraymi.com/2019/01/15/95f0f23f742a6f7a28fd225745095d04_lg.jpg' },
-];
+export const fetchStudents = createAsyncThunk(
+  'auth/fetchStudents',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/api/usuarios?rol=estudiante');
+      return response.data.data.map(u => ({
+        id: u.id,
+        nombre: u.nombre,
+        apellido: u.apellido,
+        email: u.email,
+        avatarUrl: u.avatarUrl || `https://ui-avatars.com/api/?name=${u.nombre}+${u.apellido}&background=random`
+      }));
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 
 const storedStudentId = localStorage.getItem('mockStudentId');
-const initialStudent = MOCK_STUDENTS.find(s => s.id === parseInt(storedStudentId, 10)) || MOCK_STUDENTS[0];
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: initialStudent,
-    students: MOCK_STUDENTS,
+    user: null,
+    students: [],
     token: null,
     isAuthenticated: false,
+    loadingStudents: false,
   },
   reducers: {
     setCredentials: (state, action) => {
@@ -37,6 +50,23 @@ const authSlice = createSlice({
         localStorage.setItem('mockStudentId', student.id);
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchStudents.pending, (state) => {
+        state.loadingStudents = true;
+      })
+      .addCase(fetchStudents.fulfilled, (state, action) => {
+        state.loadingStudents = false;
+        state.students = action.payload;
+        // Restaurar usuario previo o usar el primero
+        const storedId = parseInt(localStorage.getItem('mockStudentId'), 10);
+        const found = action.payload.find(s => s.id === storedId);
+        state.user = found || action.payload[0] || null;
+      })
+      .addCase(fetchStudents.rejected, (state) => {
+        state.loadingStudents = false;
+      });
   },
 });
 

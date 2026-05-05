@@ -33,7 +33,7 @@ const TestBackendConnection = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="p-4 bg-blue-50 rounded-lg">
               <h3 className="font-medium text-blue-800">Backend URL</h3>
-              <p className="text-blue-600">http://localhost:3000</p>
+              <p className="text-blue-600">http://localhost:3001</p>
             </div>
             <div className="p-4 bg-green-50 rounded-lg">
               <h3 className="font-medium text-green-800">APIs Disponibles</h3>
