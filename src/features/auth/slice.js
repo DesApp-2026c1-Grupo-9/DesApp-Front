@@ -1,28 +1,34 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import api from '../../api/axiosConfig';
 
-const MOCK_STUDENTS = [
-  { id: 1, nombre: 'Ana', apellido: 'García', email: 'ana.garcia@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Ana+Garcia&background=random' },
-  { id: 2, nombre: 'Carlos', apellido: 'Rodríguez', email: 'carlos.rodriguez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Carlos+Rodriguez&background=random' },
-  { id: 3, nombre: 'María', apellido: 'González', email: 'maria.gonzalez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=random' },
-  { id: 4, nombre: 'Juan', apellido: 'Martínez', email: 'juan.martinez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Juan+Martinez&background=random' },
-  { id: 5, nombre: 'Sofía', apellido: 'López', email: 'sofia.lopez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Sofia+Lopez&background=random' },
-  { id: 6, nombre: 'Diego', apellido: 'Fernández', email: 'diego.fernandez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Diego+Fernandez&background=random' },
-  { id: 7, nombre: 'Valentina', apellido: 'Pérez', email: 'valentina.perez@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Valentina+Perez&background=random' },
-  { id: 8, nombre: 'Tomás', apellido: 'Silva', email: 'tomas.silva@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Tomas+Silva&background=random' },
-  { id: 9, nombre: 'Camila', apellido: 'Torres', email: 'camila.torres@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Camila+Torres&background=random' },
-  { id: 10, nombre: 'Nicolás', apellido: 'Morales', email: 'nicolas.morales@estudiante.unahur.edu.ar', avatarUrl: 'https://ui-avatars.com/api/?name=Nicolas+Morales&background=random' },
-];
+export const fetchStudents = createAsyncThunk(
+  'auth/fetchStudents',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/api/usuarios?rol=estudiante');
+      return response.data.data.map(u => ({
+        id: u.id,
+        nombre: u.nombre,
+        apellido: u.apellido,
+        email: u.email,
+        avatarUrl: u.avatarUrl || `https://ui-avatars.com/api/?name=${u.nombre}+${u.apellido}&background=random`
+      }));
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 
 const storedStudentId = localStorage.getItem('mockStudentId');
-const initialStudent = MOCK_STUDENTS.find(s => s.id === parseInt(storedStudentId, 10)) || MOCK_STUDENTS[0];
 
 const authSlice = createSlice({
   name: 'auth',
   initialState: {
-    user: initialStudent,
-    students: MOCK_STUDENTS,
+    user: null,
+    students: [],
     token: null,
     isAuthenticated: false,
+    loadingStudents: false,
   },
   reducers: {
     setCredentials: (state, action) => {
@@ -44,6 +50,23 @@ const authSlice = createSlice({
         localStorage.setItem('mockStudentId', student.id);
       }
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchStudents.pending, (state) => {
+        state.loadingStudents = true;
+      })
+      .addCase(fetchStudents.fulfilled, (state, action) => {
+        state.loadingStudents = false;
+        state.students = action.payload;
+        // Restaurar usuario previo o usar el primero
+        const storedId = parseInt(localStorage.getItem('mockStudentId'), 10);
+        const found = action.payload.find(s => s.id === storedId);
+        state.user = found || action.payload[0] || null;
+      })
+      .addCase(fetchStudents.rejected, (state) => {
+        state.loadingStudents = false;
+      });
   },
 });
 

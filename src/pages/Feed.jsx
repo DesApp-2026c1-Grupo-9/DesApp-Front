@@ -42,7 +42,7 @@ import api from '../api/axiosConfig';
 // Importaciones de Slices
 import { likeComentario, unlikeComentario } from '../features/feed/comentariosSlice';
 import { fetchFeed, addPost, removePost, toggleLike, editPost } from '../features/feed/slice';
-import { switchStudent } from '../features/auth/slice';
+import { switchStudent, fetchStudents } from '../features/auth/slice';
 
 const TIPO_EVENTO = {
   INSCRIPCION: 'inscripcion',
@@ -585,9 +585,19 @@ function CreatePostForm({ onSubmit, loading, currentStudent }) {
 export default function Feed() {
   const dispatch = useDispatch();
   const { posts, loading } = useSelector((state) => state.feed);
-  const { user, students } = useSelector((state) => state.auth);
+  const { user, students, loadingStudents } = useSelector((state) => state.auth);
 
+  useEffect(() => { dispatch(fetchStudents()); }, [dispatch]);
   useEffect(() => { if (user?.id) dispatch(fetchFeed(user.id)); }, [user, dispatch]);
+
+  if (loadingStudents || !user) {
+    return (
+      <Container sx={{ py: 6, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography>Cargando usuarios...</Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container sx={{ py: 6, maxWidth: '800px !important' }}>
