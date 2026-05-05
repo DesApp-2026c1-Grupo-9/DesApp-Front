@@ -1,242 +1,252 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Card, CardContent, Button, Table, TableBody, TableCell, TableContainer,TableHead, TableRow, Paper, Chip, Alert, CircularProgress, Tabs, Tab, Grid, Avatar, ButtonGroup} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { 
+  Box, Typography, Card, CardContent, Button, Table, TableBody, 
+  TableCell, TableContainer, TableHead, TableRow, Paper, Chip, 
+  Alert, CircularProgress, Tabs, Tab, Grid, Avatar, ButtonGroup, 
+  Select, MenuItem, FormControl, Dialog, DialogActions, 
+  DialogContent, DialogContentText, DialogTitle, List, ListItem, 
+  ListItemText, ListItemIcon 
+} from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
   School as SchoolIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  Warning as WarningIcon,
+  Book as BookIcon
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
-import { calcularMateriasDisponibles, ESTADOS_MATERIA, verificarCorrelatividades } from '../services/AcademicService';
-
-// Importamos el plan completo de materias desde AcademicService
-const MATERIAS_CARRERA = {
-  'Licenciatura en Informática': [
-    // Primer año
-    { id: 1, nombre: 'Matemática I', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 8, area: 'CB' },
-    { id: 2, nombre: 'Introducción a la Programación', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 8, area: 'AyL' },
-    { id: 3, nombre: 'Organización de Computadoras', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 6, area: 'ASOyR' },
-    { id: 4, nombre: 'Nuevos Entornos y Lenguajes', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 2, area: 'Otros' },
-    { id: 5, nombre: 'Estructuras de Datos', año: 1, cuatrimestre: 2, correlativas: ['Introducción a la Programación'], cargaHoraria: 8, area: 'TC' },
-    { id: 6, nombre: 'Programación con Objetos I', año: 1, cuatrimestre: 2, correlativas: ['Introducción a la Programación'], cargaHoraria: 8, area: 'AyL' },
-    { id: 7, nombre: 'Bases de Datos', año: 1, cuatrimestre: 2, correlativas: ['Introducción a la Programación'], cargaHoraria: 6, area: 'ISBDySI' },
-    { id: 8, nombre: 'Inglés I', año: 1, cuatrimestre: 2, correlativas: [], cargaHoraria: 2, area: 'Otros' },
-    // Segundo Año
-    { id: 9, nombre: 'Matemática II', año: 2, cuatrimestre: 1, correlativas: ['Matemática I'], cargaHoraria: 4, area: 'CB' },
-    { id: 10, nombre: 'Programación con Objetos II', año: 2, cuatrimestre: 1, correlativas: ['Programación con Objetos I'], cargaHoraria: 6, area: 'AyL' },
-    { id: 11, nombre: 'Redes de Computadoras', año: 2, cuatrimestre: 1, correlativas: ['Organización de Computadoras'], cargaHoraria: 6, area: 'ASOyR' },
-    { id: 12, nombre: 'Sistemas Operativos', año: 2, cuatrimestre: 1, correlativas: ['Organización de Computadoras'], cargaHoraria: 6, area: 'ASOyR' },
-    { id: 13, nombre: 'Programación Funcional', año: 2, cuatrimestre: 2, correlativas: ['Programación con Objetos I'], cargaHoraria: 4, area: 'AyL' },
-    { id: 14, nombre: 'Construcción de Interfaces de Usuario', año: 2, cuatrimestre: 2, correlativas: ['Programación con Objetos II'], cargaHoraria: 6, area: 'ISBDySI' },
-    { id: 15, nombre: 'Algoritmos', año: 2, cuatrimestre: 2, correlativas: ['Estructuras de Datos', 'Matemática II'], cargaHoraria: 6, area: 'AyL' },
-    { id: 16, nombre: 'Estrategias de Persistencia', año: 2, cuatrimestre: 2, correlativas: ['Bases de Datos', 'Programación con Objetos II'], cargaHoraria: 6, area: 'ISBDySI' },
-    { id: 17, nombre: 'Laboratorio de Sistemas Operativos y Redes', año: 2, cuatrimestre: 2, correlativas: ['Sistemas Operativos', 'Redes de Computadoras'], cargaHoraria: 4, area: 'ASOyR' },
-    // Tercer Año
-    { id: 18, nombre: 'Análisis Matemático', año: 3, cuatrimestre: 1, correlativas: ['Matemática II'], cargaHoraria: 6, area: 'CB' },
-    { id: 19, nombre: 'Lógica y Programación', año: 3, cuatrimestre: 1, correlativas: ['Algoritmos'], cargaHoraria: 6, area: 'TC' },
-    { id: 20, nombre: 'Elementos de Ingeniería de Software', año: 3, cuatrimestre: 1, correlativas: ['Programación con Objetos II'], cargaHoraria: 6, area: 'ISBDySI' },
-    { id: 21, nombre: 'Seguridad de la Información', año: 3, cuatrimestre: 1, correlativas: ['Redes de Computadoras', 'Sistemas Operativos'], cargaHoraria: 4, area: 'ASOyR' },
-    { id: 22, nombre: 'Materia UNAHUR I', año: 3, cuatrimestre: 1, correlativas: [], cargaHoraria: 2, area: 'Otros' },
-    { id: 23, nombre: 'Inglés II', año: 3, cuatrimestre: 1, correlativas: ['Inglés I'], cargaHoraria: 2, area: 'Otros' },
-    { id: 24, nombre: 'Matemática III', año: 3, cuatrimestre: 2, correlativas: ['Análisis Matemático'], cargaHoraria: 4, area: 'CB' },
-    { id: 25, nombre: 'Programación Concurrente', año: 3, cuatrimestre: 2, correlativas: ['Programación con Objetos II', 'Sistemas Operativos'], cargaHoraria: 4, area: 'AyL' },
-    { id: 26, nombre: 'Ingeniería de Requerimientos', año: 3, cuatrimestre: 2, correlativas: ['Elementos de Ingeniería de Software'], cargaHoraria: 4, area: 'ISBDySI' },
-    { id: 27, nombre: 'Desarrollo de Aplicaciones', año: 3, cuatrimestre: 2, correlativas: ['Construcción de Interfaces de Usuario', 'Estrategias de Persistencia'], cargaHoraria: 6, area: 'ISBDySI' },
-    // Cuarto Año
-    { id: 28, nombre: 'Probabilidad y Estadística', año: 4, cuatrimestre: 1, correlativas: ['Matemática III'], cargaHoraria: 6, area: 'CB' },
-    { id: 29, nombre: 'Gestión de Proyectos de Desarrollo de Software', año: 4, cuatrimestre: 1, correlativas: ['Ingeniería de Requerimientos'], cargaHoraria: 4, area: 'ISBDySI' },
-    { id: 30, nombre: 'Lenguajes Formales y Autómatas', año: 4, cuatrimestre: 1, correlativas: ['Lógica y Programación'], cargaHoraria: 4, area: 'TC' },
-    { id: 31, nombre: 'Programación con Objetos III', año: 4, cuatrimestre: 1, correlativas: ['Programación Concurrente'], cargaHoraria: 4, area: 'AyL' },
-    { id: 32, nombre: 'Materia UNAHUR II', año: 4, cuatrimestre: 1, correlativas: ['Materia UNAHUR I'], cargaHoraria: 2, area: 'Otros' },
-    { id: 33, nombre: 'Práctica Profesional Supervisada (PPS)', año: 4, cuatrimestre: 2, correlativas: ['Desarrollo de Aplicaciones'], cargaHoraria: 6, area: 'Otros' },
-    { id: 34, nombre: 'Teoría de la Computación', año: 4, cuatrimestre: 2, correlativas: ['Lenguajes Formales y Autómatas'], cargaHoraria: 4, area: 'TC' },
-    { id: 35, nombre: 'Arquitectura de Software I', año: 4, cuatrimestre: 2, correlativas: ['Gestión de Proyectos de Desarrollo de Software'], cargaHoraria: 4, area: 'ISBDySI' },
-    { id: 36, nombre: 'Sistemas Distribuidos y Tiempo Real', año: 4, cuatrimestre: 2, correlativas: ['Laboratorio de Sistemas Operativos y Redes', 'Programación Concurrente'], cargaHoraria: 6, area: 'ASOyR' },
-    // Quinto Año
-    { id: 37, nombre: 'Tesina de Licenciatura', año: 5, cuatrimestre: 1, correlativas: ['Práctica Profesional Supervisada (PPS)'], cargaHoraria: 5, area: 'Otros' },
-    { id: 38, nombre: 'Materia Optativa I', año: 5, cuatrimestre: 1, correlativas: [], cargaHoraria: 4, area: 'Optativa' },
-    { id: 39, nombre: 'Características de Lenguajes de Programación', año: 5, cuatrimestre: 1, correlativas: ['Programación con Objetos III'], cargaHoraria: 4, area: 'AyL' },
-    { id: 40, nombre: 'Arquitectura de Software II', año: 5, cuatrimestre: 1, correlativas: ['Arquitectura de Software I'], cargaHoraria: 4, area: 'ISBDySI' },
-    { id: 41, nombre: 'Arquitectura de Computadoras', año: 5, cuatrimestre: 2, correlativas: ['Sistemas Distribuidos y Tiempo Real'], cargaHoraria: 4, area: 'ASOyR' },
-    { id: 42, nombre: 'Materia Optativa II', año: 5, cuatrimestre: 2, correlativas: [], cargaHoraria: 4, area: 'Optativa' },
-    { id: 43, nombre: 'Parseo y generación de código', año: 5, cuatrimestre: 2, correlativas: ['Teoría de la Computación'], cargaHoraria: 4, area: 'AyL' },
-    { id: 44, nombre: 'Ejercicio Profesional', año: 5, cuatrimestre: 2, correlativas: [], cargaHoraria: 3, area: 'APyS' },
-    { id: 45, nombre: 'Tecnología y Sociedad', año: 5, cuatrimestre: 2, correlativas: [], cargaHoraria: 3, area: 'APyS' }
-  ],
-  'Tecnicatura en Inteligencia Artificial': [
-    { id: 1, nombre: 'Matemática para informática I', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 4, area: 'CB' },
-    { id: 2, nombre: 'Introducción a lógica y problemas computacionales', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 4, area: 'AyL' },
-    { id: 3, nombre: 'Introducción a la inteligencia artificial', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 4, area: 'IA' },
-    { id: 4, nombre: 'Nuevos entornos y lenguajes', año: 1, cuatrimestre: 1, correlativas: [], cargaHoraria: 2, area: 'Gral' },
-    { id: 5, nombre: 'Álgebra lineal', año: 1, cuatrimestre: 2, correlativas: ['Matemática para informática I'], cargaHoraria: 4, area: 'CB' },
-    { id: 6, nombre: 'Cálculo', año: 1, cuatrimestre: 2, correlativas: ['Matemática para informática I'], cargaHoraria: 4, area: 'CB' },
-    { id: 7, nombre: 'Taller de Programación I', año: 1, cuatrimestre: 2, correlativas: ['Introducción a lógica y problemas computacionales'], cargaHoraria: 4, area: 'AyL' },
-    { id: 8, nombre: 'Tecnología y sociedad', año: 1, cuatrimestre: 2, correlativas: [], cargaHoraria: 3, area: 'Gral' },
-    { id: 9, nombre: 'Inglés I', año: 1, cuatrimestre: 2, correlativas: [], cargaHoraria: 2, area: 'Gral' },
-    { id: 10, nombre: 'Bases de datos', año: 2, cuatrimestre: 1, correlativas: ['Álgebra lineal'], cargaHoraria: 6, area: 'ISBDySI' },
-    { id: 11, nombre: 'Probabilidad y estadística', año: 2, cuatrimestre: 1, correlativas: ['Álgebra lineal', 'Cálculo'], cargaHoraria: 6, area: 'CB' },
-    { id: 12, nombre: 'Taller de Programación II', año: 2, cuatrimestre: 1, correlativas: ['Taller de Programación I'], cargaHoraria: 4, area: 'AyL' },
-    { id: 13, nombre: 'Fundamentos de redes neuronales', año: 2, cuatrimestre: 1, correlativas: ['Introducción a la inteligencia artificial', 'Álgebra lineal', 'Taller de Programación I'], cargaHoraria: 4, area: 'IA' },
-    { id: 14, nombre: 'Fundamentos de ciencias de datos', año: 2, cuatrimestre: 2, correlativas: ['Introducción a la inteligencia artificial', 'Álgebra lineal', 'Cálculo'], cargaHoraria: 3, area: 'IA' },
-    { id: 15, nombre: 'Aprendizaje Automático', año: 2, cuatrimestre: 2, correlativas: ['Probabilidad y estadística', 'Fundamentos de redes neuronales'], cargaHoraria: 4, area: 'IA' },
-    { id: 16, nombre: 'Electiva', año: 2, cuatrimestre: 2, correlativas: ['Probabilidad y estadística', 'Fundamentos de redes neuronales'], cargaHoraria: 4, area: 'Elec' },
-    { id: 17, nombre: 'Taller de Programación III', año: 2, cuatrimestre: 2, correlativas: ['Taller de Programación II'], cargaHoraria: 4, area: 'AyL' },
-    { id: 18, nombre: 'Inglés II', año: 2, cuatrimestre: 2, correlativas: ['Inglés I'], cargaHoraria: 2, area: 'Gral' },
-    { id: 19, nombre: 'Materia UNAHUR', año: 3, cuatrimestre: 1, correlativas: [], cargaHoraria: 2, area: 'Gral' },
-    { id: 20, nombre: 'Aprendizaje Automático Avanzado', año: 3, cuatrimestre: 1, correlativas: ['Aprendizaje Automático', 'Taller de Programación III'], cargaHoraria: 6, area: 'IA' },
-    { id: 21, nombre: 'Procesamiento de Imágenes y Visión por Computadora', año: 3, cuatrimestre: 1, correlativas: ['Aprendizaje Automático', 'Taller de Programación III'], cargaHoraria: 6, area: 'IA' },
-    { id: 22, nombre: 'Proyecto integrador', año: 3, cuatrimestre: 1, correlativas: ['Aprendizaje Automático', 'Taller de Programación III'], cargaHoraria: 5, area: 'IA' }
-  ]
-};
+import { useAuth } from '../context/AuthContext';
 
 export const EstudianteMaterias = () => {
-  const { id } = useParams();
   const navigate = useNavigate();
+  const { estudianteActual, loading: authLoading } = useAuth();
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
-  const [materiasDisponibles, setMateriasDisponibles] = useState([]);
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Estados para manejar conflictos de correlatividades
+  const [dialogoConflicto, setDialogoConflicto] = useState({ 
+    abierto: false, 
+    materia: null, 
+    nuevoEstado: null,
+    materiasAfectadas: [],
+    mensaje: ''
+  });
 
-  // Datos de estudiantes para navegación
-  const estudiantesDisponibles = [
-    { id: 1, nombre: 'Juan Pérez', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' },
-    { id: 2, nombre: 'María González', avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=150&h=150&fit=crop&crop=face' },
-    { id: 3, nombre: 'Carlos López', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' }
-  ];
+  const [dialogoPrerrequisitos, setDialogoPrerrequisitos] = useState({
+    abierto: false,
+    materiaNombre: '',
+    prerequisitosIncumplidos: [],
+    accion: ''
+  });
 
   useEffect(() => {
     const cargarDatos = async () => {
+      if (!estudianteActual?.id) return;
+      
       try {
         setLoading(true);
-        const [estudianteData, situacionData] = await Promise.all([
-          EstudianteService.obtenerEstudiante(id),
-          EstudianteService.obtenerMateriasEstudiante(id)
-        ]);
+        setError(null);
         
-        setEstudiante(estudianteData);
-        setSituacionAcademica(situacionData);
-
-        // Obtener plan completo de la carrera
-        const materiasCompletas = obtenerPlanCompleto(situacionData);
-        setMateriasDisponibles(materiasCompletas);
+        // Cargar datos del plan de materias desde el backend
+        const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
         
-      } catch (err) {
-        console.error('Error al cargar datos:', err);
-        setError('Error al cargar la información del estudiante');
+        if (response.data) {
+          setEstudiante(response.data.estudiante);
+          
+          // Procesar las materias del backend
+          const todasLasMaterias = [];
+          const materiasPorAnio = response.data.materiasPorAnio || {};
+          
+          // Convertir la estructura del backend a la del frontend
+          Object.keys(materiasPorAnio).forEach(anio => {
+            const materiasDelAnio = materiasPorAnio[anio].map(materia => ({
+              id: materia.id,
+              nombre: materia.nombre,
+              anio: parseInt(anio),
+              tipo: materia.tipo || 'cuatrimestral',
+              // Mapear estados del backend al frontend
+              estado: materia.estado === 'aprobada' ? 'Aprobada' :
+                      materia.estado === 'regularizada' ? 'Regularizada' :
+                      materia.estado === 'no_cursada' && materia.disponible ? 'Disponible' :
+                      'No Disponible',
+              disponible: materia.disponible !== false, // Por defecto disponible
+              prerrequisitos: materia.prerrequisitos || []
+            }));
+            
+            todasLasMaterias.push(...materiasDelAnio);
+          });
+          
+          setSituacionAcademica({
+            materias: todasLasMaterias,
+            resumen: response.data.resumen || {},
+            carrera: response.data.carrera,
+            planDeEstudio: response.data.planDeEstudio
+          });
+        }
+      } catch (error) {
+        console.error('Error al cargar datos del estudiante:', error);
+        setError('Error al cargar los datos del estudiante');
       } finally {
         setLoading(false);
       }
     };
 
-    if (id) {
-      cargarDatos();
-    }
-  }, [id]);
+    cargarDatos();
+  }, [estudianteActual?.id]);
 
-  // Función para obtener el plan completo con estados
-  const obtenerPlanCompleto = (situacionData) => {
-    const planCarrera = MATERIAS_CARRERA[situacionData.carrera] || [];
-    console.log('Plan de carrera:', planCarrera.length, 'materias');
-    console.log('Situacion academica:', situacionData.situacionAcademica.length, 'materias cursadas');
-    
-    const resultado = planCarrera.map(materiaCompleta => {
-      // Buscar si el estudiante ya cursó esta materia
-      const materiaCursada = situacionData.situacionAcademica.find(
-        m => m.nombre === materiaCompleta.nombre
+  // Función para cambiar el estado de una materia
+  const handleCambiarEstadoMateria = async (materiaId, nuevoEstado, confirmarCascada = false) => {
+    try {
+      // Mapear estados de UI a estados de base de datos
+      const estadoMapeado = mapearEstadoUIaDB(nuevoEstado);
+      
+      await EstudianteService.actualizarEstadoMateria(
+        estudianteActual.id, 
+        materiaId, 
+        estadoMapeado,
+        confirmarCascada
       );
-
-      if (materiaCursada) {
-        // Si ya la cursó, usar su estado actual
-        return {
-          ...materiaCompleta,
-          estado: materiaCursada.estado,
-          nota: materiaCursada.nota,
-          fecha: materiaCursada.fecha
-        };
-      } else {
-        // Si no la cursó, verificar si puede cursarla por correlatividades
-        const verificacion = verificarCorrelatividades(
-          materiaCompleta.nombre, 
-          situacionData.situacionAcademica, 
-          situacionData.carrera
-        );
+      
+      // Recargar los datos para reflejar el cambio
+      const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
+      if (response.data) {
+        const todasLasMaterias = [];
+        const materiasPorAnio = response.data.materiasPorAnio || {};
         
-        const estado = verificacion.puedeCorrer ? 'Puede Cursar' : 'No Disponible';
+        Object.keys(materiasPorAnio).forEach(anio => {
+          const materiasDelAnio = materiasPorAnio[anio].map(materia => ({
+            id: materia.id,
+            nombre: materia.nombre,
+            anio: parseInt(anio),
+            tipo: materia.tipo || 'cuatrimestral',
+            estado: materia.estado === 'aprobada' ? 'Aprobada' :
+                    materia.estado === 'regularizada' ? 'Regularizada' :
+                    materia.estado === 'no_cursada' && materia.disponible ? 'Disponible' :
+                    'No Disponible',
+            disponible: materia.disponible !== false,
+            prerrequisitos: materia.prerrequisitos || []
+          }));
+          todasLasMaterias.push(...materiasDelAnio);
+        });
         
-        if (!verificacion.puedeCorrer) {
-          console.log(`${materiaCompleta.nombre}: No disponible -`, verificacion.motivo, verificacion.correlativasPendientes);
-        }
+        setSituacionAcademica({
+          materias: todasLasMaterias,
+          resumen: response.data.resumen || {},
+          carrera: response.data.carrera,
+          planDeEstudio: response.data.planDeEstudio
+        });
         
-        return {
-          ...materiaCompleta,
-          estado: estado,
-          motivo: verificacion.motivo,
-          correlativasPendientes: verificacion.correlativasPendientes?.map(c => c.nombre || c) || [],
-          nota: null,
-          fecha: null
-        };
+        console.log(`Materia actualizada exitosamente: ${nuevoEstado}`);
       }
-    });
-    
-    const estados = {};
-    resultado.forEach(m => {
-      estados[m.estado] = (estados[m.estado] || 0) + 1;
-    });
-    console.log('Estados calculados:', estados);
-    
-    return resultado;
+    } catch (error) {
+      console.error('Error al actualizar materia:', error);
+      
+      // Manejar conflicto de correlatividades
+      if (error.tipo === 'CONFLICTO_CORRELATIVIDADES') {
+        setDialogoConflicto({
+          abierto: true,
+          materia: materiaId,
+          nuevoEstado: nuevoEstado,
+          materiasAfectadas: error.data.materiasAfectadas || [],
+          mensaje: error.data.message
+        });
+      } 
+      // Manejar prerrequisitos incumplidos
+      else if (error.tipo === 'PRERREQUISITOS_INCUMPLIDOS') {
+        const materiaNombre = situacionAcademica.materias.find(m => m.id === materiaId)?.nombre || 'Esta materia';
+        
+        setDialogoPrerrequisitos({
+          abierto: true,
+          materiaNombre: materiaNombre,
+          prerequisitosIncumplidos: error.data.prerequisitosIncumplidos || [],
+          accion: nuevoEstado === 'Aprobada' ? 'aprobar' : 'regularizar'
+        });
+      } else {
+        setError('Error al actualizar el estado de la materia');
+      }
+    }
   };
 
   const obtenerColorEstado = (estado) => {
     switch (estado) {
       case 'Aprobada': return 'success';
       case 'Regularizada': return 'warning';
-      case 'Cursando': return 'info';
-      case 'Puede Cursar': return 'primary';
-      case 'No Disponible': return 'default';
+      case 'Disponible': return 'primary';
+      case 'No Disponible': return 'error';
       default: return 'default';
     }
   };
 
+  // Funciones para manejar el diálogo de conflicto de correlatividades
+  const handleConfirmarCascada = async () => {
+    try {
+      setDialogoConflicto(prev => ({ ...prev, abierto: false }));
+      
+      // Reintentamos con confirmación de cascada
+      await handleCambiarEstadoMateria(
+        dialogoConflicto.materia, 
+        dialogoConflicto.nuevoEstado, 
+        true // confirmarCascada = true
+      );
+    } catch (error) {
+      console.error('Error al aplicar cascada:', error);
+      setError('Error al aplicar el cambio en cascada');
+    }
+  };
+
+  const handleCancelarCambio = () => {
+    setDialogoConflicto({ 
+      abierto: false, 
+      materia: null, 
+      nuevoEstado: null,
+      materiasAfectadas: [],
+      mensaje: ''
+    });
+  };
+
+  const handleCerrarPrerrequisitos = () => {
+    setDialogoPrerrequisitos({
+      abierto: false,
+      materiaNombre: '',
+      prerequisitosIncumplidos: [],
+      accion: ''
+    });
+  };
+  // Mapear estados de UI a estados de base de datos
+  const mapearEstadoUIaDB = (estadoUI) => {
+    const mapeo = {
+      'Aprobada': 'aprobada',
+      'Regularizada': 'regularizada', 
+      'Disponible': 'no_cursada',
+      'No Cursada': 'no_cursada'
+    };
+    return mapeo[estadoUI] || estadoUI.toLowerCase();
+  };
   const obtenerIconoEstado = (estado) => {
     switch (estado) {
       case 'Aprobada': return <CheckCircleIcon fontSize="small" />;
-      case 'Cursando': return <ScheduleIcon fontSize="small" />;
       case 'Regularizada': return <ScheduleIcon fontSize="small" color="warning" />;
-      case 'Puede Cursar': return <SchoolIcon fontSize="small" color="primary" />;
-      case 'No Disponible': return <SchoolIcon fontSize="small" color="disabled" />;
+      case 'Disponible': return <SchoolIcon fontSize="small" color="primary" />;
       default: return <SchoolIcon fontSize="small" />;
     }
   };
 
   const filtrarMateriasPorEstado = (estado) => {
-    const filtradas = materiasDisponibles.filter(m => m.estado === estado);
-    if (estado === 'No Disponible') {
-      console.log(`Filtrando por estado "${estado}":`, filtradas.length, 'materias encontradas');
-      console.log('Primeras 3 materias No Disponibles:', filtradas.slice(0, 3));
-    }
-    return filtradas;
-  };
-
-  const contarMateriasPorAño = (año) => {
-    const materias = materiasDisponibles.filter(m => m.año === año);
-    return {
-      total: materias.length,
-      aprobadas: materias.filter(m => m.estado === 'Aprobada').length,
-      cursando: materias.filter(m => m.estado === 'Cursando').length,
-      disponibles: materias.filter(m => m.estado === 'Puede Cursar').length
-    };
+    if (!situacionAcademica?.materias) return [];
+    return situacionAcademica.materias.filter(m => m.estado === estado);
   };
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
         <CircularProgress />
@@ -266,42 +276,19 @@ export const EstudianteMaterias = () => {
       <Box display="flex" alignItems="center" mb={3}>
         <Button 
           startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/mi-perfil')}
           sx={{ mr: 2 }}
         >
-          Inicio
+          Mi Perfil
         </Button>
         <Box flexGrow={1}>
           <Typography variant="h4">
-            Materias de {estudiante.nombre} {estudiante.apellido}
+            Materias de {estudiante?.nombre} {estudiante?.apellido}
           </Typography>
           <Typography variant="subtitle1" color="textSecondary">
-            {situacionAcademica.carrera}
+            {situacionAcademica?.carrera?.nombre || 'Sin carrera asignada'}
           </Typography>
         </Box>
-      </Box>
-
-      {/* Navegación entre estudiantes */}
-      <Box mb={3}>
-        <Typography variant="h6" gutterBottom>
-          Ver otros estudiantes:
-        </Typography>
-        <ButtonGroup variant="outlined" size="small">
-          {estudiantesDisponibles.map((est) => (
-            <Button
-              key={est.id}
-              variant={parseInt(id) === est.id ? "contained" : "outlined"}
-              startIcon={
-                <Avatar src={est.avatar} sx={{ width: 24, height: 24 }}>
-                  <PersonIcon sx={{ fontSize: 16 }} />
-                </Avatar>
-              }
-              onClick={() => navigate(`/estudiante/${est.id}/materias`)}
-            >
-              {est.nombre}
-            </Button>
-          ))}
-        </ButtonGroup>
       </Box>
 
       {/* Resumen estadísticas */}
@@ -310,7 +297,7 @@ export const EstudianteMaterias = () => {
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main">
-                {situacionAcademica?.estadisticas?.materiasAprobadas || 0}
+                {situacionAcademica?.resumen?.aprobadas || 0}
               </Typography>
               <Typography variant="caption">Aprobadas</Typography>
             </CardContent>
@@ -320,7 +307,7 @@ export const EstudianteMaterias = () => {
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main">
-                {situacionAcademica?.estadisticas?.materiasRegularizadas || 0}
+                {situacionAcademica?.resumen?.regularizadas || 0}
               </Typography>
               <Typography variant="caption">Regularizadas</Typography>
             </CardContent>
@@ -330,9 +317,9 @@ export const EstudianteMaterias = () => {
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="info.main">
-                {situacionAcademica?.estadisticas?.materiasCursando || 0}
+                {situacionAcademica?.resumen?.noCursadas || 0}
               </Typography>
-              <Typography variant="caption">Cursando</Typography>
+              <Typography variant="caption">No Cursadas</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -340,7 +327,7 @@ export const EstudianteMaterias = () => {
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary.main">
-                {filtrarMateriasPorEstado('Puede Cursar').length}
+                {situacionAcademica?.resumen?.disponibles || 0}
               </Typography>
               <Typography variant="caption">Disponibles</Typography>
             </CardContent>
@@ -350,12 +337,9 @@ export const EstudianteMaterias = () => {
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="text.secondary">
-                {(situacionAcademica?.estadisticas?.materiasAprobadas || 0) + 
-                 (situacionAcademica?.estadisticas?.materiasRegularizadas || 0) + 
-                 (situacionAcademica?.estadisticas?.materiasCursando || 0) + 
-                 (situacionAcademica?.estadisticas?.materiasSinCursar || 0)}
+                {situacionAcademica?.resumen?.total || 0}
               </Typography>
-              <Typography variant="caption">Total Plan</Typography>
+              <Typography variant="caption">Total</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -365,11 +349,10 @@ export const EstudianteMaterias = () => {
       <Card>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
-            <Tab label={`Todas (${materiasDisponibles.length})`} />
+            <Tab label={`Todas (${situacionAcademica?.materias?.length || 0})`} />
             <Tab label={`Aprobadas (${filtrarMateriasPorEstado('Aprobada').length})`} />
-            <Tab label={`Cursando (${filtrarMateriasPorEstado('Cursando').length})`} />
-            <Tab label={`Disponibles (${filtrarMateriasPorEstado('Puede Cursar').length})`} />
             <Tab label={`Regularizadas (${filtrarMateriasPorEstado('Regularizada').length})`} />
+            <Tab label={`Disponibles (${filtrarMateriasPorEstado('Disponible').length})`} />
             <Tab label={`No Disponibles (${filtrarMateriasPorEstado('No Disponible').length})`} />
           </Tabs>
         </Box>
@@ -381,23 +364,19 @@ export const EstudianteMaterias = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Año</TableCell>
                     <TableCell>Materia</TableCell>
                     <TableCell>Estado</TableCell>
-                    <TableCell>Nota</TableCell>
-                    <TableCell>Carga Horaria</TableCell>
-                    <TableCell>Área</TableCell>
+                    <TableCell>Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {materiasDisponibles.map((materia, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{materia.año}°</TableCell>
+                  {situacionAcademica?.materias?.map((materia, index) => (
+                    <TableRow key={materia.id || index}>
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           {obtenerIconoEstado(materia.estado)}
                           <Typography sx={{ ml: 1 }}>
-                            {materia.nombre}
+                            {materia.nombre} ({materia.anio}° año)
                           </Typography>
                         </Box>
                       </TableCell>
@@ -408,9 +387,28 @@ export const EstudianteMaterias = () => {
                           size="small"
                         />
                       </TableCell>
-                      <TableCell>{materia.nota || '-'}</TableCell>
-                      <TableCell>{materia.cargaHoraria}hs</TableCell>
-                      <TableCell>{materia.area}</TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={materia.estado}
+                            onChange={(e) => {
+                              const nuevoEstado = e.target.value;
+                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
+                            }}
+                            displayEmpty
+                            sx={{ 
+                              '& .MuiSelect-select': { 
+                                py: 0.5,
+                                fontSize: '0.875rem'
+                              }
+                            }}
+                          >
+                            <MenuItem value="Disponible">Disponible</MenuItem>
+                            <MenuItem value="Regularizada">Regularizada</MenuItem>
+                            <MenuItem value="Aprobada">Aprobada</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -424,32 +422,45 @@ export const EstudianteMaterias = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Año</TableCell>
                     <TableCell>Materia</TableCell>
-                    <TableCell>Nota</TableCell>
-                    <TableCell>Fecha</TableCell>
-                    <TableCell>Área</TableCell>
+                    <TableCell>Estado</TableCell>
+                    <TableCell>Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filtrarMateriasPorEstado('Aprobada').map((materia, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{materia.año}°</TableCell>
+                    <TableRow key={materia.id || index}>
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           {obtenerIconoEstado(materia.estado)}
                           <Typography sx={{ ml: 1 }}>
-                            {materia.nombre}
+                            {materia.nombre} ({materia.anio}° año)
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography color="success.main" fontWeight="bold">
-                          {materia.nota}
-                        </Typography>
+                        <Chip 
+                          label={materia.estado}
+                          color={obtenerColorEstado(materia.estado)}
+                          size="small"
+                        />
                       </TableCell>
-                      <TableCell>{materia.fecha || '-'}</TableCell>
-                      <TableCell>{materia.area}</TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={materia.estado}
+                            onChange={(e) => {
+                              const nuevoEstado = e.target.value;
+                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
+                            }}
+                            size="small"
+                          >
+                            <MenuItem value="Disponible">Disponible</MenuItem>
+                            <MenuItem value="Regularizada">Regularizada</MenuItem>
+                            <MenuItem value="Aprobada">Aprobada</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -457,32 +468,49 @@ export const EstudianteMaterias = () => {
             </TableContainer>
           )}
 
-          {/* Tab 2: Cursando */}
+          {/* Tab 2: Regularizadas */}
           {tabValue === 2 && (
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Año</TableCell>
                     <TableCell>Materia</TableCell>
-                    <TableCell>Carga Horaria</TableCell>
-                    <TableCell>Área</TableCell>
+                    <TableCell>Estado</TableCell>
+                    <TableCell>Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filtrarMateriasPorEstado('Cursando').map((materia, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{materia.año}°</TableCell>
+                  {filtrarMateriasPorEstado('Regularizada').map((materia, index) => (
+                    <TableRow key={materia.id || index}>
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           {obtenerIconoEstado(materia.estado)}
                           <Typography sx={{ ml: 1 }}>
-                            {materia.nombre}
+                            {materia.nombre} ({materia.anio}° año)
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>{materia.cargaHoraria}hs</TableCell>
-                      <TableCell>{materia.area}</TableCell>
+                      <TableCell>
+                        <Alert severity="warning" sx={{ py: 0 }}>
+                          Regularizada - Debe rendir final
+                        </Alert>
+                      </TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={materia.estado}
+                            onChange={(e) => {
+                              const nuevoEstado = e.target.value;
+                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
+                            }}
+                            size="small"
+                          >
+                            <MenuItem value="Disponible">Disponible</MenuItem>
+                            <MenuItem value="Regularizada">Regularizada</MenuItem>
+                            <MenuItem value="Aprobada">Aprobada</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -490,38 +518,49 @@ export const EstudianteMaterias = () => {
             </TableContainer>
           )}
 
-          {/* Tab 3: Disponibles para cursar */}
+          {/* Tab 3: Disponibles */}
           {tabValue === 3 && (
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Año</TableCell>
                     <TableCell>Materia</TableCell>
-                    <TableCell>Carga Horaria</TableCell>
-                    <TableCell>Correlatividades</TableCell>
-                    <TableCell>Área</TableCell>
+                    <TableCell>Estado</TableCell>
+                    <TableCell>Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {filtrarMateriasPorEstado('Puede Cursar').map((materia, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{materia.año}°</TableCell>
+                  {filtrarMateriasPorEstado('Disponible').map((materia, index) => (
+                    <TableRow key={materia.id || index}>
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           {obtenerIconoEstado(materia.estado)}
                           <Typography sx={{ ml: 1 }}>
-                            {materia.nombre}
+                            {materia.nombre} ({materia.anio}° año)
                           </Typography>
                         </Box>
                       </TableCell>
-                      <TableCell>{materia.cargaHoraria}hs</TableCell>
                       <TableCell>
-                        <Typography variant="caption" color="success.main">
-                          ✓ Cumple correlatividades
-                        </Typography>
+                        <Alert severity="success" sx={{ py: 0 }}>
+                          Disponible para cursar
+                        </Alert>
                       </TableCell>
-                      <TableCell>{materia.area}</TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value={materia.estado}
+                            onChange={(e) => {
+                              const nuevoEstado = e.target.value;
+                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
+                            }}
+                            size="small"
+                          >
+                            <MenuItem value="Disponible">Disponible</MenuItem>
+                            <MenuItem value="Regularizada">Regularizada</MenuItem>
+                            <MenuItem value="Aprobada">Aprobada</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -529,77 +568,49 @@ export const EstudianteMaterias = () => {
             </TableContainer>
           )}
 
-          {/* Tab 4: Regularizadas */}
+          {/* Tab 4: No Disponibles */}
           {tabValue === 4 && (
             <TableContainer>
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Año</TableCell>
                     <TableCell>Materia</TableCell>
-                    <TableCell>Área</TableCell>
                     <TableCell>Estado</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filtrarMateriasPorEstado('Regularizada').map((materia, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{materia.año}°</TableCell>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          {obtenerIconoEstado(materia.estado)}
-                          <Typography sx={{ ml: 1 }}>
-                            {materia.nombre}
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>{materia.area}</TableCell>
-                      <TableCell>
-                        <Alert severity="warning" size="small">
-                          Regularizada - Debe rendir final
-                        </Alert>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* Tab 5: No Disponibles */}
-          {tabValue === 5 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Año</TableCell>
-                    <TableCell>Materia</TableCell>
-                    <TableCell>Correlatividades Faltantes</TableCell>
-                    <TableCell>Área</TableCell>
+                    <TableCell>Acciones</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {filtrarMateriasPorEstado('No Disponible').map((materia, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{materia.año}°</TableCell>
+                    <TableRow key={materia.id || index}>
                       <TableCell>
                         <Box display="flex" alignItems="center">
                           {obtenerIconoEstado(materia.estado)}
                           <Typography sx={{ ml: 1 }}>
-                            {materia.nombre}
+                            {materia.nombre} ({materia.anio}° año)
                           </Typography>
                         </Box>
                       </TableCell>
                       <TableCell>
-                        {materia.correlativasPendientes && materia.correlativasPendientes.length > 0 ? (
-                          materia.correlativasPendientes.map((corr, idx) => (
-                            <Chip key={idx} label={corr} size="small" color="error" sx={{ mr: 0.5, mb: 0.5 }} />
-                          ))
-                        ) : (
-                          <Typography variant="caption">Verificar correlatividades</Typography>
-                        )}
+                        <Alert severity="info" sx={{ py: 0 }}>
+                          Faltan correlativas
+                        </Alert>
                       </TableCell>
-                      <TableCell>{materia.area}</TableCell>
+                      <TableCell>
+                        <FormControl size="small" sx={{ minWidth: 120 }}>
+                          <Select
+                            value="No Disponible"
+                            disabled={true}
+                            size="small"
+                            sx={{
+                              '& .MuiSelect-select': { 
+                                color: 'text.disabled'
+                              }
+                            }}
+                          >
+                            <MenuItem value="No Disponible">No Disponible</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -609,6 +620,117 @@ export const EstudianteMaterias = () => {
 
         </CardContent>
       </Card>
+
+      {/* Diálogo de confirmación para conflictos de correlatividades */}
+      <Dialog 
+        open={dialogoConflicto.abierto} 
+        onClose={handleCancelarCambio}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <WarningIcon color="warning" sx={{ mr: 1 }} />
+            Conflicto de Correlatividades
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent>
+          <DialogContentText>
+            {dialogoConflicto.mensaje}
+          </DialogContentText>
+          
+          {dialogoConflicto.materiasAfectadas.length > 0 && (
+            <Box mt={2}>
+              <Typography variant="h6" gutterBottom>
+                Materias que se verían afectadas:
+              </Typography>
+              <List>
+                {dialogoConflicto.materiasAfectadas.map((materia) => (
+                  <ListItem key={materia.id}>
+                    <ListItemIcon>
+                      <BookIcon color="primary" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={materia.nombre}
+                      secondary={`${materia.anio}° año - ${materia.cuatrimestre}° cuatrimestre`}
+                    />
+                  </ListItem>
+                ))}
+              </List>
+              <Alert severity="info" sx={{ mt: 2 }}>
+                Al confirmar, estas materias también cambiarán automáticamente su estado para mantener la coherencia académica.
+              </Alert>
+            </Box>
+          )}
+        </DialogContent>
+        
+        <DialogActions>
+          <Button onClick={handleCancelarCambio}>
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleConfirmarCascada}
+            variant="contained" 
+            color="warning"
+            startIcon={<WarningIcon />}
+          >
+            Confirmar Cambio en Cascada
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Diálogo de información para prerrequisitos incumplidos */}
+      <Dialog 
+        open={dialogoPrerrequisitos.abierto} 
+        onClose={handleCerrarPrerrequisitos}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" alignItems="center">
+            <WarningIcon color="error" sx={{ mr: 1 }} />
+            Prerrequisitos No Cumplidos
+          </Box>
+        </DialogTitle>
+        
+        <DialogContent>
+          <DialogContentText>
+            ❌ No se puede <strong>{dialogoPrerrequisitos.accion}</strong> la materia "<strong>{dialogoPrerrequisitos.materiaNombre}</strong>" porque faltan las siguientes correlativas:
+          </DialogContentText>
+          
+          <Box mt={2}>
+            <List>
+              {dialogoPrerrequisitos.prerequisitosIncumplidos.map((prerrequisito, index) => (
+                <ListItem key={index}>
+                  <ListItemIcon>
+                    <BookIcon color="error" />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={prerrequisito}
+                    secondary="Debe estar al menos regularizada"
+                  />
+                </ListItem>
+              ))}
+            </List>
+            <Alert severity="warning" sx={{ mt: 2 }}>
+              Para poder {dialogoPrerrequisitos.accion} esta materia, primero debe aprobar o regularizar todas las materias correlativas listadas arriba.
+            </Alert>
+          </Box>
+        </DialogContent>
+        
+        <DialogActions>
+          <Button 
+            onClick={handleCerrarPrerrequisitos}
+            variant="contained" 
+            color="primary"
+          >
+            Entendido
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
+
+export default EstudianteMaterias;

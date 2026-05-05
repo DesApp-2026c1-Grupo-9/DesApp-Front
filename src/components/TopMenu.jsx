@@ -1,40 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, Chip } from '@mui/material';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, DynamicFeed } from '@mui/icons-material';
-import EstudianteService from '../services/EstudianteService';
+import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz } from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
 
 export function TopMenu() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { id } = useParams();
-  const [estudianteActual, setEstudianteActual] = useState(null);
-
-  // Cargar información del estudiante cuando estamos en rutas de estudiante
-  useEffect(() => {
-    if (id && location.pathname.includes('/estudiante/')) {
-      EstudianteService.obtenerEstudiante(id)
-        .then(estudiante => setEstudianteActual(estudiante))
-        .catch(err => console.error('Error al cargar estudiante en TopMenu:', err));
-    } else {
-      setEstudianteActual(null);
-    }
-  }, [id, location.pathname]);
-
-  // Función para obtener el path de materias con el ID correcto
-  const getMateriasPath = () => {
-    const estudianteId = id || '1'; // Si no hay ID, usar estudiante 1 por defecto
-    return `/estudiante/${estudianteId}/materias`;
-  };
+  const { estudianteActual, loading } = useAuth();
 
   const menuItems = [
     { label: 'Inicio', path: '/', icon: <Home /> },
-    { label: 'Perfil Estudiantil', path: '/estudiante', icon: <Person /> },
+    { label: 'Mi Perfil', path: '/mi-perfil', icon: <Person /> },
+    { label: 'Mis Materias', path: '/mis-materias', icon: <Book /> },
     { label: 'Carreras', path: '/carreras', icon: <School /> },
-    { label: 'Materias', path: getMateriasPath(), icon: <Book /> },
     { label: 'Feed', path: '/feed', icon: <DynamicFeed /> },
-    { label: 'Conexiones', path: '/conexiones', icon: <People /> },
+    { label: 'Conexiones', path: '/conexiones', icon: <Groups /> },
     { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },
+    // Demo oculto - cambiar manualmente la URL a /demo-selector
   ];
 
   return (
@@ -42,14 +25,7 @@ export function TopMenu() {
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Sistema Académico UNAHUR
-          {estudianteActual && (
-            <Chip 
-              label={`${estudianteActual.nombre} ${estudianteActual.apellido}`}
-              color="secondary"
-              size="small"
-              sx={{ ml: 2 }}
-            />
-          )}
+          {/* Nombre de estudiante removido para mayor realismo */}
         </Typography>
         
         <Box sx={{ display: 'flex', gap: 1 }}>

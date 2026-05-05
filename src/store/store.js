@@ -4,6 +4,7 @@ import perfilReducer from '../features/perfil/slice';
 import sesionesReducer from '../features/sesiones/slice';
 import feedReducer from '../features/feed/slice';
 import conexionesReducer from '../features/conexiones/slice';
+import academicoReducer from '../features/academico/slice';
 import comentariosReducer from '../features/feed/comentariosSlice';
 
 export const store = configureStore({
@@ -13,6 +14,7 @@ export const store = configureStore({
     sesiones: sesionesReducer,
     feed: feedReducer,
     conexiones: conexionesReducer,
+    academico: academicoReducer,
     comentarios: comentariosReducer,
   },
 });
