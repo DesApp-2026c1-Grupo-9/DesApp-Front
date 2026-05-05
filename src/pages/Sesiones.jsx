@@ -1,114 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+
 import {
   Typography, Button, Box, FormControl, InputLabel, Select, MenuItem,
-  TextField, CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText
+  TextField, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
+  DialogContentText, Avatar
 } from '@mui/material';
 import SesionCard from '../components/SesionCard';
 import SesionModal from '../components/SesionModal';
 import AprobacionModal from '../components/AprobacionModal';
 
-// Mock data - current user
-const currentUser = { id: 1, nombre: 'Diego', apellido: 'Fernández' };
+import { fetchSesiones, addSesion, editSesion, removeSesion, joinToSesion, 
+         approveParticipanteThunk, rejectParticipanteThunk } from '../features/sesiones/slice';
+import { fetchStudents, switchStudent } from '../features/auth/slice';
 
-// Mock data - materias
-const mockMaterias = [
-  { id: 1, nombre: 'Matemática' },
-  { id: 2, nombre: 'Programación' },
-  { id: 3, nombre: 'Bases de Datos' },
-  { id: 4, nombre: 'Inglés Técnico' }
-];
-
-// Mock data - sesiones
-const initialSesiones = [
-  {
-    id: 1,
-    materiaId: 1,
-    materia: { id: 1, nombre: 'Matemática' },
-    tema: 'Repaso para parcial',
-    tipo: 'virtual',
-    link: 'https://meet.google.com/abc-def-ghi',
-    ubicacion: null,
-    fechaHora: '2026-05-10T14:00:00',
-    duracion: 120,
-    cupos: 10,
-    descripcion: 'Repasaremos los temas 1-5',
-    necesidadAprobacion: true,
-    estado: 'activa',
-    creadorId: 1,
-    participantes: [
-      { id: 1, estudianteId: 2, estudiante: { id: 2, nombre: 'Juan', apellido: 'Pérez' }, estado: 'aprobado' },
-      { id: 2, estudianteId: 3, estudiante: { id: 3, nombre: 'María', apellido: 'López' }, estado: 'pendiente' },
-      { id: 3, estudianteId: 4, estudiante: { id: 4, nombre: 'Ana', apellido: 'Gómez' }, estado: 'pendiente' }
-    ]
-  },
-  {
-    id: 2,
-    materiaId: 2,
-    materia: { id: 2, nombre: 'Programación' },
-    tema: 'Resolución TP3',
-    tipo: 'presencial',
-    link: null,
-    ubicacion: 'Aula 305',
-    fechaHora: '2026-05-12T16:00:00',
-    duracion: 180,
-    cupos: null,
-    descripcion: 'Trabajo práctico 3 en grupo',
-    necesidadAprobacion: false,
-    estado: 'activa',
-    creadorId: 2,
-    participantes: [
-      { id: 4, estudianteId: 1, estudiante: { id: 1, nombre: 'Diego', apellido: 'Fernández' }, estado: 'aprobado' }
-    ]
-  },
-  {
-    id: 3,
-    materiaId: 3,
-    materia: { id: 3, nombre: 'Bases de Datos' },
-    tema: 'Consulta de dudas Unidad 5',
-    tipo: 'virtual',
-    link: 'https://discord.gg/xyz123',
-    ubicacion: null,
-    fechaHora: '2026-05-15T10:00:00',
-    duracion: 90,
-    cupos: 20,
-    descripcion: 'Traer consultas sobre normalización',
-    necesidadAprobacion: false,
-    estado: 'activa',
-    creadorId: 3,
-    participantes: [
-      { id: 5, estudianteId: 1, estudiante: { id: 1, nombre: 'Diego', apellido: 'Fernández' }, estado: 'aprobado' },
-      { id: 6, estudianteId: 2, estudiante: { id: 2, nombre: 'Juan', apellido: 'Pérez' }, estado: 'aprobado' }
-    ]
-  },
-  {
-    id: 4,
-    materiaId: 4,
-    materia: { id: 4, nombre: 'Inglés Técnico' },
-    tema: 'Práctica oral',
-    tipo: 'presencial',
-    link: null,
-    ubicacion: 'Biblioteca central',
-    fechaHora: '2026-05-20T09:00:00',
-    duracion: 120,
-    cupos: 15,
-    descripcion: 'Práctica de speaking para el examen',
-    necesidadAprobacion: true,
-    estado: 'activa',
-    creadorId: 1,
-    participantes: [
-      { id: 7, estudianteId: 3, estudiante: { id: 3, nombre: 'María', apellido: 'López' }, estado: 'pendiente' }
-    ]
-  }
-];
+function ProjectSelector({ user, students, onSwitch }) {
+  return (
+    <Select 
+      value={user?.id || ''} 
+      label="Simular Usuario" 
+      onChange={(e) => onSwitch(e.target.value)}
+      renderValue={(selected) => {
+        const student = students.find(s => s.id === selected);
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Avatar src={student?.avatarUrl} sx={{ width: 24, height: 24 }}>
+              {student?.nombre?.charAt(0)}
+            </Avatar>
+            <Typography variant="body2" fontWeight="500">
+              {student?.nombre} {student?.apellido}
+            </Typography>
+          </Box>
+        );
+      }}
+    >
+      {students.map(s => (
+        <MenuItem key={s.id} value={s.id}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar src={s.avatarUrl} sx={{ width: 28, height: 28 }}>{s.nombre?.charAt(0)}</Avatar>
+            <Typography>{s.nombre} {s.apellido}</Typography>
+          </Box>
+        </MenuItem>
+      ))}
+    </Select>
+  );
+}
 
 const Sesiones = () => {
-  const [sesiones, setSesiones] = useState(initialSesiones);
-  // Use individual state variables for filters
+  const dispatch = useDispatch();
+  const { user, students, loading: loadingStudents } = useSelector(state => state.auth);
+  const { list: sesiones, loading, error } = useSelector(state => state.sesiones);
+
+  // Filters - local state
   const [filterMateria, setFilterMateria] = useState(null);
   const [filterFecha, setFilterFecha] = useState(null);
   const [filterTipo, setFilterTipo] = useState(null);
 
+  // Modals
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSesion, setEditingSesion] = useState(null);
   const [aprobacionModalOpen, setAprobacionModalOpen] = useState(false);
@@ -116,12 +64,24 @@ const Sesiones = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sesionToDelete, setSesionToDelete] = useState(null);
 
+  // Load students on mount
+  useEffect(() => {
+    dispatch(fetchStudents());
+  }, [dispatch]);
+
+  // Load sesiones when user changes
+  useEffect(() => {
+    if (user?.id) {
+      dispatch(fetchSesiones({ usuarioId: user.id }));
+    }
+  }, [user, dispatch]);
+
   // Log when filters change
   useEffect(() => {
     console.log('FILTERS CHANGED:', { materia: filterMateria, fecha: filterFecha, tipo: filterTipo });
   }, [filterMateria, filterFecha, filterTipo]);
 
-  // Filter logic - SIMPLE
+  // Filter logic - matches backend data structure
   const filteredSesiones = sesiones.filter(s => {
     if (s.estado !== 'activa') return false;
 
@@ -131,22 +91,18 @@ const Sesiones = () => {
     // Filter by tipo
     if (filterTipo && s.tipo !== filterTipo) return false;
 
-    // Filter by fecha - SIMPLE STRING COMPARISON
+    // Filter by fecha
     if (filterFecha) {
-      // s.fechaHora is "2026-05-10T14:00:00"
-      // Extract just "2026-05-10"
-      const sesionDate = s.fechaHora.split('T')[0]; // "2026-05-10"
-      const matches = sesionDate === filterFecha;
-      console.log('Date filter:', s.tema, '| sesionDate:', sesionDate, '| filterFecha:', filterFecha, '| matches:', matches);
-      if (!matches) return false;
+      const sesionDate = s.fechaHora?.split('T')[0];
+      if (sesionDate !== filterFecha) return false;
     }
 
     return true;
   });
 
-  console.log('TOTAL:', sesiones.length, '| FILTERED:', filteredSesiones.length);
+  console.log('TOTAL:', sesiones.length, '| FILTERED:', filteredSesiones.length, '| USER:', user?.id);
 
-  // Handler: Create new sesion
+  // Handler: Create new sesion - open modal
   const handleCreate = () => {
     setEditingSesion(null);
     setModalOpen(true);
@@ -161,23 +117,16 @@ const Sesiones = () => {
   // Handler: Save sesion (create or update)
   const handleSave = (sesionData) => {
     if (editingSesion) {
-      // Update existing
-      setSesiones(prev => prev.map(s =>
-        s.id === editingSesion.id
-          ? { ...s, ...sesionData, materia: mockMaterias.find(m => m.id === sesionData.materiaId) }
-          : s
-      ));
+      dispatch(editSesion({ 
+        sesionId: editingSesion.id, 
+        sesionData, 
+        usuarioId: user.id 
+      }));
     } else {
-      // Create new
-      const newSesion = {
-        id: Date.now(),
-        ...sesionData,
-        materia: mockMaterias.find(m => m.id === sesionData.materiaId),
-        estado: 'activa',
-        creadorId: currentUser.id,
-        participantes: []
-      };
-      setSesiones(prev => [...prev, newSesion]);
+      dispatch(addSesion({ 
+        sesionData, 
+        usuarioId: user.id 
+      }));
     }
     setModalOpen(false);
     setEditingSesion(null);
@@ -185,31 +134,16 @@ const Sesiones = () => {
 
   // Handler: Join sesion
   const handleJoin = (sesionId) => {
-    setSesiones(prev => prev.map(s => {
-      if (s.id !== sesionId) return s;
-      const yaInscrito = s.participantes.some(p => p.estudianteId === currentUser.id);
-      if (yaInscrito) return s;
-
-      const nuevoParticipante = {
-        id: Date.now(),
-        estudianteId: currentUser.id,
-        estudiante: { id: currentUser.id, nombre: currentUser.nombre, apellido: currentUser.apellido },
-        estado: s.necesidadAprobacion ? 'pendiente' : 'aprobado'
-      };
-
-      return { ...s, participantes: [...s.participantes, nuevoParticipante] };
-    }));
+    dispatch(joinToSesion({ sesionId, usuarioId: user.id }))
+      .then(() => {
+        // Refresh sesiones to get updated participantes
+        dispatch(fetchSesiones({ usuarioId: user.id }));
+      });
   };
 
-  // Handler: Leave sesion
+  // Handler: Leave sesion - no backend support yet
   const handleLeave = (sesionId) => {
-    setSesiones(prev => prev.map(s => {
-      if (s.id !== sesionId) return s;
-      return {
-        ...s,
-        participantes: s.participantes.filter(p => p.estudianteId !== currentUser.id)
-      };
-    }));
+    console.log('Leave not implemented yet');
   };
 
   // Handler: View participantes (open approval modal)
@@ -220,16 +154,8 @@ const Sesiones = () => {
 
   // Handler: Approve participant
   const handleApprove = (sesionId, participanteId) => {
-    setSesiones(prev => prev.map(s => {
-      if (s.id !== sesionId) return s;
-      return {
-        ...s,
-        participantes: s.participantes.map(p =>
-          p.id === participanteId ? { ...p, estado: 'aprobado' } : p
-        )
-      };
-    }));
-    // Update selectedSesion for modal
+    dispatch(approveParticipanteThunk({ sesionId, participanteId, usuarioId: user.id }));
+    // Update local selectedSesion for modal
     setSelectedSesion(prev => prev ? {
       ...prev,
       participantes: prev.participantes.map(p =>
@@ -240,16 +166,8 @@ const Sesiones = () => {
 
   // Handler: Reject participant
   const handleReject = (sesionId, participanteId) => {
-    setSesiones(prev => prev.map(s => {
-      if (s.id !== sesionId) return s;
-      return {
-        ...s,
-        participantes: s.participantes.map(p =>
-          p.id === participanteId ? { ...p, estado: 'rechazado' } : p
-        )
-      };
-    }));
-    // Update selectedSesion for modal
+    dispatch(rejectParticipanteThunk({ sesionId, participanteId, usuarioId: user.id }));
+    // Update local selectedSesion for modal
     setSelectedSesion(prev => prev ? {
       ...prev,
       participantes: prev.participantes.map(p =>
@@ -266,7 +184,9 @@ const Sesiones = () => {
 
   // Handler: Confirm delete
   const handleConfirmDelete = () => {
-    setSesiones(prev => prev.filter(s => s.id !== sesionToDelete));
+    if (sesionToDelete) {
+      dispatch(removeSesion({ sesionId: sesionToDelete, usuarioId: user.id }));
+    }
     setDeleteDialogOpen(false);
     setSesionToDelete(null);
   };
@@ -295,13 +215,33 @@ const Sesiones = () => {
     setFilterTipo(null);
   };
 
+  if (loadingStudents || !user) {
+    return (
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography>Cargando usuarios...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
-      <Typography variant="h4" gutterBottom>
-        Sesiones de Estudio
-      </Typography>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+          Sesiones de Estudio
+        </Typography>
+        
+        <FormControl size="small" sx={{ minWidth: 220 }}>
+          <InputLabel>Simular Usuario</InputLabel>
+          <ProjectSelector 
+            user={user}
+            students={students}
+            onSwitch={(val) => dispatch(switchStudent(val))}
+          />
+        </FormControl>
+      </Box>
 
-      {/* Filters */}
+      {/* Actions and Filters */}
       <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <Button
           variant="contained"
@@ -319,8 +259,10 @@ const Sesiones = () => {
             onChange={(e) => setFilterMateria(e.target.value || null)}
           >
             <MenuItem value="">Todas</MenuItem>
-            {mockMaterias.map(m => (
-              <MenuItem key={m.id} value={m.id}>{m.nombre}</MenuItem>
+            {sesiones.map(s => (
+              <MenuItem key={s.materiaId} value={s.materiaId}>
+                {s.materia?.nombre || s.materiaId}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -362,25 +304,38 @@ const Sesiones = () => {
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="textSecondary">
             Filtros activos:
-            {filterMateria && ` Materia: ${mockMaterias.find(m => m.id === Number(filterMateria))?.nombre || filterMateria}`}
+            {filterMateria && ` Materia ID: ${filterMateria}`}
             {filterFecha && ` Fecha: ${filterFecha}`}
             {filterTipo && ` Tipo: ${filterTipo}`}
           </Typography>
         </Box>
       )}
 
+      {/* Loading/Error States */}
+      {loading && (
+        <Box sx={{ textAlign: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      )}
+
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>
+          Error: {error}
+        </Typography>
+      )}
+
       {/* Sesiones List */}
-      {filteredSesiones.length === 0 ? (
+      {!loading && filteredSesiones.length === 0 ? (
         <Typography color="textSecondary" sx={{ mt: 4, textAlign: 'center' }}>
           No hay sesiones disponibles con los filtros seleccionados
         </Typography>
-      ) : (
+      ) : !loading && (
         <Box>
           {filteredSesiones.map(sesion => (
             <SesionCard
               key={sesion.id}
               sesion={sesion}
-              currentUser={currentUser}
+              currentUser={user}
               onEdit={handleEdit}
               onJoin={handleJoin}
               onLeave={handleLeave}
@@ -395,7 +350,6 @@ const Sesiones = () => {
       <SesionModal
         open={modalOpen}
         sesion={editingSesion}
-        materias={mockMaterias}
         onSave={handleSave}
         onCancel={handleCloseModal}
       />
@@ -404,6 +358,7 @@ const Sesiones = () => {
       <AprobacionModal
         open={aprobacionModalOpen}
         sesion={selectedSesion}
+        currentUser={user}
         onApprove={handleApprove}
         onReject={handleReject}
         onClose={handleCloseAprobacionModal}
@@ -414,7 +369,7 @@ const Sesiones = () => {
         <DialogTitle>Confirmar Eliminación</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ¿Estás seguro de que deseas eliminar esta sesión? Esta acción no se puede deshacer.
+            ¿Estás seguro de que deseas cancelar esta sesión? Esta acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

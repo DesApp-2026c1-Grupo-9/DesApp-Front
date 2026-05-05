@@ -1,21 +1,31 @@
 import React from 'react';
-import { Card, CardContent, Typography, Chip, Button, Box, Avatar } from '@mui/material';
-import { AccessTime, LocationOn, Videocam, Person, CheckCircle, HourglassEmpty } from '@mui/icons-material';
+import { Card, CardContent, Typography, Chip, Button, Box } from '@mui/material';
+import { AccessTime, LocationOn, Videocam, HourglassEmpty } from '@mui/icons-material';
 
 const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
-  const isCreator = sesion.creadorId === currentUser.id;
-  const participante = sesion.participantes?.find(p => p.estudianteId === currentUser.id);
+  const currentUserId = currentUser?.id;
+  
+  const participante = sesion.participantes?.find(p => 
+    p.estudianteId === currentUserId || p.estudiante?.id === currentUserId
+  );
+  
+  const isCreator = sesion.creadorId === currentUserId;
   const isJoined = !!participante;
   const isPending = participante?.estado === 'pendiente';
   const isApproved = participante?.estado === 'aprobado';
   const approvedCount = sesion.participantes?.filter(p => p.estado === 'aprobado').length || 0;
+  const pendingCount = sesion.participantes?.filter(p => p.estado === 'pendiente').length || 0;
+
+  // Get creator display name
+  const creador = sesion.creador;
+  const creadorNombre = creador 
+    ? `${creador.nombre} ${creador.apellido}`
+    : (sesion.creadorId ? `Usuario ${sesion.creadorId}` : 'Usuario');
 
   const fecha = new Date(sesion.fechaHora).toLocaleString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
     hour: '2-digit', minute: '2-digit'
   });
-
-  const pendingCount = sesion.participantes?.filter(p => p.estado === 'pendiente').length || 0;
 
   return (
     <Card sx={{ mb: 2, transition: '0.3s', '&:hover': { boxShadow: 6 } }}>
@@ -26,7 +36,7 @@ const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewPartic
               {sesion.tema}
             </Typography>
             <Typography color="textSecondary" gutterBottom>
-              {sesion.materia?.nombre} • {fecha}
+              {sesion.materia?.nombre || sesion.materiaId} • {fecha}
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
@@ -70,7 +80,7 @@ const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewPartic
             )}
 
             <Typography variant="caption" color="textSecondary">
-              Creado por: {sesion.creadorId === 1 ? 'Diego Fernández' : 'Otro usuario'}
+              Creado por: {creadorNombre}
             </Typography>
           </Box>
         </Box>

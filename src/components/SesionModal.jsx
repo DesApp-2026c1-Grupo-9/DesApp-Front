@@ -6,8 +6,25 @@ import {
 } from '@mui/material';
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import api from '../api/axiosConfig';
 
-const SesionModal = ({ open, sesion, materias, onSave, onCancel }) => {
+const SesionModal = ({ open, sesion, onSave, onCancel }) => {
+  const [materias, setMaterias] = useState([]);
+
+  useEffect(() => {
+    api.get('/api/materias')
+      .then(res => {
+        const lista = res.data?.data || res.data || [];
+        const mapped = Array.isArray(lista) 
+          ? lista.map(m => ({ id: m.id, nombre: m.nombre }))
+          : [];
+        setMaterias(mapped);
+      })
+      .catch(err => {
+        console.error('Error loading materias:', err);
+        setMaterias([]);
+      });
+  }, []);
   const isEdit = !!sesion;
   const [formData, setFormData] = useState({
     materiaId: '',
