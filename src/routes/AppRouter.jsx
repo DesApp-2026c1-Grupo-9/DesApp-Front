@@ -15,6 +15,7 @@ import { EstudianteDashboard } from '../pages/EstudianteDashboard';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import { TopMenu } from '../components/TopMenu';
+import Materiales from '../pages/Materiales';
 import AuthProvider from '../context/AuthContext';
 
 const AppRouter = () => {
@@ -28,6 +29,7 @@ const AppRouter = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/sesiones" element={<Sesiones />} />
+            <Route path="/materiales" element={<Materiales />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/conexiones" element={<Conexiones />} />
             {/* Rutas del sistema académico - Solo para el estudiante actual */}
