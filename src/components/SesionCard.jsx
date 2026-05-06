@@ -13,6 +13,7 @@ const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewPartic
   const isJoined = !!participante;
   const isPending = participante?.estado === 'pendiente';
   const isApproved = participante?.estado === 'aprobado';
+  const isRejected = participante?.estado === 'rechazado';
   const approvedCount = sesion.participantes?.filter(p => p.estado === 'aprobado').length || 0;
   const pendingCount = sesion.participantes?.filter(p => p.estado === 'pendiente').length || 0;
 
@@ -112,7 +113,7 @@ const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewPartic
             </>
           ) : (
             <>
-              {!isJoined && (
+              {(!isJoined || isRejected) && (
                 <Button
                   size="small"
                   variant="contained"

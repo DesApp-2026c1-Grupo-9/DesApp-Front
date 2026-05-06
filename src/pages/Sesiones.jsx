@@ -11,7 +11,7 @@ import SesionModal from '../components/SesionModal';
 import AprobacionModal from '../components/AprobacionModal';
 
 import { fetchSesiones, addSesion, editSesion, removeSesion, joinToSesion, 
-         approveParticipanteThunk, rejectParticipanteThunk } from '../features/sesiones/slice';
+         approveParticipanteThunk, rejectParticipanteThunk, leaveSesionThunk } from '../features/sesiones/slice';
 import { fetchStudents, switchStudent } from '../features/auth/slice';
 
 function ProjectSelector({ user, students, onSwitch }) {
@@ -135,15 +135,42 @@ const Sesiones = () => {
   // Handler: Join sesion
   const handleJoin = (sesionId) => {
     dispatch(joinToSesion({ sesionId, usuarioId: user.id }))
-      .then(() => {
-        // Refresh sesiones to get updated participantes
+      .then((result) => {
+        // Small delay to ensure DB processes the insert before fetch
+        setTimeout(() => {
+          dispatch(fetchSesiones({ usuarioId: user.id }));
+        }, 200);
+      })
+      .catch((err) => {
+        console.error('Error joining sesion:', err);
         dispatch(fetchSesiones({ usuarioId: user.id }));
       });
   };
 
-  // Handler: Leave sesion - no backend support yet
+  // Handler: Leave sesion
   const handleLeave = (sesionId) => {
-    console.log('Leave not implemented yet');
+    const sesion = sesiones.find(s => s.id === sesionId);
+    const participante = sesion?.participantes?.find(p => 
+      p.estudianteId === user.id || p.estudiante?.id === user.id
+    );
+    
+    if (participante) {
+      dispatch(leaveSesionThunk({ 
+        sesionId, 
+        participanteId: participante.id, 
+        usuarioId: user.id 
+      }))
+        .then((result) => {
+          // Small delay to ensure DB processes the delete before fetch
+          setTimeout(() => {
+            dispatch(fetchSesiones({ usuarioId: user.id }));
+          }, 200);
+        })
+        .catch((err) => {
+          console.error('Error leaving sesion:', err);
+          dispatch(fetchSesiones({ usuarioId: user.id }));
+        });
+    }
   };
 
   // Handler: View participantes (open approval modal)

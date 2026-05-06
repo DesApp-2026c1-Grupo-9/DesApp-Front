@@ -23,3 +23,6 @@ export const approveParticipante = (sesionId, participanteId, usuarioId) =>
 
 export const rejectParticipante = (sesionId, participanteId, usuarioId) => 
   api.put(`/api/sesiones/${sesionId}/participantes/${participanteId}/rechazar?usuarioId=${usuarioId}`);
+
+export const leaveSesion = (sesionId, participanteId, usuarioId) => 
+  api.delete(`/api/sesiones/${sesionId}/participantes/${participanteId}?usuarioId=${usuarioId}`);

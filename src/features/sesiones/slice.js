@@ -7,7 +7,8 @@ import {
   joinSesion,
   getParticipantes,
   approveParticipante,
-  rejectParticipante
+  rejectParticipante,
+  leaveSesion
 } from './service';
 
 const transformBackendSesion = (sesion) => {
@@ -128,6 +129,18 @@ export const rejectParticipanteThunk = createAsyncThunk(
   }
 );
 
+export const leaveSesionThunk = createAsyncThunk(
+  'sesiones/leaveSesion',
+  async ({ sesionId, participanteId, usuarioId }, { rejectWithValue }) => {
+    try {
+      const response = await leaveSesion(sesionId, participanteId, usuarioId);
+      return { sesionId, participante: response.data };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 const sesionesSlice = createSlice({
   name: 'sesiones',
   initialState: {
@@ -220,6 +233,13 @@ const sesionesSlice = createSlice({
           if (idx !== -1) {
             sesion.participantes[idx] = participante;
           }
+        }
+      })
+      .addCase(leaveSesionThunk.fulfilled, (state, action) => {
+        const { sesionId, participante } = action.payload;
+        const sesion = state.list.find(s => s.id === sesionId);
+        if (sesion && sesion.participantes) {
+          sesion.participantes = sesion.participantes.filter(p => p.id !== participante.id);
         }
       });
   }
