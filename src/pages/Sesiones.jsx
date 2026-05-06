@@ -9,6 +9,7 @@ import {
 import SesionCard from '../components/SesionCard';
 import SesionModal from '../components/SesionModal';
 import AprobacionModal from '../components/AprobacionModal';
+import api from '../api/axiosConfig';
 
 import { fetchSesiones, addSesion, editSesion, removeSesion, joinToSesion, 
          approveParticipanteThunk, rejectParticipanteThunk, leaveSesionThunk } from '../features/sesiones/slice';
@@ -55,6 +56,7 @@ const Sesiones = () => {
   const [filterMateria, setFilterMateria] = useState(null);
   const [filterFecha, setFilterFecha] = useState(null);
   const [filterTipo, setFilterTipo] = useState(null);
+  const [materias, setMaterias] = useState([]);
 
   // Modals
   const [modalOpen, setModalOpen] = useState(false);
@@ -68,6 +70,19 @@ const Sesiones = () => {
   useEffect(() => {
     dispatch(fetchStudents());
   }, [dispatch]);
+
+  // Load materias on mount
+  useEffect(() => {
+    api.get('/api/materias')
+      .then(res => {
+        const lista = res.data?.data || res.data || [];
+        setMaterias(Array.isArray(lista) ? lista : []);
+      })
+      .catch(err => {
+        console.error('Error loading materias:', err);
+        setMaterias([]);
+      });
+  }, []);
 
   // Load sesiones when user changes
   useEffect(() => {
@@ -286,9 +301,9 @@ const Sesiones = () => {
             onChange={(e) => setFilterMateria(e.target.value || null)}
           >
             <MenuItem value="">Todas</MenuItem>
-            {sesiones.map(s => (
-              <MenuItem key={s.materiaId} value={s.materiaId}>
-                {s.materia?.nombre || s.materiaId}
+            {materias.map(m => (
+              <MenuItem key={m.id} value={m.id}>
+                {m.nombre}
               </MenuItem>
             ))}
           </Select>
@@ -363,6 +378,7 @@ const Sesiones = () => {
               key={sesion.id}
               sesion={sesion}
               currentUser={user}
+              materias={materias}
               onEdit={handleEdit}
               onJoin={handleJoin}
               onLeave={handleLeave}
