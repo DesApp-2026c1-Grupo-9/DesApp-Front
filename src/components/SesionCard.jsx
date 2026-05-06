@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, Typography, Chip, Button, Box } from '@mui/material';
 import { AccessTime, LocationOn, Videocam, HourglassEmpty } from '@mui/icons-material';
 
-const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
+const SesionCard = ({ sesion, currentUser, materias, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
   const currentUserId = currentUser?.id;
   
   const participante = sesion.participantes?.find(p => 
@@ -16,6 +16,9 @@ const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewPartic
   const isRejected = participante?.estado === 'rechazado';
   const approvedCount = sesion.participantes?.filter(p => p.estado === 'aprobado').length || 0;
   const pendingCount = sesion.participantes?.filter(p => p.estado === 'pendiente').length || 0;
+
+  // Get materia name from prop or fallback to ID
+  const materiaNombre = materias?.find(m => m.id === sesion.materiaId)?.nombre || `Materia ${sesion.materiaId}`;
 
   // Get creator display name
   const creador = sesion.creador;
@@ -37,7 +40,7 @@ const SesionCard = ({ sesion, currentUser, onEdit, onJoin, onLeave, onViewPartic
               {sesion.tema}
             </Typography>
             <Typography color="textSecondary" gutterBottom>
-              {sesion.materia?.nombre || sesion.materiaId} • {fecha}
+              {materiaNombre} • {fecha}
             </Typography>
 
             <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
