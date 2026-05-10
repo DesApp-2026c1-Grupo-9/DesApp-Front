@@ -50,7 +50,7 @@ function ProjectSelector({ user, students, onSwitch }) {
 const Sesiones = () => {
   const dispatch = useDispatch();
   const { user, students, loading: loadingStudents } = useSelector(state => state.auth);
-  const { list: sesiones, loading, error } = useSelector(state => state.sesiones);
+  const { list: sesiones, loading, error, operationLoading } = useSelector(state => state.sesiones);
 
   // Filters - local state
   const [filterMateria, setFilterMateria] = useState(null);
@@ -150,15 +150,9 @@ const Sesiones = () => {
   // Handler: Join sesion
   const handleJoin = (sesionId) => {
     dispatch(joinToSesion({ sesionId, usuarioId: user.id }))
-      .then((result) => {
-        // Small delay to ensure DB processes the insert before fetch
-        setTimeout(() => {
-          dispatch(fetchSesiones({ usuarioId: user.id }));
-        }, 200);
-      })
+      .unwrap()
       .catch((err) => {
         console.error('Error joining sesion:', err);
-        dispatch(fetchSesiones({ usuarioId: user.id }));
       });
   };
 
@@ -175,15 +169,9 @@ const Sesiones = () => {
         participanteId: participante.id, 
         usuarioId: user.id 
       }))
-        .then((result) => {
-          // Small delay to ensure DB processes the delete before fetch
-          setTimeout(() => {
-            dispatch(fetchSesiones({ usuarioId: user.id }));
-          }, 200);
-        })
+        .unwrap()
         .catch((err) => {
           console.error('Error leaving sesion:', err);
-          dispatch(fetchSesiones({ usuarioId: user.id }));
         });
     }
   };
@@ -379,6 +367,7 @@ const Sesiones = () => {
               sesion={sesion}
               currentUser={user}
               materias={materias}
+              operationLoading={operationLoading}
               onEdit={handleEdit}
               onJoin={handleJoin}
               onLeave={handleLeave}
