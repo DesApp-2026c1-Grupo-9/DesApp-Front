@@ -1,9 +1,13 @@
 import React from 'react';
-import { Card, CardContent, Typography, Chip, Button, Box } from '@mui/material';
+import { Card, CardContent, Typography, Chip, Button, Box, CircularProgress } from '@mui/material';
 import { AccessTime, LocationOn, Videocam, HourglassEmpty } from '@mui/icons-material';
 
-const SesionCard = ({ sesion, currentUser, materias, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
+const SesionCard = ({ sesion, currentUser, materias, operationLoading, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
   const currentUserId = currentUser?.id;
+
+  const isThisOperationLoading = operationLoading && 
+    operationLoading.sesionId === sesion.id && 
+    ['joining', 'leaving'].includes(operationLoading.action);
   
   const participante = sesion.participantes?.find(p => 
     p.estudianteId === currentUserId || p.estudiante?.id === currentUserId
@@ -121,7 +125,11 @@ const SesionCard = ({ sesion, currentUser, materias, onEdit, onJoin, onLeave, on
                   size="small"
                   variant="contained"
                   onClick={() => onJoin(sesion.id)}
+                  disabled={isThisOperationLoading}
                 >
+                  {isThisOperationLoading && operationLoading.action === 'joining' ? (
+                    <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
+                  ) : null}
                   Inscribirse
                 </Button>
               )}
@@ -136,7 +144,11 @@ const SesionCard = ({ sesion, currentUser, materias, onEdit, onJoin, onLeave, on
                   variant="outlined"
                   color="error"
                   onClick={() => onLeave(sesion.id)}
+                  disabled={isThisOperationLoading}
                 >
+                  {isThisOperationLoading && operationLoading.action === 'leaving' ? (
+                    <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
+                  ) : null}
                   Abandonar
                 </Button>
               )}

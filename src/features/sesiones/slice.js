@@ -147,7 +147,8 @@ const sesionesSlice = createSlice({
     list: [],
     loading: false,
     error: null,
-    currentUserId: null
+    currentUserId: null,
+    operationLoading: null
   },
   reducers: {
     clearSesionesError: (state) => {
@@ -155,6 +156,9 @@ const sesionesSlice = createSlice({
     },
     setCurrentUser: (state, action) => {
       state.currentUserId = action.payload;
+    },
+    setOperationLoading: (state, action) => {
+      state.operationLoading = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -172,41 +176,47 @@ const sesionesSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(addSesion.pending, (state) => {
-        state.loading = true;
         state.error = null;
+        state.operationLoading = { action: 'creating' };
       })
       .addCase(addSesion.fulfilled, (state, action) => {
-        state.loading = false;
+        state.operationLoading = null;
         state.list.unshift(action.payload);
       })
       .addCase(addSesion.rejected, (state, action) => {
-        state.loading = false;
+        state.operationLoading = null;
         state.error = action.payload;
       })
       .addCase(editSesion.pending, (state) => {
-        state.loading = true;
         state.error = null;
       })
       .addCase(editSesion.fulfilled, (state, action) => {
-        state.loading = false;
+        state.operationLoading = null;
         const index = state.list.findIndex(s => s.id === action.payload.id);
         if (index !== -1) {
           state.list[index] = action.payload;
         }
       })
       .addCase(editSesion.rejected, (state, action) => {
-        state.loading = false;
+        state.operationLoading = null;
         state.error = action.payload;
       })
       .addCase(removeSesion.fulfilled, (state, action) => {
         state.list = state.list.filter(s => s.id !== action.payload);
       })
+      .addCase(joinToSesion.pending, (state, action) => {
+        state.operationLoading = { action: 'joining', sesionId: action.meta.arg.sesionId };
+      })
       .addCase(joinToSesion.fulfilled, (state, action) => {
+        state.operationLoading = null;
         const { sesionId, participante } = action.payload;
         const sesion = state.list.find(s => s.id === sesionId);
         if (sesion) {
           sesion.participantes = [...(sesion.participantes || []), participante];
         }
+      })
+      .addCase(joinToSesion.rejected, (state, action) => {
+        state.operationLoading = null;
       })
       .addCase(fetchParticipantes.fulfilled, (state, action) => {
         const { sesionId, participantes } = action.payload;
@@ -235,15 +245,22 @@ const sesionesSlice = createSlice({
           }
         }
       })
+      .addCase(leaveSesionThunk.pending, (state, action) => {
+        state.operationLoading = { action: 'leaving', sesionId: action.meta.arg.sesionId };
+      })
       .addCase(leaveSesionThunk.fulfilled, (state, action) => {
+        state.operationLoading = null;
         const { sesionId, participante } = action.payload;
         const sesion = state.list.find(s => s.id === sesionId);
         if (sesion && sesion.participantes) {
           sesion.participantes = sesion.participantes.filter(p => p.id !== participante.id);
         }
+      })
+      .addCase(leaveSesionThunk.rejected, (state, action) => {
+        state.operationLoading = null;
       });
   }
 });
 
-export const { clearSesionesError, setCurrentUser } = sesionesSlice.actions;
+export const { clearSesionesError, setCurrentUser, setOperationLoading } = sesionesSlice.actions;
 export default sesionesSlice.reducer;
