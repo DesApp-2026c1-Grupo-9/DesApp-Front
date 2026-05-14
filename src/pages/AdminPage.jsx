@@ -778,11 +778,6 @@ export default function AdminPage() {
 
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto', p: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-        <AdminPanelSettings color="warning" sx={{ fontSize: 32 }} />
-        <Typography variant="h4">Panel de Administración</Typography>
-      </Box>
-
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Tabs value={tab} onChange={(_, v) => setTab(v)}>

@@ -1,31 +1,28 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Box } from '@mui/material';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Perfil from '../pages/Perfil';
 import Sesiones from '../pages/Sesiones';
 import Feed from '../pages/Feed';
 import Conexiones from '../pages/Conexiones';
-// Páginas del sistema académico
 import { StudentProfilePage } from '../pages/StudentProfilePage';
 import { CareerManagementPage } from '../pages/CareerManagementPage';
 import { SubjectManagementPage } from '../pages/SubjectManagementPage';
 import { EstudianteDashboard } from '../pages/EstudianteDashboard';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import { SelectorEstudiante } from '../pages/SelectorEstudiante';
-import { TopMenu } from '../components/TopMenu';
 import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
 import AuthProvider from '../context/AuthContext';
+import PublicLayout from '../layouts/PublicLayout';
+import AdminLayout from '../layouts/AdminLayout';
 
 const AppRouter = () => {
   return (
     <AuthProvider>
       <Router>
-        <TopMenu />
-        <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
-          <Routes>
+        <Routes>
+          <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/perfil" element={<Perfil />} />
@@ -33,17 +30,16 @@ const AppRouter = () => {
             <Route path="/materiales" element={<Materiales />} />
             <Route path="/feed" element={<Feed />} />
             <Route path="/conexiones" element={<Conexiones />} />
-            {/* Rutas del sistema académico - Solo para el estudiante actual */}
             <Route path="/mi-perfil" element={<EstudianteDashboard />} />
             <Route path="/mis-materias" element={<EstudianteMaterias />} />
             <Route path="/carreras" element={<CareerManagementPage />} />
             <Route path="/materias" element={<SubjectManagementPage />} />
-            {/* Panel de Administración */}
-            <Route path="/admin" element={<AdminPage />} />
-            {/* Ruta especial para demostración - cambiar estudiante */}
             <Route path="/demo-selector" element={<SelectorEstudiante />} />
-          </Routes>
-        </Box>
+          </Route>
+          <Route element={<AdminLayout />}>
+            <Route path="/admin" element={<AdminPage />} />
+          </Route>
+        </Routes>
       </Router>
     </AuthProvider>
   );
