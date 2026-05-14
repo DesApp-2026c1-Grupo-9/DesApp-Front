@@ -57,7 +57,7 @@ export const fetchFeed = createAsyncThunk(
   'feed/fetchFeed',
   async (usuarioId, { getState }) => {
     const currentUserId = usuarioId || getState().feed.currentUserId;
-    const response = await getFeed({ usuarioId: currentUserId });
+    const response = await getFeed({ usuarioId: currentUserId, feed: 'contactos' });
     return { novedades: transformBackendList(response.data, currentUserId) };
   }
 );
