@@ -8,7 +8,8 @@ import {
 import {
   PersonAdd, School, MenuBook, Edit, Delete, Add, AdminPanelSettings, Refresh,
 } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/axiosConfig';
 
 function TabPanel({ children, value, index }) {
@@ -18,6 +19,8 @@ function TabPanel({ children, value, index }) {
 function PersonasTab() {
   const [usuarios, setUsuarios] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroRol, setFiltroRol] = useState('todos');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -122,9 +125,26 @@ function PersonasTab() {
         </Box>
       </Box>
 
-      <TextField fullWidth size="small" placeholder="Buscar por nombre, apellido o email..."
-        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 2 }} />
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <TextField fullWidth size="small" placeholder="Buscar por nombre, apellido o email..."
+          value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Rol</InputLabel>
+          <Select value={filtroRol} label="Rol" onChange={(e) => setFiltroRol(e.target.value)}>
+            <MenuItem value="todos">Todos</MenuItem>
+            <MenuItem value="estudiante">Estudiante</MenuItem>
+            <MenuItem value="administrador">Administrador</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Estado</InputLabel>
+          <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
+            <MenuItem value="todos">Todos</MenuItem>
+            <MenuItem value="activo">Activo</MenuItem>
+            <MenuItem value="inactivo">Inactivo</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
@@ -138,24 +158,23 @@ function PersonasTab() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {usuarios
-              .filter((u) =>
-                !searchTerm.trim() ||
-                `${u.nombre} ${u.apellido} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase())
-              )
-              .length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
-                  No hay usuarios registrados
-                </TableCell>
-              </TableRow>
-            ) : (
-              usuarios
-                .filter((u) =>
-                  !searchTerm.trim() ||
-                  `${u.nombre} ${u.apellido} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-                .map((u) => (
+            {(() => {
+              const filtrados = usuarios.filter((u) => {
+                const matchSearch = !searchTerm.trim() ||
+                  `${u.nombre} ${u.apellido} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchRol = filtroRol === 'todos' || u.rol === filtroRol;
+                const matchEstado = filtroEstado === 'todos' ||
+                  (filtroEstado === 'activo' ? u.activo : !u.activo);
+                return matchSearch && matchRol && matchEstado;
+              });
+              return filtrados.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                    No hay usuarios registrados
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filtrados.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -184,7 +203,8 @@ function PersonasTab() {
                   </TableCell>
                 </TableRow>
               ))
-            )}
+              );
+            })()}
           </TableBody>
         </Table>
       </TableContainer>
@@ -267,6 +287,8 @@ function PersonasTab() {
 function CarrerasTab() {
   const [carreras, setCarreras] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroInstituto, setFiltroInstituto] = useState('todos');
+  const [filtroDuracion, setFiltroDuracion] = useState('todos');
   const [open, setOpen] = useState(false);
   const [editCarrera, setEditCarrera] = useState(null);
   const [form, setForm] = useState({ nombre: '', titulo: '', instituto: '', duracion: '' });
@@ -365,9 +387,28 @@ function CarrerasTab() {
         </Button>
       </Box>
 
-      <TextField fullWidth size="small" placeholder="Buscar carrera por nombre, título o instituto..."
-        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 2 }} />
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <TextField fullWidth size="small" placeholder="Buscar carrera por nombre, título o instituto..."
+          value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Instituto</InputLabel>
+          <Select value={filtroInstituto} label="Instituto" onChange={(e) => setFiltroInstituto(e.target.value)}>
+            <MenuItem value="todos">Todos</MenuItem>
+            {[...new Set(carreras.filter(c => c.instituto).map(c => c.instituto))].sort().map((inst) => (
+              <MenuItem key={inst} value={inst}>{inst}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Duración</InputLabel>
+          <Select value={filtroDuracion} label="Duración" onChange={(e) => setFiltroDuracion(e.target.value)}>
+            <MenuItem value="todos">Todas</MenuItem>
+            {[...new Set(carreras.filter(c => c.duracion).map(c => c.duracion))].sort((a, b) => a - b).map((d) => (
+              <MenuItem key={d} value={d}>{d} años</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
 
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
@@ -383,10 +424,13 @@ function CarrerasTab() {
           </TableHead>
           <TableBody>
             {carreras
-              .filter((c) =>
-                !searchTerm.trim() ||
-                `${c.nombre} ${c.titulo} ${c.instituto}`.toLowerCase().includes(searchTerm.toLowerCase())
-              )
+              .filter((c) => {
+                const matchSearch = !searchTerm.trim() ||
+                  `${c.nombre} ${c.titulo} ${c.instituto}`.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchInstituto = filtroInstituto === 'todos' || c.instituto === filtroInstituto;
+                const matchDuracion = filtroDuracion === 'todos' || c.duracion?.toString() === filtroDuracion.toString();
+                return matchSearch && matchInstituto && matchDuracion;
+              })
               .map((c) => (
               <TableRow key={c.id}>
                 <TableCell sx={{ fontWeight: 'medium' }}>{c.nombre}</TableCell>
@@ -522,6 +566,8 @@ function MateriasTab() {
   const [materias, setMaterias] = useState([]);
   const [carreras, setCarreras] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtroAnio, setFiltroAnio] = useState('todos');
+  const [filtroTipo, setFiltroTipo] = useState('todos');
   const [open, setOpen] = useState(false);
   const [editMateria, setEditMateria] = useState(null);
   const [form, setForm] = useState({ nombre: '', anio: '', tipo: 'cuatrimestral' });
@@ -596,9 +642,27 @@ function MateriasTab() {
         </Button>
       </Box>
 
-      <TextField fullWidth size="small" placeholder="Buscar materia por nombre..."
-        value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ mb: 2 }} />
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <TextField fullWidth size="small" placeholder="Buscar materia por nombre..."
+          value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <FormControl size="small" sx={{ minWidth: 120 }}>
+          <InputLabel>Año</InputLabel>
+          <Select value={filtroAnio} label="Año" onChange={(e) => setFiltroAnio(e.target.value)}>
+            <MenuItem value="todos">Todos</MenuItem>
+            {[1, 2, 3, 4, 5].map((a) => (
+              <MenuItem key={a} value={a}>{a}° Año</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Tipo</InputLabel>
+          <Select value={filtroTipo} label="Tipo" onChange={(e) => setFiltroTipo(e.target.value)}>
+            <MenuItem value="todos">Todos</MenuItem>
+            <MenuItem value="cuatrimestral">Cuatrimestral</MenuItem>
+            <MenuItem value="anual">Anual</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">
@@ -613,10 +677,13 @@ function MateriasTab() {
           </TableHead>
           <TableBody>
             {materias
-              .filter((m) =>
-                !searchTerm.trim() ||
-                `${m.nombre} ${m.tipo} ${(m.carreras || []).map(c => c.nombre).join(' ')}`.toLowerCase().includes(searchTerm.toLowerCase())
-              )
+              .filter((m) => {
+                const matchSearch = !searchTerm.trim() ||
+                  `${m.nombre} ${m.tipo} ${(m.carreras || []).map(c => c.nombre).join(' ')}`.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchAnio = filtroAnio === 'todos' || m.anio?.toString() === filtroAnio.toString();
+                const matchTipo = filtroTipo === 'todos' || m.tipo === filtroTipo;
+                return matchSearch && matchAnio && matchTipo;
+              })
               .map((m) => (
               <TableRow key={m.id}>
                 <TableCell sx={{ fontWeight: 'medium' }}>{m.nombre}</TableCell>
@@ -691,7 +758,23 @@ function MateriasTab() {
 
 export default function AdminPage() {
   const [tab, setTab] = useState(0);
-  const { estudianteActual } = useAuth();
+  const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
+
+  if (!user || user.rol !== 'administrador') {
+    return (
+      <Box sx={{ maxWidth: 600, mx: 'auto', p: 6, textAlign: 'center' }}>
+        <AdminPanelSettings sx={{ fontSize: 64, color: 'text.disabled', mb: 2 }} />
+        <Typography variant="h5" gutterBottom>Acceso Denegado</Typography>
+        <Typography color="text.secondary" sx={{ mb: 3 }}>
+          Solo los usuarios administradores pueden acceder al panel de administración.
+        </Typography>
+        <Button variant="contained" onClick={() => navigate('/')}>
+          Volver al inicio
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ maxWidth: 1400, mx: 'auto', p: 3 }}>
