@@ -5,12 +5,15 @@ export const fetchStudents = createAsyncThunk(
   'auth/fetchStudents',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/api/usuarios?rol=estudiante');
+      // Traer todos los usuarios (incluyendo administradores)
+      const response = await api.get('/api/usuarios');
       return response.data.data.map(u => ({
         id: u.id,
         nombre: u.nombre,
         apellido: u.apellido,
         email: u.email,
+        rol: u.rol || 'estudiante',
+        activo: u.activo,
         avatarUrl: u.avatarUrl || `https://ui-avatars.com/api/?name=${u.nombre}+${u.apellido}&background=random`
       }));
     } catch (error) {

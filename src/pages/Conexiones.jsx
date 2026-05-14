@@ -83,7 +83,14 @@ function ProjectSelector({ user, students, onSwitch }) {
             <Avatar src={s.avatar} sx={{ width: 28, height: 28 }}>
               {s.nombre?.charAt(0)}
             </Avatar>
-            <Typography>{s.nombre} {s.apellido}</Typography>
+            <Box>
+              <Typography>{s.nombre} {s.apellido}</Typography>
+              {s.rol === 'administrador' && (
+                <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'bold' }}>
+                  Administrador
+                </Typography>
+              )}
+            </Box>
           </Box>
         </MenuItem>
       ))}

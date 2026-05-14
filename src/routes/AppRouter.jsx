@@ -16,6 +16,7 @@ import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import { TopMenu } from '../components/TopMenu';
 import Materiales from '../pages/Materiales';
+import AdminPage from '../pages/AdminPage';
 import AuthProvider from '../context/AuthContext';
 
 const AppRouter = () => {
@@ -37,6 +38,8 @@ const AppRouter = () => {
             <Route path="/mis-materias" element={<EstudianteMaterias />} />
             <Route path="/carreras" element={<CareerManagementPage />} />
             <Route path="/materias" element={<SubjectManagementPage />} />
+            {/* Panel de Administración */}
+            <Route path="/admin" element={<AdminPage />} />
             {/* Ruta especial para demostración - cambiar estudiante */}
             <Route path="/demo-selector" element={<SelectorEstudiante />} />
           </Routes>
