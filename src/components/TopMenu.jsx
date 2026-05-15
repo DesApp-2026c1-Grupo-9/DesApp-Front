@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppBar, Toolbar, Typography, Button, Box, IconButton, Chip } from '@mui/material';
 import { useNavigate, useLocation, useParams } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks } from '@mui/icons-material';
+import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks, AdminPanelSettings } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
 export function TopMenu() {
@@ -18,6 +18,7 @@ export function TopMenu() {
     { label: 'Conexiones', path: '/conexiones', icon: <Groups /> },
     { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },
     { label: 'Materiales', path: '/materiales', icon: <LibraryBooks /> },
+    { label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> },
     // Demo oculto - cambiar manualmente la URL a /demo-selector
   ];
 
