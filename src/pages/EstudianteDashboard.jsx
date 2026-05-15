@@ -11,12 +11,17 @@ import {
   Grid,
   Alert,
   CircularProgress,
-  Paper
+  Paper,
+  Switch,
+  FormControlLabel,
+  Divider
 } from '@mui/material';
 import {
   Person as PersonIcon,
   School as SchoolIcon,
-  MenuBook as MenuBookIcon
+  MenuBook as MenuBookIcon,
+  Public,
+  Lock
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
@@ -28,6 +33,22 @@ export const EstudianteDashboard = () => {
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [perfilPublico, setPerfilPublico] = useState(true);
+
+  useEffect(() => {
+    if (estudianteActual?.id) {
+      const stored = localStorage.getItem(`perfilPublico_${estudianteActual.id}`);
+      setPerfilPublico(stored !== null ? stored === 'true' : true);
+    }
+  }, [estudianteActual]);
+
+  const handlePerfilPublicoChange = (e) => {
+    const newValue = e.target.checked;
+    setPerfilPublico(newValue);
+    if (estudianteActual?.id) {
+      localStorage.setItem(`perfilPublico_${estudianteActual.id}`, newValue.toString());
+    }
+  };
 
   useEffect(() => {
     const cargarDatosEstudiante = async () => {
@@ -151,6 +172,32 @@ export const EstudianteDashboard = () => {
               </Typography>
               <Typography variant="body2">
                 <strong>Edad:</strong> {estudiante.edad} años
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                {perfilPublico ? <Public color="success" fontSize="small" /> : <Lock fontSize="small" />}
+                <Typography variant="subtitle2">
+                  Visibilidad del Perfil
+                </Typography>
+              </Box>
+             
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={perfilPublico}
+                    onChange={handlePerfilPublicoChange}
+                    size="small"
+                  />
+                }
+                label="Perfil Público"
+              />
+
+               <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                {perfilPublico 
+                  ? 'Tu perfil es visible para todos' 
+                  : 'Tus perfil es visible solo para tus contactos'}
               </Typography>
             </CardContent>
           </Card>
