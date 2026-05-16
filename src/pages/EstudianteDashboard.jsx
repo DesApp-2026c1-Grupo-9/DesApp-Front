@@ -39,6 +39,7 @@ export const EstudianteDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [perfilPublico, setPerfilPublico] = useState(true);
+  const [visibleEnDescubrir, setVisibleEnDescubrir] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const usuarioId = estudianteActual?.usuario?.id;
@@ -52,6 +53,7 @@ export const EstudianteDashboard = () => {
   useEffect(() => {
     if (preferencias) {
       setPerfilPublico(preferencias.perfilPublico ?? true);
+      setVisibleEnDescubrir(preferencias.visibleEnDescubrir ?? true);
     }
   }, [preferencias]);
 
@@ -70,6 +72,26 @@ export const EstudianteDashboard = () => {
         })
         .catch((err) => {
           setPerfilPublico(!newValue);
+          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+        });
+    }
+  };
+
+  const handleVisibleEnDescubrirChange = (e) => {
+    const newValue = e.target.checked;
+    setVisibleEnDescubrir(newValue);
+
+    if (usuarioId) {
+      dispatch(updatePreferencias({
+        estudianteId: usuarioId,
+        preferencias: { visibleEnDescubrir: newValue }
+      }))
+        .unwrap()
+        .then(() => {
+          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+        })
+        .catch((err) => {
+          setVisibleEnDescubrir(!newValue);
           setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
         });
     }
@@ -228,6 +250,24 @@ export const EstudianteDashboard = () => {
                 {perfilPublico 
                   ? 'Tu perfil es visible para todos' 
                   : 'Tus perfil es visible solo para tus contactos'}
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={visibleEnDescubrir}
+                    onChange={handleVisibleEnDescubrirChange}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Aparecer en búsqueda de contactos"
+              />
+
+              <Typography variant="caption" color="textSecondary" display="block">
+                Los demás estudiantes podrán encontrarte por nombre en la sección Descubrir de Conexiones
               </Typography>
             </CardContent>
           </Card>
