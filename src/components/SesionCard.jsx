@@ -123,7 +123,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
                   color="warning"
                   onClick={() => onViewParticipantes(sesion)}
                 >
-                  {visibilidad === 'privado' && pendingCount > 0 
+                  {sesion.necesidadAprobacion && pendingCount > 0 
                     ? `Ver Participantes (${pendingCount} pendientes)` 
                     : 'Ver Participantes'}
                 </Button>
