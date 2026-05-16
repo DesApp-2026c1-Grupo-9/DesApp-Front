@@ -39,6 +39,9 @@ export const EstudianteDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [perfilPublico, setPerfilPublico] = useState(true);
+  const [pubInscripciones, setPubInscripciones] = useState(true);
+  const [pubRegularizaciones, setPubRegularizaciones] = useState(true);
+  const [pubAprobaciones, setPubAprobaciones] = useState(true);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const usuarioId = estudianteActual?.usuario?.id;
@@ -52,6 +55,9 @@ export const EstudianteDashboard = () => {
   useEffect(() => {
     if (preferencias) {
       setPerfilPublico(preferencias.perfilPublico ?? true);
+      setPubInscripciones(preferencias.publicarInscripciones ?? true);
+      setPubRegularizaciones(preferencias.publicarRegularizaciones ?? true);
+      setPubAprobaciones(preferencias.publicarAprobaciones ?? true);
     }
   }, [preferencias]);
 
@@ -70,6 +76,25 @@ export const EstudianteDashboard = () => {
         })
         .catch((err) => {
           setPerfilPublico(!newValue);
+          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+        });
+    }
+  };
+
+  const handlePublishChange = (field, setter) => (e) => {
+    const newValue = e.target.checked;
+    setter(newValue);
+    if (usuarioId) {
+      dispatch(updatePreferencias({
+        estudianteId: usuarioId,
+        preferencias: { [field]: newValue }
+      }))
+        .unwrap()
+        .then(() => {
+          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+        })
+        .catch((err) => {
+          setter(!newValue);
           setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
         });
     }
@@ -228,6 +253,54 @@ export const EstudianteDashboard = () => {
                 {perfilPublico 
                   ? 'Tu perfil es visible para todos' 
                   : 'Tus perfil es visible solo para tus contactos'}
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                <Typography variant="subtitle2">
+                  Publicación automática en el Feed
+                </Typography>
+              </Box>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={pubInscripciones}
+                    onChange={handlePublishChange('publicarInscripciones', setPubInscripciones)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Publicar inscripciones"
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={pubRegularizaciones}
+                    onChange={handlePublishChange('publicarRegularizaciones', setPubRegularizaciones)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Publicar regularizaciones"
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={pubAprobaciones}
+                    onChange={handlePublishChange('publicarAprobaciones', setPubAprobaciones)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Publicar aprobaciones"
+              />
+
+              <Typography variant="caption" color="textSecondary" display="block">
+                Controla qué eventos académicos se publican automáticamente en tu feed de novedades
               </Typography>
             </CardContent>
           </Card>
