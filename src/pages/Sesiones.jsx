@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography, Button, Box, FormControl, InputLabel, Select, MenuItem,
   TextField, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
-  DialogContentText, Avatar
+  DialogContentText, Avatar, Tabs, Tab, FormControlLabel, Checkbox
 } from '@mui/material';
 import SesionCard from '../components/SesionCard';
 import SesionModal from '../components/SesionModal';
@@ -65,6 +65,11 @@ const Sesiones = () => {
   const [filterTipo, setFilterTipo] = useState(null);
   const [materias, setMaterias] = useState([]);
 
+  // Tab filters
+  const [activeTab, setActiveTab] = useState('todas');
+  const [showPastEvents, setShowPastEvents] = useState(false);
+  const [misMateriasIds, setMisMateriasIds] = useState([]);
+
   // Modals
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSesion, setEditingSesion] = useState(null);
@@ -104,17 +109,46 @@ const Sesiones = () => {
     console.log('FILTERS CHANGED:', { materia: filterMateria, fecha: filterFecha, tipo: filterTipo });
   }, [filterMateria, filterFecha, filterTipo]);
 
+  // Fetch materias IDs when tab changes to MIS MATERIAS
+  useEffect(() => {
+    if (activeTab === 'misMaterias' && user?.id) {
+      api.get(`/api/estudiantes/${user.id}/materias-ids`)
+        .then(res => {
+          const ids = res.data?.data || [];
+          setMisMateriasIds(ids);
+        })
+        .catch(err => {
+          console.error('Error fetching user materias:', err);
+          setMisMateriasIds([]);
+        });
+    } else if (activeTab !== 'misMaterias') {
+      setMisMateriasIds([]);
+    }
+  }, [activeTab, user]);
+
   // Filter logic - backend handles visibility, frontend just filters by materia/tipo/fecha
+  const today = new Date().toISOString().split('T')[0];
   const filteredSesiones = sesiones.filter(s => {
+    // Past events filter (date only)
+    if (!showPastEvents) {
+      const sesionDate = s.fechaHora?.split('T')[0];
+      if (sesionDate < today) return false;
+    }
+
+    // Estado filter
     if (s.estado !== 'activa') return false;
 
-    // Filter by materia
-    if (filterMateria && s.materiaId !== Number(filterMateria)) return false;
+    // Tab-specific filters
+    if (activeTab === 'misMaterias') {
+      if (!misMateriasIds.includes(s.materiaId)) return false;
+    }
+    if (activeTab === 'misSesiones') {
+      if (s.creadorId !== user.id) return false;
+    }
 
-    // Filter by tipo
+    // Manual filters (Materia, Fecha, Tipo)
+    if (activeTab !== 'misMaterias' && filterMateria && s.materiaId !== Number(filterMateria)) return false;
     if (filterTipo && s.tipo !== filterTipo) return false;
-
-    // Filter by fecha
     if (filterFecha) {
       const sesionDate = s.fechaHora?.split('T')[0];
       if (sesionDate !== filterFecha) return false;
@@ -289,21 +323,23 @@ const Sesiones = () => {
           Nueva Sesión
         </Button>
 
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Materia</InputLabel>
-          <Select
-            label="Materia"
-            value={filterMateria || ''}
-            onChange={(e) => setFilterMateria(e.target.value || null)}
-          >
-            <MenuItem value="">Todas</MenuItem>
-            {materias.map(m => (
-              <MenuItem key={m.id} value={m.id}>
-                {m.nombre}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        {activeTab === 'todas' && (
+          <FormControl sx={{ minWidth: 200 }}>
+            <InputLabel>Materia</InputLabel>
+            <Select
+              label="Materia"
+              value={filterMateria || ''}
+              onChange={(e) => setFilterMateria(e.target.value || null)}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {materias.map(m => (
+                <MenuItem key={m.id} value={m.id}>
+                  {m.nombre}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         <TextField
           label="Fecha"
@@ -337,6 +373,30 @@ const Sesiones = () => {
         )}
       </Box>
 
+      {/* Past events checkbox - separate line */}
+      <Box sx={{ mb: 2 }}>
+        <FormControlLabel
+          control={
+            <Checkbox 
+              checked={showPastEvents} 
+              onChange={(e) => setShowPastEvents(e.target.checked)} 
+            />
+          }
+          label="Mostrar eventos pasados"
+        />
+      </Box>
+
+      {/* Tab bar */}
+      <Tabs 
+        value={activeTab} 
+        onChange={(e, v) => setActiveTab(v)}
+        sx={{ mb: 2 }}
+      >
+        <Tab value="todas" label="TODAS LAS SESIONES" />
+        <Tab value="misMaterias" label="MIS MATERIAS" />
+        <Tab value="misSesiones" label="MIS SESIONES" />
+      </Tabs>
+
       {/* Active Filters Display */}
       {(filterMateria || filterFecha || filterTipo) && (
         <Box sx={{ mb: 2 }}>
@@ -363,7 +423,11 @@ const Sesiones = () => {
       )}
 
       {/* Sesiones List */}
-      {!loading && filteredSesiones.length === 0 ? (
+      {activeTab === 'misMaterias' && misMateriasIds.length === 0 ? (
+        <Typography color="textSecondary" sx={{ mt: 4, textAlign: 'center' }}>
+          No estás anotado en ninguna carrera
+        </Typography>
+      ) : !loading && filteredSesiones.length === 0 ? (
         <Typography color="textSecondary" sx={{ mt: 4, textAlign: 'center' }}>
           No hay sesiones disponibles con los filtros seleccionados
         </Typography>
