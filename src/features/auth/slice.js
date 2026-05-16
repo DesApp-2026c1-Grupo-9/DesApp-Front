@@ -15,6 +15,7 @@ export const fetchStudents = createAsyncThunk(
         activo: u.activo,
         avatarUrl: u.avatarUrl || `https://ui-avatars.com/api/?name=${u.nombre}+${u.apellido}&background=random`,
         perfilPublico: u.perfilPublico ?? true,
+        visibleEnDescubrir: u.visibleEnDescubrir ?? true,
         conexiones: []
       }));
     } catch (error) {
