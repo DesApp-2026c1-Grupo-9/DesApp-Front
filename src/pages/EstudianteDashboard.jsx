@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Typography,
@@ -14,7 +15,8 @@ import {
   Paper,
   Switch,
   FormControlLabel,
-  Divider
+  Divider,
+  Snackbar
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -25,29 +27,56 @@ import {
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 
 export const EstudianteDashboard = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { estudianteActual, loading: authLoading } = useAuth();
+  const { preferencias, loadingPreferencias, errorPreferencias } = useSelector(state => state.auth);
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [perfilPublico, setPerfilPublico] = useState(true);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const usuarioId = estudianteActual?.usuario?.id;
 
   useEffect(() => {
-    if (estudianteActual?.id) {
-      const stored = localStorage.getItem(`perfilPublico_${estudianteActual.id}`);
-      setPerfilPublico(stored !== null ? stored === 'true' : true);
+    if (usuarioId) {
+      dispatch(fetchPreferencias(usuarioId));
     }
-  }, [estudianteActual]);
+  }, [usuarioId, dispatch]);
+
+  useEffect(() => {
+    if (preferencias) {
+      setPerfilPublico(preferencias.perfilPublico ?? true);
+    }
+  }, [preferencias]);
 
   const handlePerfilPublicoChange = (e) => {
     const newValue = e.target.checked;
     setPerfilPublico(newValue);
-    if (estudianteActual?.id) {
-      localStorage.setItem(`perfilPublico_${estudianteActual.id}`, newValue.toString());
+
+    if (usuarioId) {
+      dispatch(updatePreferencias({
+        estudianteId: usuarioId,
+        preferencias: { perfilPublico: newValue }
+      }))
+        .unwrap()
+        .then(() => {
+          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+        })
+        .catch((err) => {
+          setPerfilPublico(!newValue);
+          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+        });
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   useEffect(() => {
@@ -189,6 +218,7 @@ export const EstudianteDashboard = () => {
                     checked={perfilPublico}
                     onChange={handlePerfilPublicoChange}
                     size="small"
+                    disabled={loadingPreferencias}
                   />
                 }
                 label="Perfil Público"
@@ -280,6 +310,17 @@ export const EstudianteDashboard = () => {
           </Card>
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
