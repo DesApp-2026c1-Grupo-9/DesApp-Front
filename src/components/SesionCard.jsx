@@ -116,14 +116,16 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
               >
                 Eliminar
               </Button>
-              {pendingCount > 0 && (
+              {isCreator && (
                 <Button
                   size="small"
                   variant="contained"
                   color="warning"
                   onClick={() => onViewParticipantes(sesion)}
                 >
-                  Ver Participantes ({pendingCount} pendientes)
+                  {visibilidad === 'privado' && pendingCount > 0 
+                    ? `Ver Participantes (${pendingCount} pendientes)` 
+                    : 'Ver Participantes'}
                 </Button>
               )}
             </>
