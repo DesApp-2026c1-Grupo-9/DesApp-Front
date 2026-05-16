@@ -1,8 +1,8 @@
 import React from 'react';
 import { Card, CardContent, Typography, Chip, Button, Box, CircularProgress } from '@mui/material';
-import { AccessTime, LocationOn, Videocam, HourglassEmpty } from '@mui/icons-material';
+import { AccessTime, LocationOn, Videocam, HourglassEmpty, Public, Group, Lock } from '@mui/icons-material';
 
-const SesionCard = ({ sesion, currentUser, materias, operationLoading, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
+const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilidad, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
   const currentUserId = currentUser?.id;
 
   const isThisOperationLoading = operationLoading && 
@@ -68,6 +68,15 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, onEdit, o
               />
               {sesion.necesidadAprobacion && (
                 <Chip label="Requiere aprobación" size="small" color="warning" variant="outlined" />
+              )}
+              {visibilidad === 'publico' && (
+                <Chip icon={<Public />} label="Público" size="small" color="success" variant="outlined" />
+              )}
+              {visibilidad === 'contacto' && (
+                <Chip icon={<Group />} label="Contacto" size="small" color="info" variant="outlined" />
+              )}
+              {visibilidad === 'privado' && (
+                <Chip icon={<Lock />} label="Privado" size="small" color="default" variant="outlined" />
               )}
             </Box>
 

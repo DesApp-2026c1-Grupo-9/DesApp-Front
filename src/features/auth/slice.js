@@ -5,7 +5,6 @@ export const fetchStudents = createAsyncThunk(
   'auth/fetchStudents',
   async (_, { rejectWithValue }) => {
     try {
-      // Traer todos los usuarios (incluyendo administradores)
       const response = await api.get('/api/usuarios');
       return response.data.data.map(u => ({
         id: u.id,
@@ -14,8 +13,48 @@ export const fetchStudents = createAsyncThunk(
         email: u.email,
         rol: u.rol || 'estudiante',
         activo: u.activo,
-        avatarUrl: u.avatarUrl || `https://ui-avatars.com/api/?name=${u.nombre}+${u.apellido}&background=random`
+        avatarUrl: u.avatarUrl || `https://ui-avatars.com/api/?name=${u.nombre}+${u.apellido}&background=random`,
+        perfilPublico: u.perfilPublico ?? true,
+        conexiones: []
       }));
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const fetchConexiones = createAsyncThunk(
+  'auth/fetchConexiones',
+  async (usuarioId, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/api/conexiones', {
+        params: { usuarioId }
+      });
+      return response.data.data || [];
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const fetchPreferencias = createAsyncThunk(
+  'auth/fetchPreferencias',
+  async (estudianteId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`/api/novedades/preferencias/${estudianteId}`);
+      return response.data.data || response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const updatePreferencias = createAsyncThunk(
+  'auth/updatePreferencias',
+  async ({ estudianteId, preferencias }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/api/novedades/preferencias/${estudianteId}`, preferencias);
+      return response.data.data || response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -32,6 +71,12 @@ const authSlice = createSlice({
     token: null,
     isAuthenticated: false,
     loadingStudents: false,
+    preferencias: null,
+    loadingPreferencias: false,
+    errorPreferencias: null,
+    conexiones: [],
+    loadingConexiones: false,
+    errorConexiones: null,
   },
   reducers: {
     setCredentials: (state, action) => {
@@ -51,6 +96,21 @@ const authSlice = createSlice({
       if (student) {
         state.user = student;
         localStorage.setItem('mockStudentId', student.id);
+        state.preferencias = null;
+        state.conexiones = [];
+      }
+    },
+    clearPreferencias: (state) => {
+      state.preferencias = null;
+    },
+    clearConexiones: (state) => {
+      state.conexiones = [];
+    },
+    updateStudentProfileVisibility: (state, action) => {
+      const { studentId, perfilPublico } = action.payload;
+      const student = state.students.find(s => s.id === studentId);
+      if (student) {
+        student.perfilPublico = perfilPublico;
       }
     },
   },
@@ -62,16 +122,59 @@ const authSlice = createSlice({
       .addCase(fetchStudents.fulfilled, (state, action) => {
         state.loadingStudents = false;
         state.students = action.payload;
-        // Restaurar usuario previo o usar el primero
         const storedId = parseInt(localStorage.getItem('mockStudentId'), 10);
         const found = action.payload.find(s => s.id === storedId);
         state.user = found || action.payload[0] || null;
       })
-      .addCase(fetchStudents.rejected, (state) => {
+      .addCase(fetchStudents.rejected, (state, action) => {
         state.loadingStudents = false;
+        state.errorStudents = action.payload;
+      })
+      .addCase(fetchConexiones.pending, (state) => {
+        state.loadingConexiones = true;
+        state.errorConexiones = null;
+      })
+      .addCase(fetchConexiones.fulfilled, (state, action) => {
+        state.loadingConexiones = false;
+        state.conexiones = action.payload.map(c => c.contacto.id);
+      })
+      .addCase(fetchConexiones.rejected, (state, action) => {
+        state.loadingConexiones = false;
+        state.errorConexiones = action.payload;
+      })
+      .addCase(fetchPreferencias.pending, (state) => {
+        state.loadingPreferencias = true;
+        state.errorPreferencias = null;
+      })
+      .addCase(fetchPreferencias.fulfilled, (state, action) => {
+        state.loadingPreferencias = false;
+        state.preferencias = action.payload;
+      })
+      .addCase(fetchPreferencias.rejected, (state, action) => {
+        state.loadingPreferencias = false;
+        state.errorPreferencias = action.payload;
+      })
+      .addCase(updatePreferencias.pending, (state) => {
+        state.loadingPreferencias = true;
+        state.errorPreferencias = null;
+      })
+      .addCase(updatePreferencias.fulfilled, (state, action) => {
+        state.loadingPreferencias = false;
+        state.preferencias = action.payload;
+        if (state.user) {
+          state.user.perfilPublico = action.payload.perfilPublico;
+        }
+        const student = state.students.find(s => s.id === state.user?.id);
+        if (student) {
+          student.perfilPublico = action.payload.perfilPublico;
+        }
+      })
+      .addCase(updatePreferencias.rejected, (state, action) => {
+        state.loadingPreferencias = false;
+        state.errorPreferencias = action.payload;
       });
-  },
+  }
 });
 
-export const { setCredentials, logout, switchStudent } = authSlice.actions;
+export const { setCredentials, logout, switchStudent, clearPreferencias, clearConexiones, updateStudentProfileVisibility } = authSlice.actions;
 export default authSlice.reducer;

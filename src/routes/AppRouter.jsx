@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
-import Perfil from '../pages/Perfil';
 import Sesiones from '../pages/Sesiones';
 import Feed from '../pages/Feed';
 import Conexiones from '../pages/Conexiones';
@@ -25,7 +24,6 @@ const AppRouter = () => {
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/perfil" element={<Perfil />} />
             <Route path="/sesiones" element={<Sesiones />} />
             <Route path="/materiales" element={<Materiales />} />
             <Route path="/feed" element={<Feed />} />

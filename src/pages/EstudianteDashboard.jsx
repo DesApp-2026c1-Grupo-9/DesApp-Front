@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Typography,
@@ -11,23 +12,72 @@ import {
   Grid,
   Alert,
   CircularProgress,
-  Paper
+  Paper,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Snackbar
 } from '@mui/material';
 import {
   Person as PersonIcon,
   School as SchoolIcon,
-  MenuBook as MenuBookIcon
+  MenuBook as MenuBookIcon,
+  Public,
+  Lock
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 
 export const EstudianteDashboard = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { estudianteActual, loading: authLoading } = useAuth();
+  const { preferencias, loadingPreferencias, errorPreferencias } = useSelector(state => state.auth);
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [perfilPublico, setPerfilPublico] = useState(true);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const usuarioId = estudianteActual?.usuario?.id;
+
+  useEffect(() => {
+    if (usuarioId) {
+      dispatch(fetchPreferencias(usuarioId));
+    }
+  }, [usuarioId, dispatch]);
+
+  useEffect(() => {
+    if (preferencias) {
+      setPerfilPublico(preferencias.perfilPublico ?? true);
+    }
+  }, [preferencias]);
+
+  const handlePerfilPublicoChange = (e) => {
+    const newValue = e.target.checked;
+    setPerfilPublico(newValue);
+
+    if (usuarioId) {
+      dispatch(updatePreferencias({
+        estudianteId: usuarioId,
+        preferencias: { perfilPublico: newValue }
+      }))
+        .unwrap()
+        .then(() => {
+          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+        })
+        .catch((err) => {
+          setPerfilPublico(!newValue);
+          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+        });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
 
   useEffect(() => {
     const cargarDatosEstudiante = async () => {
@@ -152,6 +202,33 @@ export const EstudianteDashboard = () => {
               <Typography variant="body2">
                 <strong>Edad:</strong> {estudiante.edad} años
               </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                {perfilPublico ? <Public color="success" fontSize="small" /> : <Lock fontSize="small" />}
+                <Typography variant="subtitle2">
+                  Visibilidad del Perfil
+                </Typography>
+              </Box>
+             
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={perfilPublico}
+                    onChange={handlePerfilPublicoChange}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Perfil Público"
+              />
+
+               <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                {perfilPublico 
+                  ? 'Tu perfil es visible para todos' 
+                  : 'Tus perfil es visible solo para tus contactos'}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -233,6 +310,17 @@ export const EstudianteDashboard = () => {
           </Card>
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

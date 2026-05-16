@@ -13,7 +13,7 @@ import api from '../api/axiosConfig';
 
 import { fetchSesiones, addSesion, editSesion, removeSesion, joinToSesion, 
          approveParticipanteThunk, rejectParticipanteThunk, leaveSesionThunk } from '../features/sesiones/slice';
-import { fetchStudents, switchStudent } from '../features/auth/slice';
+import { fetchStudents, fetchConexiones, switchStudent } from '../features/auth/slice';
 
 function ProjectSelector({ user, students, onSwitch }) {
   return (
@@ -56,7 +56,7 @@ function ProjectSelector({ user, students, onSwitch }) {
 
 const Sesiones = () => {
   const dispatch = useDispatch();
-  const { user, students, loading: loadingStudents } = useSelector(state => state.auth);
+  const { user, students, conexiones, loading: loadingStudents } = useSelector(state => state.auth);
   const { list: sesiones, loading, error, operationLoading } = useSelector(state => state.sesiones);
 
   // Filters - local state
@@ -95,6 +95,7 @@ const Sesiones = () => {
   useEffect(() => {
     if (user?.id) {
       dispatch(fetchSesiones({ usuarioId: user.id }));
+      dispatch(fetchConexiones(user.id));
     }
   }, [user, dispatch]);
 
@@ -103,7 +104,7 @@ const Sesiones = () => {
     console.log('FILTERS CHANGED:', { materia: filterMateria, fecha: filterFecha, tipo: filterTipo });
   }, [filterMateria, filterFecha, filterTipo]);
 
-  // Filter logic - matches backend data structure
+  // Filter logic - backend handles visibility, frontend just filters by materia/tipo/fecha
   const filteredSesiones = sesiones.filter(s => {
     if (s.estado !== 'activa') return false;
 
@@ -368,20 +369,32 @@ const Sesiones = () => {
         </Typography>
       ) : !loading && (
         <Box>
-          {filteredSesiones.map(sesion => (
-            <SesionCard
-              key={sesion.id}
-              sesion={sesion}
-              currentUser={user}
-              materias={materias}
-              operationLoading={operationLoading}
-              onEdit={handleEdit}
-              onJoin={handleJoin}
-              onLeave={handleLeave}
-              onViewParticipantes={handleViewParticipantes}
-              onDelete={handleDeleteClick}
-            />
-          ))}
+          {filteredSesiones.map(sesion => {
+            const creator = students.find(st => st.id === sesion.creadorId);
+            const creatorPublico = creator?.perfilPublico ?? true;
+            const esContacto = conexiones.includes(sesion.creadorId);
+            const isCreator = sesion.creadorId === user?.id;
+            let visibilidad = 'publico';
+            if (!creatorPublico) {
+              visibilidad = isCreator ? 'privado' : 'contacto';
+            }
+
+            return (
+              <SesionCard
+                key={sesion.id}
+                sesion={sesion}
+                currentUser={user}
+                materias={materias}
+                operationLoading={operationLoading}
+                visibilidad={visibilidad}
+                onEdit={handleEdit}
+                onJoin={handleJoin}
+                onLeave={handleLeave}
+                onViewParticipantes={handleViewParticipantes}
+                onDelete={handleDeleteClick}
+              />
+            );
+          })}
         </Box>
       )}
 
