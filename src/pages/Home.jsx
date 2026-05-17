@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -30,12 +31,14 @@ import {
   PlayArrow,
   Warning,
   Assignment,
-  Event
+  Event,
+  AdminPanelSettings
 } from '@mui/icons-material';
 
 const Home = () => {
   const navigate = useNavigate();
   const { estudianteActual, loading: authLoading } = useAuth();
+  const { user } = useSelector((state) => state.auth);
   const [estudianteInfo, setEstudianteInfo] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +84,37 @@ const Home = () => {
       loadStudentData();
     }
   }, [estudianteActual]);
+
+  const esAdmin =
+    user?.rol === 'administrador' ||
+    String(user?.nombre || '').toLowerCase().includes('admin') ||
+    String(user?.apellido || '').toLowerCase().includes('admin');
+
+  if (esAdmin) {
+    return (
+      <Box sx={{ maxWidth: 1400, mx: 'auto', p: 3 }}>
+        <Box sx={{ mb: 4 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Box display="flex" alignItems="center">
+              <Avatar
+                sx={{ width: 80, height: 80, mr: 3, bgcolor: 'primary.main' }}
+              >
+                <AdminPanelSettings sx={{ fontSize: 40 }} />
+              </Avatar>
+              <Box>
+                <Typography variant="h3" gutterBottom>
+                  ¡Bienvenido, {user?.nombre || 'Admin Inicial'}!
+                </Typography>
+                <Typography variant="h6" color="text.secondary">
+                  Panel de administracion del sistema
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    );
+  }
 
   // Loading state
   if (authLoading || loading) {

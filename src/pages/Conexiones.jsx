@@ -17,9 +17,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
   Tabs,
   Tab,
   List,
@@ -31,7 +28,6 @@ import {
   Alert,
   Chip,
   Snackbar,
-  MenuItem,
 } from '@mui/material';
 import {
   PersonAdd,
@@ -43,7 +39,7 @@ import {
   HourglassEmpty,
   Search,
 } from '@mui/icons-material';
-import { fetchStudents, switchStudent } from '../features/auth/slice';
+import { fetchStudents } from '../features/auth/slice';
 import {
   fetchConexiones,
   fetchPendientes,
@@ -58,49 +54,6 @@ function TabPanel({ children, value, index }) {
     <div role="tabpanel" hidden={value !== index}>
       {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
-  );
-}
-
-function ProjectSelector({ user, students, onSwitch }) {
-  return (
-    <Select
-      value={user?.id || ''}
-      label="Simular Usuario"
-      onChange={(e) => onSwitch(e.target.value)}
-      renderValue={(selected) => {
-        const student = students.find((s) => s.id === selected);
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src={student?.avatar} sx={{ width: 24, height: 24 }}>
-              {student?.nombre?.charAt(0)}
-            </Avatar>
-            <Typography variant="body2" fontWeight="500">
-              {student?.nombre} {student?.apellido}
-            </Typography>
-          </Box>
-        );
-      }}
-      size="small"
-      sx={{ minWidth: 220 }}
-    >
-      {students.map((s) => (
-        <MenuItem key={s.id} value={s.id}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar src={s.avatar} sx={{ width: 28, height: 28 }}>
-              {s.nombre?.charAt(0)}
-            </Avatar>
-            <Box>
-              <Typography>{s.nombre} {s.apellido}</Typography>
-              {s.rol === 'administrador' && (
-                <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                  Administrador
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </MenuItem>
-      ))}
-    </Select>
   );
 }
 
@@ -234,14 +187,6 @@ export default function Conexiones() {
         <Typography variant="h4" fontWeight="bold" color="primary">
           Conexiones
         </Typography>
-        <FormControl size="small" sx={{ minWidth: 220 }}>
-          <InputLabel>Simular Usuario</InputLabel>
-          <ProjectSelector
-            user={user}
-            students={students}
-            onSwitch={(val) => dispatch(switchStudent(val))}
-          />
-        </FormControl>
       </Box>
 
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>

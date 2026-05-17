@@ -18,9 +18,6 @@ import {
   MenuItem,
   Chip,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
   Collapse,
   List,
   ListItem,
@@ -42,7 +39,7 @@ import api from '../api/axiosConfig';
 // Importaciones de Slices
 import { likeComentario, unlikeComentario } from '../features/feed/comentariosSlice';
 import { fetchFeed, addPost, removePost, toggleLike, editPost } from '../features/feed/slice';
-import { switchStudent, fetchStudents } from '../features/auth/slice';
+import { fetchStudents } from '../features/auth/slice';
 
 const TIPO_EVENTO = {
   INSCRIPCION: 'inscripcion',
@@ -585,7 +582,7 @@ function CreatePostForm({ onSubmit, loading, currentStudent }) {
 export default function Feed() {
   const dispatch = useDispatch();
   const { posts, loading } = useSelector((state) => state.feed);
-  const { user, students, loadingStudents } = useSelector((state) => state.auth);
+  const { user, loadingStudents } = useSelector((state) => state.auth);
 
   useEffect(() => { dispatch(fetchStudents()); }, [dispatch]);
   useEffect(() => { if (user?.id) dispatch(fetchFeed(user.id)); }, [user, dispatch]);
@@ -603,14 +600,6 @@ export default function Feed() {
     <Container sx={{ py: 6, maxWidth: '800px !important' }}>
       <Box sx={{ mb: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="h4" fontWeight="bold" color="primary">Novedades</Typography>
-        <FormControl size="small" sx={{ minWidth: 220 }}>
-          <InputLabel>Simular Usuario</InputLabel>
-          <ProjectSelector 
-            user={user}
-            students={students}
-            onSwitch={(val) => dispatch(switchStudent(val))}
-          />
-        </FormControl>
       </Box>
 
       {user?.id && (
@@ -629,42 +618,5 @@ export default function Feed() {
         />
       ))}
     </Container>
-  );
-}
-
-function ProjectSelector({ user, students, onSwitch }) {
-  return (
-    <Select 
-      value={user?.id || ''} 
-      label="Simular Usuario" 
-      onChange={(e) => onSwitch(e.target.value)}
-      renderValue={(selected) => {
-        const student = students.find(s => s.id === selected);
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src={student?.avatar} sx={{ width: 24, height: 24 }}>{student?.nombre?.charAt(0)}</Avatar>
-            <Typography variant="body2" fontWeight="500">
-              {student?.nombre} {student?.apellido}
-            </Typography>
-          </Box>
-        );
-      }}
-    >
-      {students.map(s => (
-        <MenuItem key={s.id} value={s.id}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar src={s.avatar} sx={{ width: 28, height: 28 }}>{s.nombre.charAt(0)}</Avatar>
-            <Box>
-              <Typography>{s.nombre} {s.apellido}</Typography>
-              {s.rol === 'administrador' && (
-                <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                  Administrador
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </MenuItem>
-      ))}
-    </Select>
   );
 }

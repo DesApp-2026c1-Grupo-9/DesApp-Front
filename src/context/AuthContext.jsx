@@ -13,19 +13,58 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [estudianteActual, setEstudianteActual] = useState(null);
+  const [estudiantesDisponibles, setEstudiantesDisponibles] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const normalizarEstudiantes = (payload) => {
+    if (Array.isArray(payload)) return payload;
+    return payload?.data || [];
+  };
+
+  const cargarEstudiantesDisponibles = async () => {
+    const estudiantesData = await EstudianteService.obtenerTodosEstudiantes();
+    const estudiantes = normalizarEstudiantes(estudiantesData);
+    setEstudiantesDisponibles(estudiantes);
+    return estudiantes;
+  };
+
   useEffect(() => {
-    // Cargar Diego Fernández como estudiante por defecto
+    // Cargar estudiante por defecto y cachear lista para cambios globales de contexto
     const cargarEstudianteActual = async () => {
       try {
         setLoading(true);
-        // Usar la función que busca Diego Fernández automáticamente
-        const estudianteData = await EstudianteService.obtenerEstudianteDefecto();
-        console.log('Datos del estudiante por defecto:', estudianteData);
-        const estudiante = estudianteData.data || estudianteData;
+        const estudiantes = await cargarEstudiantesDisponibles();
+        const usuarioSeleccionadoId = Number(localStorage.getItem('mockStudentId'));
+
+        let estudiante = null;
+
+        if (usuarioSeleccionadoId) {
+          estudiante = estudiantes.find(
+            (e) => Number(e?.usuario?.id) === usuarioSeleccionadoId
+          ) || null;
+        }
+
+        if (!usuarioSeleccionadoId) {
+          estudiante =
+            estudiantes.find(
+              (e) =>
+                e?.usuario?.nombre?.toLowerCase() === 'diego' &&
+                e?.usuario?.apellido?.toLowerCase() === 'fernández'
+            ) || estudiantes[0] || null;
+        }
+
+        if (usuarioSeleccionadoId && !estudiante) {
+          // Caso administrador u otro usuario sin estudiante asociado.
+          setEstudianteActual(null);
+          return;
+        }
+
+        if (!estudiante) {
+          throw new Error('No hay estudiantes disponibles');
+        }
+
         setEstudianteActual(estudiante);
-        console.log('Estudiante cargado:', estudiante.usuario.nombre, estudiante.usuario.apellido);
+        console.log('Estudiante cargado:', estudiante.usuario?.nombre, estudiante.usuario?.apellido);
       } catch (error) {
         console.error('Error al cargar estudiante actual:', error);
         // Si hay error, usar datos de backup actualizados
@@ -66,10 +105,39 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const cambiarEstudiantePorUsuarioId = async (usuarioId) => {
+    try {
+      setLoading(true);
+      const usuarioIdNumero = Number(usuarioId);
+
+      let estudiantes = estudiantesDisponibles;
+      if (!estudiantes.length) {
+        estudiantes = await cargarEstudiantesDisponibles();
+      }
+
+      const estudiante = estudiantes.find(
+        (e) => Number(e?.usuario?.id) === usuarioIdNumero
+      );
+
+      if (!estudiante) {
+        setEstudianteActual(null);
+        return;
+      }
+
+      setEstudianteActual(estudiante);
+    } catch (error) {
+      console.error('Error al cambiar estudiante por usuario:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value = {
     estudianteActual,
+    estudiantesDisponibles,
     loading,
-    cambiarEstudiante
+    cambiarEstudiante,
+    cambiarEstudiantePorUsuarioId
   };
 
   return (

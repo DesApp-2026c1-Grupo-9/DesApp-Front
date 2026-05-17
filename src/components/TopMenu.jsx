@@ -1,13 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, Chip } from '@mui/material';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Avatar,
+} from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks, AdminPanelSettings } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
+import { fetchStudents, switchStudent } from '../features/auth/slice';
 
 export function TopMenu() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { estudianteActual, loading } = useAuth();
+  const dispatch = useDispatch();
+  const { user, students, loadingStudents } = useSelector((state) => state.auth);
+  const { cambiarEstudiantePorUsuarioId } = useAuth();
+
+  useEffect(() => {
+    if (!students?.length) {
+      dispatch(fetchStudents());
+    }
+  }, [dispatch, students?.length]);
+
+  useEffect(() => {
+    if (user?.id) {
+      cambiarEstudiantePorUsuarioId(user.id);
+    }
+  }, [user?.id, cambiarEstudiantePorUsuarioId]);
+
+  const handleSwitchUsuarioGlobal = async (usuarioId) => {
+    const usuarioIdNumero = Number(usuarioId);
+    dispatch(switchStudent(usuarioIdNumero));
+    await cambiarEstudiantePorUsuarioId(usuarioIdNumero);
+  };
 
   const menuItems = [
     { label: 'Inicio', path: '/', icon: <Home /> },
@@ -27,8 +60,50 @@ export function TopMenu() {
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Sistema Académico UNAHUR
-          {/* Nombre de estudiante removido para mayor realismo */}
+
         </Typography>
+
+        <FormControl size="small" sx={{ minWidth: 240, mr: 2 }} disabled={loadingStudents || !students?.length}>
+          <InputLabel>Simular Usuario</InputLabel>
+          <Select
+            value={user?.id || ''}
+            label="Simular Usuario"
+            onChange={(e) => handleSwitchUsuarioGlobal(e.target.value)}
+            renderValue={(selected) => {
+              const student = students.find((s) => s.id === selected);
+              return (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Avatar src={student?.avatarUrl || student?.avatar} sx={{ width: 24, height: 24 }}>
+                    {student?.nombre?.charAt(0)}
+                  </Avatar>
+                  <Typography variant="body2" fontWeight="500">
+                    {student?.nombre} {student?.apellido}
+                  </Typography>
+                </Box>
+              );
+            }}
+          >
+            {students.map((s) => (
+              <MenuItem key={s.id} value={s.id}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Avatar src={s.avatarUrl || s.avatar} sx={{ width: 28, height: 28 }}>
+                    {s.nombre?.charAt(0)}
+                  </Avatar>
+                  <Box>
+                    <Typography>
+                      {s.nombre} {s.apellido}
+                    </Typography>
+                    {s.rol === 'administrador' && (
+                      <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'bold' }}>
+                        Administrador
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         
         <Box sx={{ display: 'flex', gap: 1 }}>
           {menuItems.map((item) => (

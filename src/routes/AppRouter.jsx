@@ -12,6 +12,7 @@ import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
+import AppErrorPage from '../pages/AppErrorPage';
 import AuthProvider from '../context/AuthContext';
 import PublicLayout from '../layouts/PublicLayout';
 import AdminLayout from '../layouts/AdminLayout';
@@ -21,6 +22,7 @@ const AppRouter = () => {
     <AuthProvider>
       <Router>
         <Routes>
+          <Route path="/error" element={<AppErrorPage />} />
           <Route element={<PublicLayout />}>
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />

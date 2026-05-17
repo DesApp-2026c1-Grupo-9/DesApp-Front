@@ -244,7 +244,13 @@ export const EstudianteMaterias = () => {
 
   useEffect(() => {
     const cargarDatos = async () => {
-      if (!estudianteActual?.id) return;
+      if (!estudianteActual?.id) {
+        setEstudiante(null);
+        setSituacionAcademica(null);
+        setError(null);
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);

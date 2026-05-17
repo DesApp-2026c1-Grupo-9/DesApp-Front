@@ -23,7 +23,10 @@ import {
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
   Public,
-  Lock
+  Lock,
+  AdminPanelSettings as AdminPanelSettingsIcon,
+  Group as GroupIcon,
+  DynamicFeed as DynamicFeedIcon
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
@@ -33,7 +36,14 @@ export const EstudianteDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { estudianteActual, loading: authLoading } = useAuth();
-  const { preferencias, loadingPreferencias, errorPreferencias } = useSelector(state => state.auth);
+  const { user, students, preferencias, loadingPreferencias, errorPreferencias } = useSelector(state => state.auth);
+  const esAdmin =
+    user?.rol === 'administrador' ||
+    String(user?.nombre || '').toLowerCase().includes('admin') ||
+    String(user?.apellido || '').toLowerCase().includes('admin');
+  const totalUsuarios = students?.length || 0;
+  const totalEstudiantes = students?.filter((item) => item.rol !== 'administrador').length || 0;
+  const totalAdministradores = students?.filter((item) => item.rol === 'administrador').length || 0;
   
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
@@ -132,10 +142,17 @@ export const EstudianteDashboard = () => {
 
   useEffect(() => {
     const cargarDatosEstudiante = async () => {
-      if (!estudianteActual?.id) return;
+      if (!estudianteActual?.id) {
+        setEstudiante(null);
+        setSituacionAcademica(null);
+        setError(null);
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
+        setError(null);
         const [estudianteData, situacionData] = await Promise.all([
           EstudianteService.obtenerEstudiante(estudianteActual.id),
           EstudianteService.obtenerMateriasEstudiante(estudianteActual.id)
@@ -181,6 +198,122 @@ export const EstudianteDashboard = () => {
       default: return 'default';
     }
   };
+
+  if (esAdmin) {
+    return (
+      <Box p={3}>
+        <Typography variant="h4" gutterBottom>
+          Bienvenido, {user?.nombre || 'Administrador'}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          Panel de administracion del sistema. Usuario activo: {user?.email || 'sin email'}
+        </Typography>
+
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <Card sx={{ height: '100%' }}>
+              <CardContent>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Avatar sx={{ width: 80, height: 80, mr: 2, bgcolor: 'primary.main' }}>
+                    <AdminPanelSettingsIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6">
+                      {user?.nombre || 'Admin Inicial'}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      {user?.rol || 'administrador'}
+                    </Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      ID: {user?.id || '-'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Typography variant="body2" gutterBottom>
+                  <strong>Email:</strong> {user?.email || 'no disponible'}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  <strong>Modo:</strong> Administracion general
+                </Typography>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <Typography variant="subtitle2">
+                    Perfil administrativo
+                  </Typography>
+                </Box>
+
+                <Typography variant="caption" color="textSecondary" display="block" mb={2}>
+                  Este perfil no tiene situacion academica asociada; muestra accesos y control operativo.
+                </Typography>
+
+                <Button fullWidth variant="contained" onClick={() => navigate('/admin')}>
+                  Abrir panel admin
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={8}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={4}>
+                <Paper sx={{ p: 2, textAlign: 'center', height: '100%' }}>
+                  <Typography variant="h4" color="primary.main">
+                    {totalUsuarios}
+                  </Typography>
+                  <Typography variant="caption">Usuarios totales</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Paper sx={{ p: 2, textAlign: 'center', height: '100%' }}>
+                  <Typography variant="h4" color="success.main">
+                    {totalEstudiantes}
+                  </Typography>
+                  <Typography variant="caption">Estudiantes</Typography>
+                </Paper>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Paper sx={{ p: 2, textAlign: 'center', height: '100%' }}>
+                  <Typography variant="h4" color="warning.main">
+                    {totalAdministradores}
+                  </Typography>
+                  <Typography variant="caption">Administradores</Typography>
+                </Paper>
+              </Grid>
+            </Grid>
+
+            <Card sx={{ mt: 2 }}>
+              <CardContent>
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <AdminPanelSettingsIcon color="primary" />
+                  <Typography variant="h6">Accesos rapidos</Typography>
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                  Gestiona carreras, materias y actividad general desde un solo lugar.
+                </Typography>
+                <Box display="flex" gap={1} flexWrap="wrap">
+                  <Button variant="contained" onClick={() => navigate('/carreras')}>
+                    Carreras
+                  </Button>
+                  <Button variant="outlined" onClick={() => navigate('/sesiones')}>
+                    Sesiones
+                  </Button>
+                  <Button variant="outlined" startIcon={<DynamicFeedIcon />} onClick={() => navigate('/feed')}>
+                    Feed
+                  </Button>
+                  <Button variant="outlined" startIcon={<GroupIcon />} onClick={() => navigate('/conexiones')}>
+                    Conexiones
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  }
 
   if (authLoading || loading) {
     return (

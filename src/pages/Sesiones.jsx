@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography, Button, Box, FormControl, InputLabel, Select, MenuItem,
   TextField, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, 
-  DialogContentText, Avatar, Tabs, Tab, FormControlLabel, Checkbox
+  DialogContentText, Tabs, Tab, FormControlLabel, Checkbox
 } from '@mui/material';
 import SesionCard from '../components/SesionCard';
 import SesionModal from '../components/SesionModal';
@@ -13,46 +13,7 @@ import api from '../api/axiosConfig';
 
 import { fetchSesiones, addSesion, editSesion, removeSesion, joinToSesion, 
          approveParticipanteThunk, rejectParticipanteThunk, leaveSesionThunk } from '../features/sesiones/slice';
-import { fetchStudents, fetchConexiones, switchStudent } from '../features/auth/slice';
-
-function ProjectSelector({ user, students, onSwitch }) {
-  return (
-    <Select 
-      value={user?.id || ''} 
-      label="Simular Usuario" 
-      onChange={(e) => onSwitch(e.target.value)}
-      renderValue={(selected) => {
-        const student = students.find(s => s.id === selected);
-        return (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Avatar src={student?.avatarUrl} sx={{ width: 24, height: 24 }}>
-              {student?.nombre?.charAt(0)}
-            </Avatar>
-            <Typography variant="body2" fontWeight="500">
-              {student?.nombre} {student?.apellido}
-            </Typography>
-          </Box>
-        );
-      }}
-    >
-      {students.map(s => (
-        <MenuItem key={s.id} value={s.id}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Avatar src={s.avatarUrl} sx={{ width: 28, height: 28 }}>{s.nombre?.charAt(0)}</Avatar>
-            <Box>
-              <Typography>{s.nombre} {s.apellido}</Typography>
-              {s.rol === 'administrador' && (
-                <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                  Administrador
-                </Typography>
-              )}
-            </Box>
-          </Box>
-        </MenuItem>
-      ))}
-    </Select>
-  );
-}
+import { fetchStudents, fetchConexiones } from '../features/auth/slice';
 
 const Sesiones = () => {
   const dispatch = useDispatch();
@@ -302,15 +263,6 @@ const Sesiones = () => {
         <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
           Sesiones de Estudio
         </Typography>
-        
-        <FormControl size="small" sx={{ minWidth: 220 }}>
-          <InputLabel>Simular Usuario</InputLabel>
-          <ProjectSelector 
-            user={user}
-            students={students}
-            onSwitch={(val) => dispatch(switchStudent(val))}
-          />
-        </FormControl>
       </Box>
 
       {/* Actions and Filters */}
