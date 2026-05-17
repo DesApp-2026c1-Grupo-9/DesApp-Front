@@ -232,7 +232,9 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
   );
 };
 
-const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaId }) => {
+const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaId, material }) => {
+  const isEdit = !!material;
+  
   const [formData, setFormData] = useState({
     tipo: 'file',
     titulo: '',
@@ -248,7 +250,21 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (open) {
+    if (!open) return;
+    
+    if (material) {
+      setFormData({
+        tipo: material.tipo || 'file',
+        titulo: material.titulo || '',
+        descripcion: material.descripcion || '',
+        url: material.url || '',
+        materiaId: material.materiaId || '',
+        tags: material.tags?.map(t => t.nombre || t) || [],
+        archivo: null,
+        nombreArchivo: material.nombreArchivo || '',
+        tamanho: material.tamanho || 0
+      });
+    } else {
       setFormData({
         tipo: 'file',
         titulo: '',
@@ -260,10 +276,10 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
         nombreArchivo: '',
         tamanho: 0
       });
-      setTagInput('');
-      setError('');
     }
-  }, [open, defaultMateriaId]);
+    setTagInput('');
+    setError('');
+  }, [open, defaultMateriaId, material]);
 
   const handleTipoChange = (e) => {
     setFormData({ ...formData, tipo: e.target.value, url: '', archivo: null, nombreArchivo: '', tamanho: 0 });
@@ -316,6 +332,19 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
       setError('El título es obligatorio');
       return;
     }
+    
+    if (isEdit) {
+      onSave({
+        id: material.id,
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        tags: formData.tags
+      });
+      setError('');
+      onClose();
+      return;
+    }
+    
     if (!formData.materiaId) {
       setError('Selecciona una materia');
       return;
@@ -342,11 +371,11 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Agregar Material</DialogTitle>
+      <DialogTitle>{isEdit ? 'Editar Material' : 'Agregar Material'}</DialogTitle>
       <DialogContent>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
           <FormControl>
-            <RadioGroup row value={formData.tipo} onChange={handleTipoChange}>
+            <RadioGroup row value={formData.tipo} onChange={handleTipoChange} disabled={isEdit}>
               <FormControlLabel value="file" control={<Radio />} label="Archivo" />
               <FormControlLabel value="link" control={<Radio />} label="Enlace" />
             </RadioGroup>
@@ -369,7 +398,7 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
             rows={2}
           />
 
-          <FormControl fullWidth>
+          <FormControl fullWidth disabled={isEdit}>
             <InputLabel>Materia</InputLabel>
             <Select
               value={formData.materiaId}
@@ -384,14 +413,22 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
 
           {formData.tipo === 'file' ? (
             <Box>
-              <Button variant="outlined" component="label">
-                Seleccionar archivo
-                <input type="file" hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" onChange={handleFileChange} />
-              </Button>
-              {formData.nombreArchivo && (
-                <Typography variant="body2" sx={{ mt: 1 }}>
-                  {formData.nombreArchivo} ({formatFileSize(formData.tamanho)})
+              {isEdit ? (
+                <Typography variant="body2" color="text.secondary">
+                  Archivo: {formData.nombreArchivo || 'Sin archivo'} ({formatFileSize(formData.tamanho)})
                 </Typography>
+              ) : (
+                <>
+                  <Button variant="outlined" component="label">
+                    Seleccionar archivo
+                    <input type="file" hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" onChange={handleFileChange} />
+                  </Button>
+                  {formData.nombreArchivo && (
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      {formData.nombreArchivo} ({formatFileSize(formData.tamanho)})
+                    </Typography>
+                  )}
+                </>
               )}
             </Box>
           ) : (
@@ -400,6 +437,7 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
               value={formData.url}
               onChange={handleUrlChange}
               fullWidth
+              disabled={isEdit}
               placeholder="https://youtube.com, https://discord.gg/invite/..., etc."
             />
           )}
@@ -425,7 +463,7 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancelar</Button>
-        <Button onClick={handleSubmit} variant="contained">Guardar</Button>
+        <Button onClick={handleSubmit} variant="contained">{isEdit ? 'Actualizar' : 'Guardar'}</Button>
       </DialogActions>
     </Dialog>
   );
@@ -442,15 +480,16 @@ const Materiales = () => {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState(SORT_OPTIONS.FECHA_DESC);
   const [materiaFilter, setMateriaFilter] = useState('');
-  const [uploadOpen, setUploadOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchMateriales({ ...filter, search, sortBy }));
+    dispatch(fetchMateriales({ ...filter, search, sortBy, usuarioId: currentUserId }));
     dispatch(fetchMaterias());
   }, []);
 
   useEffect(() => {
-    dispatch(fetchMateriales({ ...filter, search: search || '', sortBy }));
+    dispatch(fetchMateriales({ ...filter, search: search || '', sortBy, usuarioId: currentUserId }));
   }, [search, sortBy, filter]);
 
   const handleFilterChange = (newFilter) => {
@@ -469,12 +508,22 @@ const Materiales = () => {
     }
   };
 
-  const handleAddMaterial = (data) => {
-    dispatch(addMaterial({
-      ...data,
-      creadorId: currentUserId,
-      creador: { id: currentUserId, nombre: currentUserName }
-    }));
+  const handleDialogSave = (data) => {
+    if (editingMaterial) {
+      dispatch(editMaterial({ 
+        id: data.id, 
+        data: { titulo: data.titulo, descripcion: data.descripcion, tags: data.tags },
+        usuarioId: currentUserId 
+      }));
+    } else {
+      dispatch(addMaterial({
+        ...data,
+        creadorId: currentUserId,
+        creador: { id: currentUserId, nombre: currentUserName }
+      }));
+    }
+    setDialogOpen(false);
+    setEditingMaterial(null);
   };
 
   const handleDeleteMaterial = (id) => {
@@ -482,7 +531,8 @@ const Materiales = () => {
   };
 
   const handleEditMaterial = (material) => {
-    dispatch(editMaterial({ id: material.id, data: material, usuarioId: currentUserId }));
+    setEditingMaterial(material);
+    setDialogOpen(true);
   };
 
   return (
@@ -492,7 +542,7 @@ const Materiales = () => {
         <Button 
           variant="contained" 
           startIcon={<Add />}
-          onClick={() => setUploadOpen(true)}
+          onClick={() => { setEditingMaterial(null); setDialogOpen(true); }}
         >
           Agregar Material
         </Button>
@@ -568,11 +618,12 @@ const Materiales = () => {
       )}
 
 <MaterialUploadDialog
-        open={uploadOpen}
-        onClose={() => setUploadOpen(false)}
-        onSave={handleAddMaterial}
+        open={dialogOpen}
+        onClose={() => { setDialogOpen(false); setEditingMaterial(null); }}
+        onSave={handleDialogSave}
         materias={materias || []}
         defaultMateriaId={materiaFilter || null}
+        material={editingMaterial}
       />
     </Box>
   );
