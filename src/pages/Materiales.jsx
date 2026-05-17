@@ -433,7 +433,7 @@ const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaI
 
 const Materiales = () => {
   const dispatch = useDispatch();
-  const { list: materiales, materias, loading, filter, operationLoading } = useSelector(state => state.materiales);
+  const { list: materiales = [], materias = [], loading, error, filter, operationLoading } = useSelector(state => state.materiales);
   const { user } = useSelector(state => state.auth);
 
   const currentUserId = user?.id || 1;
@@ -521,7 +521,7 @@ const Materiales = () => {
             onChange={handleMateriaChange}
           >
             <MenuItem value="">Todas</MenuItem>
-            {materias.map(m => (
+            {(materias || []).map(m => (
               <MenuItem key={m.id} value={m.id}>{m.nombre} ({m.codigo})</MenuItem>
             ))}
           </Select>
@@ -546,7 +546,9 @@ const Materiales = () => {
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
           <CircularProgress />
         </Box>
-      ) : materiales.length === 0 ? (
+      ) : error ? (
+        <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+      ) : (!materiales || materiales.length === 0) ? (
         <Box sx={{ textAlign: 'center', p: 4 }}>
           <Typography color="text.secondary">
             No se encontraron materiales
@@ -565,11 +567,11 @@ const Materiales = () => {
         ))
       )}
 
-      <MaterialUploadDialog
+<MaterialUploadDialog
         open={uploadOpen}
         onClose={() => setUploadOpen(false)}
         onSave={handleAddMaterial}
-        materias={materias}
+        materias={materias || []}
         defaultMateriaId={materiaFilter || null}
       />
     </Box>
