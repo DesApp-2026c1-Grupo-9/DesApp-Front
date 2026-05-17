@@ -21,11 +21,9 @@ const DiscordIcon = () => (
   <Box component="span" sx={{ 
     display: 'inline-flex', 
     alignItems: 'center',
-    color: '#5865F2',
-    fontWeight: 'bold',
-    fontSize: '1.1rem'
+    fontSize: '1.3rem'
   }}>
-    Discord
+    🎮
   </Box>
 );
 
