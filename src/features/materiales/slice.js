@@ -37,8 +37,7 @@ export const addMaterial = createAsyncThunk(
   'materiales/addMaterial',
   async (materialData, { rejectWithValue }) => {
     try {
-      const response = await createMaterial(materialData);
-      return response.data;
+      return await createMaterial(materialData);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -47,10 +46,9 @@ export const addMaterial = createAsyncThunk(
 
 export const editMaterial = createAsyncThunk(
   'materiales/editMaterial',
-  async ({ id, data }, { rejectWithValue }) => {
+  async ({ id, data, usuarioId }, { rejectWithValue }) => {
     try {
-      const response = await updateMaterial(id, data);
-      return response.data;
+      return await updateMaterial(id, data, usuarioId);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -59,10 +57,9 @@ export const editMaterial = createAsyncThunk(
 
 export const removeMaterial = createAsyncThunk(
   'materiales/removeMaterial',
-  async (id, { rejectWithValue }) => {
+  async ({ id, usuarioId }, { rejectWithValue }) => {
     try {
-      await deleteMaterial(id);
-      return id;
+      return await deleteMaterial(id, usuarioId);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -73,8 +70,7 @@ export const rateMaterialThunk = createAsyncThunk(
   'materiales/rateMaterial',
   async ({ id, value, usuarioId }, { rejectWithValue }) => {
     try {
-      const response = await rateMaterial(id, value, usuarioId);
-      return response.data;
+      return await rateMaterial(id, value, usuarioId);
     } catch (error) {
       return rejectWithValue(error.message);
     }

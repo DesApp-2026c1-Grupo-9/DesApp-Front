@@ -478,11 +478,11 @@ const Materiales = () => {
   };
 
   const handleDeleteMaterial = (id) => {
-    dispatch(removeMaterial(id));
+    dispatch(removeMaterial({ id, usuarioId: currentUserId }));
   };
 
   const handleEditMaterial = (material) => {
-    console.log('Edit material:', material);
+    dispatch(editMaterial({ id: material.id, data: material, usuarioId: currentUserId }));
   };
 
   return (
