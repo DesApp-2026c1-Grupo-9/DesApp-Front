@@ -1,165 +1,628 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  Typography, Box, Accordion, AccordionSummary, AccordionDetails,
-  List, ListItem, ListItemIcon, ListItemText, ListItemButton,
-  Chip, TextField, InputAdornment
+  Typography, Box, TextField, InputAdornment, Select, MenuItem,
+  FormControl, InputLabel, Button, Chip, IconButton, Dialog,
+  DialogTitle, DialogContent, DialogActions, FormControlLabel,
+  Radio, RadioGroup, CircularProgress, Alert
 } from '@mui/material';
 import {
-  ExpandMore, PictureAsPdf, VideoLibrary, Link as LinkIcon,
-  Search
+  Search, Add, PictureAsPdf, VideoLibrary,
+  ThumbUp, ThumbDown, Delete, Edit, Download, OpenInNew,
+  Cloud, GitHub
 } from '@mui/icons-material';
+import {
+  fetchMateriales, fetchMaterias, addMaterial, editMaterial,
+  removeMaterial, rateMaterialThunk, setFilter
+} from '../features/materiales/slice';
+import { SORT_OPTIONS, LINK_TIPO, MAX_FILE_SIZE, isDiscordLink, validateMagicBytes, isValidUrl } from '../features/materiales/constants';
 
-const mockMaterias = [
-  {
-    id: 1,
-    nombre: "Algoritmos y Estructuras de Datos",
-    codigo: "AED-101",
-    profesor: "Dr. Carlos García",
-    recursos: [
-      { id: 1, tipo: "pdf", titulo: "Apuntes de Complejidad Algorítmica", url: "#", fecha: "2026-03-15" },
-      { id: 2, tipo: "pdf", titulo: "Guía de Trabajos Prácticos - Unidad 3", url: "#", fecha: "2026-03-20" },
-      { id: 3, tipo: "video", titulo: "Explicación de Árboles Binarios", url: "https://youtube.com", fecha: "2026-03-10" },
-      { id: 4, tipo: "link", titulo: "Documentación Oficial de Estructuras de Datos", url: "https://docs.python.org", fecha: "2026-02-28" },
-    ]
-  },
-  {
-    id: 2,
-    nombre: "Análisis Matemático I",
-    codigo: "AM1-202",
-    profesor: "Mg. Ana López",
-    recursos: [
-      { id: 5, tipo: "pdf", titulo: "Teoría de Límites y Continuidad", url: "#", fecha: "2026-04-01" },
-      { id: 6, tipo: "pdf", titulo: "Ejercicios Resueltos - Serie 2", url: "#", fecha: "2026-04-05" },
-      { id: 7, tipo: "video", titulo: "Tutorial: Derivadas paso a paso", url: "https://youtube.com", fecha: "2026-03-25" },
-    ]
-  },
-  {
-    id: 3,
-    nombre: "Introducción a la Programación",
-    codigo: "INT-101",
-    profesor: "Lic. Martín Rodríguez",
-    recursos: [
-      { id: 8, tipo: "pdf", titulo: "Sintaxis básica de JavaScript", url: "#", fecha: "2026-02-15" },
-      { id: 9, tipo: "pdf", titulo: "Práctica de Funciones", url: "#", fecha: "2026-02-20" },
-      { id: 10, tipo: "video", titulo: "Introducción a Variables y Tipos de Datos", url: "https://youtube.com", fecha: "2026-02-10" },
-      { id: 11, tipo: "link", titulo: "Recursos adicionales - MDN Web Docs", url: "https://developer.mozilla.org", fecha: "2026-02-05" },
-    ]
-  },
-  {
-    id: 4,
-    nombre: "Sistemas Operativos",
-    codigo: "SO-301",
-    profesor: "Ing. Paula Fernández",
-    recursos: [
-      { id: 12, tipo: "pdf", titulo: "Apuntes de Gestión de Procesos", url: "#", fecha: "2026-03-01" },
-      { id: 13, tipo: "video", titulo: "Video: Concepto de Memoria Virtual", url: "https://youtube.com", fecha: "2026-03-08" },
-    ]
-  }
-];
+const DiscordIcon = () => (
+  <Box component="span" sx={{ 
+    display: 'inline-flex', 
+    alignItems: 'center',
+    fontSize: '1.3rem'
+  }}>
+    🎮
+  </Box>
+);
 
-const getIcono = (tipo) => {
-  switch (tipo) {
-    case 'pdf': return <PictureAsPdf color="error" />;
-    case 'video': return <VideoLibrary color="error" />;
-    case 'link': return <LinkIcon color="primary" />;
-    default: return <LinkIcon />;
+const getLinkIcon = (tipoLink) => {
+  switch (tipoLink) {
+    case LINK_TIPO.YOUTUBE: return <VideoLibrary sx={{ color: '#FF0000' }} />;
+    case LINK_TIPO.DRIVE: return <Cloud sx={{ color: '#4285F4' }} />;
+    case LINK_TIPO.GITHUB: return <GitHub sx={{ color: '#333' }} />;
+    case LINK_TIPO.DISCORD: return <DiscordIcon />;
+    case LINK_TIPO.DROPBOX: return <Cloud sx={{ color: '#0061FF' }} />;
+    default: return <OpenInNew sx={{ color: '#1976d2' }} />;
   }
 };
 
-const getChipColor = (tipo) => {
-  switch (tipo) {
-    case 'pdf': return 'error';
-    case 'video': return 'error';
-    case 'link': return 'primary';
-    default: return 'default';
-  }
+const formatFileSize = (bytes) => {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+};
+
+const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isOwner = currentUserId === material.creadorId;
+  const isDiscord = material.tipoLink === 'discord';
+
+  const totalRatings = material.ratings.upvotes + material.ratings.downvotes;
+  const ratio = totalRatings > 0 
+    ? Math.round((material.ratings.upvotes / totalRatings) * 100) 
+    : null;
+
+  const handleRate = (value) => {
+    onRate(material.id, value);
+  };
+
+  return (
+    <Box sx={{ 
+      border: isDiscord ? '2px solid #5865F2' : '1px solid #e0e0e0',
+      borderRadius: 2,
+      p: 2,
+      mb: 2,
+      backgroundColor: isDiscord ? '#f5f2ff' : '#fff',
+      transition: 'box-shadow 0.2s',
+      '&:hover': { boxShadow: 2 }
+    }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          minWidth: 48,
+          height: 48,
+          borderRadius: 1,
+          backgroundColor: '#f5f5f5'
+        }}>
+          {material.tipo === 'file' ? (
+            <PictureAsPdf color="error" />
+          ) : (
+            getLinkIcon(material.tipoLink)
+          )}
+        </Box>
+
+        <Box sx={{ flex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
+              {material.titulo}
+            </Typography>
+            {isDiscord && (
+              <Chip 
+                icon={<span style={{ fontSize: '0.8rem' }}>🎮</span>}
+                label="Discord"
+                size="small"
+                sx={{ backgroundColor: '#5865F2', color: '#fff' }}
+              />
+            )}
+          </Box>
+
+          {material.descripcion && (
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              {material.descripcion}
+            </Typography>
+          )}
+
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
+            {material.tags.map((tag, idx) => (
+              <Chip key={idx} label={tag.nombre} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+            ))}
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Chip 
+              label={material.materia.nombre} 
+              size="small" 
+              sx={{ backgroundColor: '#e3f2fd' }}
+            />
+            <Typography variant="caption" color="text.secondary">
+              {material.fecha} · {material.creador?.nombre}
+            </Typography>
+            {material.nombreArchivo && (
+              <Typography variant="caption" color="text.secondary">
+                {material.nombreArchivo} ({formatFileSize(material.tamanho)})
+              </Typography>
+            )}
+            {isDiscord && material.discordInfo && (
+              <Typography variant="caption" sx={{ color: '#5865F2', fontWeight: 500 }}>
+                📍 {material.discordInfo.servidor} → {material.discordInfo.canal}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            {material.tipo === 'file' ? (
+              <Button 
+                size="small" 
+                startIcon={<Download />}
+                href={`http://localhost:3001/api/materiales/${material.id}/descargar`}
+                target="_blank"
+              >
+                Descargar
+              </Button>
+            ) : isDiscord ? (
+              <Button 
+                size="small" 
+                variant="contained"
+                sx={{ backgroundColor: '#5865F2', '&:hover': { backgroundColor: '#4752C4' } }}
+                href={material.url}
+                target="_blank"
+                rel="noopener"
+              >
+                Unirse
+              </Button>
+            ) : (
+              <Button 
+                size="small" 
+                startIcon={<OpenInNew />}
+                href={material.url}
+                target="_blank"
+                rel="noopener"
+              >
+                Abrir
+              </Button>
+            )}
+
+            {isOwner && (
+              <>
+                <IconButton size="small" onClick={() => onEdit(material)}>
+                  <Edit fontSize="small" />
+                </IconButton>
+                <IconButton size="small" color="error" onClick={() => setShowDeleteConfirm(true)}>
+                  <Delete fontSize="small" />
+                </IconButton>
+              </>
+            )}
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+            <IconButton 
+              size="small" 
+              onClick={() => handleRate(1)}
+              color={material.userRating === 1 ? 'primary' : 'default'}
+            >
+              <ThumbUp fontSize="small" />
+            </IconButton>
+            <Typography variant="body2" sx={{ minWidth: 30, textAlign: 'center' }}>
+              {material.ratings.upvotes}
+            </Typography>
+            <IconButton 
+              size="small" 
+              onClick={() => handleRate(-1)}
+              color={material.userRating === -1 ? 'error' : 'default'}
+            >
+              <ThumbDown fontSize="small" />
+            </IconButton>
+            <Typography variant="body2" sx={{ minWidth: 30, textAlign: 'center' }}>
+              {material.ratings.downvotes}
+            </Typography>
+            {ratio !== null && (
+              <Chip 
+                label={`${ratio}%`} 
+                size="small" 
+                color={ratio >= 70 ? 'success' : ratio >= 50 ? 'warning' : 'error'}
+                sx={{ ml: 1 }}
+              />
+            )}
+          </Box>
+        </Box>
+      </Box>
+
+      <Dialog open={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>
+        <DialogTitle>Confirmar eliminación</DialogTitle>
+        <DialogContent>
+          <Typography>¿Estás seguro de que deseas eliminar este material?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowDeleteConfirm(false)}>Cancelar</Button>
+          <Button color="error" onClick={() => { onDelete(material.id); setShowDeleteConfirm(false); }}>
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+};
+
+const MaterialUploadDialog = ({ open, onClose, onSave, materias, defaultMateriaId, material }) => {
+  const isEdit = !!material;
+  
+  const [formData, setFormData] = useState({
+    tipo: 'file',
+    titulo: '',
+    descripcion: '',
+    url: '',
+    materiaId: defaultMateriaId || '',
+    tags: [],
+    archivo: null,
+    nombreArchivo: '',
+    tamanho: 0
+  });
+  const [tagInput, setTagInput] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!open) return;
+    
+    if (material) {
+      setFormData({
+        tipo: material.tipo || 'file',
+        titulo: material.titulo || '',
+        descripcion: material.descripcion || '',
+        url: material.url || '',
+        materiaId: material.materiaId || '',
+        tags: material.tags?.map(t => t.nombre || t) || [],
+        archivo: null,
+        nombreArchivo: material.nombreArchivo || '',
+        tamanho: material.tamanho || 0
+      });
+    } else {
+      setFormData({
+        tipo: 'file',
+        titulo: '',
+        descripcion: '',
+        url: '',
+        materiaId: defaultMateriaId || '',
+        tags: [],
+        archivo: null,
+        nombreArchivo: '',
+        tamanho: 0
+      });
+    }
+    setTagInput('');
+    setError('');
+  }, [open, defaultMateriaId, material]);
+
+  const handleTipoChange = (e) => {
+    setFormData({ ...formData, tipo: e.target.value, url: '', archivo: null, nombreArchivo: '', tamanho: 0 });
+  };
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        setError('El archivo supera el límite de 25 MB');
+        return;
+      }
+      const validation = await validateMagicBytes(file);
+      if (!validation.valid) {
+        setError(validation.error);
+        return;
+      }
+      setFormData({ ...formData, archivo: file, nombreArchivo: file.name, tamanho: file.size });
+      setError('');
+    }
+  };
+
+  const handleAddTag = () => {
+    if (tagInput.trim() && !formData.tags.includes(tagInput.trim())) {
+      setFormData({ ...formData, tags: [...formData.tags, tagInput.trim()] });
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (tag) => {
+    setFormData({ ...formData, tags: formData.tags.filter(t => t !== tag) });
+  };
+
+  const handleUrlChange = (e) => {
+    const url = e.target.value;
+    setFormData({ ...formData, url });
+    if (isDiscordLink(url)) {
+      const parts = url.split('/');
+      const inviteCode = parts[parts.length - 1];
+      setFormData(prev => ({
+        ...prev,
+        url,
+        discordInfo: { servidor: 'Servidor de Estudio', canal: 'General' }
+      }));
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!formData.titulo.trim()) {
+      setError('El título es obligatorio');
+      return;
+    }
+    
+    if (isEdit) {
+      onSave({
+        id: material.id,
+        titulo: formData.titulo,
+        descripcion: formData.descripcion,
+        tags: formData.tags
+      });
+      setError('');
+      onClose();
+      return;
+    }
+    
+    if (!formData.materiaId) {
+      setError('Selecciona una materia');
+      return;
+    }
+    if (formData.tipo === 'file' && !formData.archivo && !formData.nombreArchivo) {
+      setError('Selecciona un archivo');
+      return;
+    }
+    if (formData.tipo === 'link') {
+      if (!formData.url.trim()) {
+        setError('Ingresa una URL');
+        return;
+      }
+      if (!isValidUrl(formData.url.trim())) {
+        setError('Ingresa una URL válida (http:// o https://)');
+        return;
+      }
+    }
+    onSave(formData);
+    setFormData({ tipo: 'file', titulo: '', descripcion: '', url: '', materiaId: defaultMateriaId || '', tags: [], archivo: null, nombreArchivo: '', tamanho: 0 });
+    setError('');
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{isEdit ? 'Editar Material' : 'Agregar Material'}</DialogTitle>
+      <DialogContent>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+          <FormControl>
+            <RadioGroup row value={formData.tipo} onChange={handleTipoChange} disabled={isEdit}>
+              <FormControlLabel value="file" control={<Radio />} label="Archivo" />
+              <FormControlLabel value="link" control={<Radio />} label="Enlace" />
+            </RadioGroup>
+          </FormControl>
+
+          <TextField
+            label="Título"
+            value={formData.titulo}
+            onChange={(e) => setFormData({ ...formData, titulo: e.target.value })}
+            fullWidth
+            required
+          />
+
+          <TextField
+            label="Descripción"
+            value={formData.descripcion}
+            onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+            fullWidth
+            multiline
+            rows={2}
+          />
+
+          <FormControl fullWidth disabled={isEdit}>
+            <InputLabel>Materia</InputLabel>
+            <Select
+              value={formData.materiaId}
+              label="Materia"
+              onChange={(e) => setFormData({ ...formData, materiaId: e.target.value })}
+            >
+              {materias.map(m => (
+                <MenuItem key={m.id} value={m.id}>{m.nombre} ({m.codigo})</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+
+          {formData.tipo === 'file' ? (
+            <Box>
+              {isEdit ? (
+                <Typography variant="body2" color="text.secondary">
+                  Archivo: {formData.nombreArchivo || 'Sin archivo'} ({formatFileSize(formData.tamanho)})
+                </Typography>
+              ) : (
+                <>
+                  <Button variant="outlined" component="label">
+                    Seleccionar archivo
+                    <input type="file" hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.zip" onChange={handleFileChange} />
+                  </Button>
+                  {formData.nombreArchivo && (
+                    <Typography variant="body2" sx={{ mt: 1 }}>
+                      {formData.nombreArchivo} ({formatFileSize(formData.tamanho)})
+                    </Typography>
+                  )}
+                </>
+              )}
+            </Box>
+          ) : (
+            <TextField
+              label="URL"
+              value={formData.url}
+              onChange={handleUrlChange}
+              fullWidth
+              disabled={isEdit}
+              placeholder="https://youtube.com, https://discord.gg/invite/..., etc."
+            />
+          )}
+
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <TextField
+              label="Tag"
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
+              size="small"
+            />
+            <Button onClick={handleAddTag} variant="outlined">Agregar</Button>
+          </Box>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {formData.tags.map((tag, idx) => (
+              <Chip key={idx} label={tag} onDelete={() => handleRemoveTag(tag)} size="small" />
+            ))}
+          </Box>
+
+          {error && <Alert severity="error">{error}</Alert>}
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
+        <Button onClick={handleSubmit} variant="contained">{isEdit ? 'Actualizar' : 'Guardar'}</Button>
+      </DialogActions>
+    </Dialog>
+  );
 };
 
 const Materiales = () => {
-  const [busqueda, setBusqueda] = useState('');
+  const dispatch = useDispatch();
+  const { list: materiales = [], materias = [], loading, error, filter, operationLoading } = useSelector(state => state.materiales);
+  const { user } = useSelector(state => state.auth);
 
-  const materiasFiltradas = mockMaterias.filter(materia =>
-    materia.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    materia.codigo.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  const currentUserId = user?.id || 1;
+  const currentUserName = user?.nombre || user?.name || 'Usuario';
+
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState(SORT_OPTIONS.FECHA_DESC);
+  const [materiaFilter, setMateriaFilter] = useState('');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingMaterial, setEditingMaterial] = useState(null);
+
+  useEffect(() => {
+    dispatch(fetchMateriales({ ...filter, search, sortBy, usuarioId: currentUserId }));
+    dispatch(fetchMaterias());
+  }, []);
+
+  useEffect(() => {
+    dispatch(fetchMateriales({ ...filter, search: search || '', sortBy, usuarioId: currentUserId }));
+  }, [search, sortBy, filter]);
+
+  const handleFilterChange = (newFilter) => {
+    dispatch(setFilter(newFilter));
+  };
+
+  const handleMateriaChange = (e) => {
+    const value = e.target.value;
+    setMateriaFilter(value);
+    handleFilterChange({ materiaId: value || null });
+  };
+
+  const handleRate = (id, value) => {
+    if (currentUserId) {
+      dispatch(rateMaterialThunk({ id, value, usuarioId: currentUserId }));
+    }
+  };
+
+  const handleDialogSave = (data) => {
+    if (editingMaterial) {
+      dispatch(editMaterial({ 
+        id: data.id, 
+        data: { titulo: data.titulo, descripcion: data.descripcion, tags: data.tags },
+        usuarioId: currentUserId 
+      }));
+    } else {
+      dispatch(addMaterial({
+        ...data,
+        creadorId: currentUserId,
+        creador: { id: currentUserId, nombre: currentUserName }
+      }));
+    }
+    setDialogOpen(false);
+    setEditingMaterial(null);
+  };
+
+  const handleDeleteMaterial = (id) => {
+    dispatch(removeMaterial({ id, usuarioId: currentUserId }));
+  };
+
+  const handleEditMaterial = (material) => {
+    setEditingMaterial(material);
+    setDialogOpen(true);
+  };
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1000, margin: '0 auto' }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3 }}>
-        Materiales de Estudio
-      </Typography>
+    <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">Materiales de Estudio</Typography>
+        <Button 
+          variant="contained" 
+          startIcon={<Add />}
+          onClick={() => { setEditingMaterial(null); setDialogOpen(true); }}
+        >
+          Agregar Material
+        </Button>
+      </Box>
 
-      <TextField
-        fullWidth
-        variant="outlined"
-        placeholder="Buscar por materia o código..."
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Search />
-            </InputAdornment>
-          ),
-        }}
-        sx={{ mb: 4 }}
-      />
+      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+        <TextField
+          placeholder="Buscar por título, tags o materia..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ flex: 1, minWidth: 250 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search />
+              </InputAdornment>
+            ),
+          }}
+        />
 
-      {materiasFiltradas.length === 0 ? (
-        <Typography color="textSecondary" sx={{ textAlign: 'center', mt: 4 }}>
-          No se encontraron materias
-        </Typography>
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Materia</InputLabel>
+          <Select
+            value={materiaFilter}
+            label="Materia"
+            onChange={handleMateriaChange}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {(materias || []).map(m => (
+              <MenuItem key={m.id} value={m.id}>{m.nombre} ({m.codigo})</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        <FormControl sx={{ minWidth: 180 }}>
+          <InputLabel>Ordenar</InputLabel>
+          <Select
+            value={sortBy}
+            label="Ordenar"
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <MenuItem value={SORT_OPTIONS.FECHA_DESC}>Más recientes</MenuItem>
+            <MenuItem value={SORT_OPTIONS.FECHA_ASC}>Más antiguos</MenuItem>
+            <MenuItem value={SORT_OPTIONS.RATING_DESC}>Mejor valorados</MenuItem>
+            <MenuItem value={SORT_OPTIONS.RATING_ASC}>Peor valorados</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : error ? (
+        <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+      ) : (!materiales || materiales.length === 0) ? (
+        <Box sx={{ textAlign: 'center', p: 4 }}>
+          <Typography color="text.secondary">
+            No se encontraron materiales
+          </Typography>
+        </Box>
       ) : (
-        materiasFiltradas.map((materia) => (
-          <Accordion key={materia.id} sx={{ mb: 2 }}>
-            <AccordionSummary
-              expandIcon={<ExpandMore />}
-              sx={{ backgroundColor: '#f5f5f5' }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 2 }}>
-                <Typography variant="h6" sx={{ flex: 1 }}>
-                  {materia.nombre}
-                </Typography>
-                <Chip label={materia.codigo} size="small" variant="outlined" />
-                <Typography variant="body2" color="textSecondary">
-                  {materia.recursos.length} recursos
-                </Typography>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails>
-              <Typography variant="subtitle2" color="textSecondary" sx={{ mb: 2 }}>
-                Profesor: {materia.profesor}
-              </Typography>
-              <List>
-                {materia.recursos.map((recurso) => (
-                  <ListItem key={recurso.id} disablePadding>
-                    <ListItemButton
-                      component="a"
-                      href={recurso.url}
-                      target="_blank"
-                      rel="noopener"
-                    >
-                      <ListItemIcon sx={{ minWidth: 40 }}>
-                        {getIcono(recurso.tipo)}
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={recurso.titulo}
-                        secondary={recurso.fecha}
-                      />
-                      <Chip
-                        label={recurso.tipo.toUpperCase()}
-                        size="small"
-                        color={getChipColor(recurso.tipo)}
-                        variant="outlined"
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                ))}
-              </List>
-            </AccordionDetails>
-          </Accordion>
+        materiales.map(material => (
+          <MaterialCard
+            key={material.id}
+            material={material}
+            currentUserId={currentUserId}
+            onRate={handleRate}
+            onEdit={handleEditMaterial}
+            onDelete={handleDeleteMaterial}
+          />
         ))
       )}
+
+<MaterialUploadDialog
+        open={dialogOpen}
+        onClose={() => { setDialogOpen(false); setEditingMaterial(null); }}
+        onSave={handleDialogSave}
+        materias={materias || []}
+        defaultMateriaId={materiaFilter || null}
+        material={editingMaterial}
+      />
     </Box>
   );
 };

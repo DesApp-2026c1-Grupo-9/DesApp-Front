@@ -6,6 +6,7 @@ import feedReducer from '../features/feed/slice';
 import conexionesReducer from '../features/conexiones/slice';
 import academicoReducer from '../features/academico/slice';
 import comentariosReducer from '../features/feed/comentariosSlice';
+import materialesReducer from '../features/materiales/slice';
 
 export const store = configureStore({
   reducer: {
@@ -16,5 +17,6 @@ export const store = configureStore({
     conexiones: conexionesReducer,
     academico: academicoReducer,
     comentarios: comentariosReducer,
+    materiales: materialesReducer,
   },
 });
