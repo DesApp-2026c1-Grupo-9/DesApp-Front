@@ -64,9 +64,13 @@ const AprobacionModal = ({ open, sesion, onApprove, onReject, onClose }) => {
           </>
         )}
 
-        {pending.length === 0 && (
+        {sesion.necesidadAprobacion && pending.length === 0 ? (
           <Typography color="textSecondary" sx={{ mb: 2 }}>
             No hay participantes pendientes de aprobación.
+          </Typography>
+        ) : !sesion.necesidadAprobacion && pending.length === 0 && approved.length === 0 && (
+          <Typography color="textSecondary" sx={{ mb: 2 }}>
+            No hay participantes inscriptos.
           </Typography>
         )}
 

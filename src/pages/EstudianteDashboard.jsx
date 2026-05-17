@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Typography,
@@ -11,23 +12,123 @@ import {
   Grid,
   Alert,
   CircularProgress,
-  Paper
+  Paper,
+  Switch,
+  FormControlLabel,
+  Divider,
+  Snackbar
 } from '@mui/material';
 import {
   Person as PersonIcon,
   School as SchoolIcon,
-  MenuBook as MenuBookIcon
+  MenuBook as MenuBookIcon,
+  Public,
+  Lock
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 
 export const EstudianteDashboard = () => {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const { estudianteActual, loading: authLoading } = useAuth();
+  const { preferencias, loadingPreferencias, errorPreferencias } = useSelector(state => state.auth);
+  
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+
+  const [perfilPublico, setPerfilPublico] = useState(true);
+  const [visibleEnDescubrir, setVisibleEnDescubrir] = useState(true);
+  const [pubInscripciones, setPubInscripciones] = useState(true);
+  const [pubRegularizaciones, setPubRegularizaciones] = useState(true);
+  const [pubAprobaciones, setPubAprobaciones] = useState(true);
+  
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const usuarioId = estudianteActual?.usuario?.id;
+
+  useEffect(() => {
+    if (usuarioId) {
+      dispatch(fetchPreferencias(usuarioId));
+    }
+  }, [usuarioId, dispatch]);
+
+  useEffect(() => {
+    if (preferencias) {
+      setPerfilPublico(preferencias.perfilPublico ?? true);
+      setVisibleEnDescubrir(preferencias.visibleEnDescubrir ?? true);
+      setPubInscripciones(preferencias.publicarInscripciones ?? true);
+      setPubRegularizaciones(preferencias.publicarRegularizaciones ?? true);
+      setPubAprobaciones(preferencias.publicarAprobaciones ?? true);
+    }
+  }, [preferencias]);
+
+  const handlePerfilPublicoChange = (e) => {
+    const newValue = e.target.checked;
+    setPerfilPublico(newValue);
+
+    if (usuarioId) {
+      dispatch(updatePreferencias({
+        estudianteId: usuarioId,
+        preferencias: { perfilPublico: newValue }
+      }))
+        .unwrap()
+        .then(() => {
+          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+        })
+        .catch((err) => {
+          setPerfilPublico(!newValue);
+          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+        });
+    }
+  };
+
+  const handleVisibleEnDescubrirChange = (e) => {
+    const newValue = e.target.checked;
+    setVisibleEnDescubrir(newValue);
+
+    if (usuarioId) {
+      dispatch(updatePreferencias({
+        estudianteId: usuarioId,
+        preferencias: { visibleEnDescubrir: newValue }
+      }))
+        .unwrap()
+        .then(() => {
+          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+        })
+        .catch((err) => {
+          setVisibleEnDescubrir(!newValue);
+          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+        });
+    }
+  };
+
+  const handlePublishChange = (field, setter) => (e) => {
+    const newValue = e.target.checked;
+    setter(newValue);
+    if (usuarioId) {
+      dispatch(updatePreferencias({
+        estudianteId: usuarioId,
+        preferencias: { [field]: newValue }
+      }))
+        .unwrap()
+        .then(() => {
+          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+        })
+        .catch((err) => {
+          setter(!newValue);
+          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+        });
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
+  };
 
   useEffect(() => {
     const cargarDatosEstudiante = async () => {
@@ -40,20 +141,18 @@ export const EstudianteDashboard = () => {
           EstudianteService.obtenerMateriasEstudiante(estudianteActual.id)
         ]);
         
-        // Procesar datos del estudiante
         const estudianteInfo = {
           ...estudianteData.data,
           ...estudianteData.data.usuario,
           carreras: estudianteData.data.carreras
         };
         
-        // Procesar situación académica desde la nueva estructura
         const situacionProcesada = {
           carrera: situacionData.data?.carrera?.nombre,
           estadisticas: {
             materiasAprobadas: situacionData.data?.resumen?.aprobadas || 0,
-            materiasRegularizadas: situacionData.data?.resumen?.regularizadas || 0,
-            materiasCursando: 0, // Se puede calcular de las materias si es necesario
+            materiasRegularizaciones: situacionData.data?.resumen?.regularizaciones || 0,
+            materiasCursando: 0,
             totalMaterias: situacionData.data?.resumen?.total || 0
           },
           situacionAcademica: Object.values(situacionData.data?.materiasPorAnio || {}).flat() || []
@@ -83,12 +182,6 @@ export const EstudianteDashboard = () => {
     }
   };
 
-  const verMaterias = () => {
-    navigate('/mis-materias');
-  };
-
-  // Función navegarAOtroEstudiante removida - no es realista
-
   if (authLoading || loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
@@ -115,9 +208,6 @@ export const EstudianteDashboard = () => {
 
   return (
     <Box p={3}>
-      {/* Navegación entre estudiantes - REMOVIDA para mayor realismo */}
-
-      {/* Saludo personalizado */}
       <Typography variant="h4" gutterBottom>
         Bienvenido, {estudiante.nombre} {estudiante.apellido}
       </Typography>
@@ -152,6 +242,101 @@ export const EstudianteDashboard = () => {
               <Typography variant="body2">
                 <strong>Edad:</strong> {estudiante.edad} años
               </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                {perfilPublico ? <Public color="success" fontSize="small" /> : <Lock fontSize="small" />}
+                <Typography variant="subtitle2">
+                  Visibilidad del Perfil
+                </Typography>
+              </Box>
+              
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={perfilPublico}
+                    onChange={handlePerfilPublicoChange}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Perfil Público"
+              />
+
+              <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+                {perfilPublico 
+                  ? 'Tu perfil es visible para todos' 
+                  : 'Tu perfil es visible solo para tus contactos'}
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* Cambios de marcos/Conexiones */}
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={visibleEnDescubrir}
+                    onChange={handleVisibleEnDescubrirChange}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Aparecer en búsqueda de contactos"
+              />
+
+              <Typography variant="caption" color="textSecondary" display="block" mb={2}>
+                Los demás estudiantes podrán encontrarte por nombre en la sección Descubrir de Conexiones
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              {/* Cambios de develop */}
+              <Box display="flex" alignItems="center" gap={1} mb={1}>
+                <Typography variant="subtitle2">
+                  Publicación automática en el Feed
+                </Typography>
+              </Box>
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={pubInscripciones}
+                    onChange={handlePublishChange('publicarInscripciones', setPubInscripciones)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Publicar inscripciones"
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={pubRegularizaciones}
+                    onChange={handlePublishChange('publicarRegularizaciones', setPubRegularizaciones)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Publicar regularizaciones"
+              />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={pubAprobaciones}
+                    onChange={handlePublishChange('publicarAprobaciones', setPubAprobaciones)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Publicar aprobaciones"
+              />
+
+              <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 1 }}>
+                Controla qué eventos académicos se publican automáticamente en tu feed de novedades
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -181,7 +366,7 @@ export const EstudianteDashboard = () => {
                 <Grid item xs={6} sm={4}>
                   <Paper sx={{ p: 2, textAlign: 'center' }}>
                     <Typography variant="h4" color="warning.main">
-                      {situacionAcademica?.estadisticas?.materiasRegularizadas || 0}
+                      {situacionAcademica?.estadisticas?.materiasRegularizaciones || 0}
                     </Typography>
                     <Typography variant="caption">Regularizadas</Typography>
                   </Paper>
@@ -219,7 +404,7 @@ export const EstudianteDashboard = () => {
               </Typography>
               <Box display="flex" flexWrap="wrap" gap={1}>
                 {(situacionAcademica?.situacionAcademica || [])
-                  .slice(0, 8) // Mostrar solo las primeras 8
+                  .slice(0, 8)
                   .map((materia, index) => (
                   <Chip
                     key={index}
@@ -233,6 +418,17 @@ export const EstudianteDashboard = () => {
           </Card>
         </Grid>
       </Grid>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
