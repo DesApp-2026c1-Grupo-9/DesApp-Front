@@ -143,8 +143,8 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
               <Button 
                 size="small" 
                 startIcon={<Download />}
-                href={material.url}
-                download
+                href={`http://localhost:3001/api/materiales/${material.id}/descargar`}
+                target="_blank"
               >
                 Descargar
               </Button>
