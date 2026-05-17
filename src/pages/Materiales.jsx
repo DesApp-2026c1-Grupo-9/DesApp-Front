@@ -111,13 +111,13 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 1 }}>
             {material.tags.map((tag, idx) => (
-              <Chip key={idx} label={tag} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+              <Chip key={idx} label={tag.nombre} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
             ))}
           </Box>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
             <Chip 
-              label={material.materia.codigo} 
+              label={material.materia.nombre} 
               size="small" 
               sx={{ backgroundColor: '#e3f2fd' }}
             />
