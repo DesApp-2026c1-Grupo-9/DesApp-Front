@@ -152,7 +152,7 @@ export const EstudianteDashboard = () => {
           estadisticas: {
             materiasAprobadas: situacionData.data?.resumen?.aprobadas || 0,
             materiasRegularizaciones: situacionData.data?.resumen?.regularizaciones || 0,
-            materiasCursando: 0,
+            materiasCursando: situacionData.data?.resumen?.cursando || 0,
             totalMaterias: situacionData.data?.resumen?.total || 0
           },
           situacionAcademica: Object.values(situacionData.data?.materiasPorAnio || {}).flat() || []

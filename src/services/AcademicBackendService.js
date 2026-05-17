@@ -121,7 +121,9 @@ class AcademicBackendService {
         resumen: {
           materiasAprobadas: situacion.situaciones?.filter(s => s.estado === 'aprobada').length || 0,
           materiasRegularizadas: situacion.situaciones?.filter(s => s.estado === 'regularizada').length || 0,
-          materiasCursando: situacion.situaciones?.filter(s => s.estado === 'cursada').length || 0,
+          materiasCursando: situacion.situaciones?.filter(
+            s => s.estado === 'cursando' || s.estado === 'cursada'
+          ).length || 0,
           totalFinales: finales.intentos?.length || 0,
           finalesAprobados: finales.intentos?.filter(f => f.resultado === 'aprobado').length || 0,
           totalCreditos: creditos.resumen?.totalCreditos || 0,

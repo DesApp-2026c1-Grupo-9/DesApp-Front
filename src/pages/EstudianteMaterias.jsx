@@ -6,7 +6,7 @@ import {
   Alert, CircularProgress, Tabs, Tab, Grid, Avatar, ButtonGroup, 
   Select, MenuItem, FormControl, Dialog, DialogActions, 
   DialogContent, DialogContentText, DialogTitle, List, ListItem, 
-  ListItemText, ListItemIcon 
+  ListItemText, ListItemIcon, Tooltip 
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -45,6 +45,203 @@ export const EstudianteMaterias = () => {
     accion: ''
   });
 
+  const transformarMateriaBackend = (materia, anio) => ({
+    id: materia.id,
+    nombre: materia.nombre,
+    anio: parseInt(anio),
+    tipo: materia.tipo || 'cuatrimestral',
+    estado:
+      materia.estado === 'aprobada'
+        ? 'Aprobada'
+        : materia.estado === 'regularizada'
+          ? 'Regularizada'
+          : materia.estado === 'cursando'
+            ? 'Cursando'
+            : materia.estado === 'no_cursada' && materia.disponible
+              ? 'Disponible'
+              : 'No Disponible',
+    disponible: materia.disponible !== false,
+    prerrequisitos: materia.prerrequisitos || []
+  });
+
+  const ordenarMateriasParaVista = (materias) => {
+    return [...materias].sort((a, b) => {
+      if (a.anio !== b.anio) {
+        return a.anio - b.anio;
+      }
+
+      const correlativasA = a.prerrequisitos?.length || 0;
+      const correlativasB = b.prerrequisitos?.length || 0;
+      if (correlativasA !== correlativasB) {
+        return correlativasA - correlativasB;
+      }
+
+      return a.nombre.localeCompare(b.nombre);
+    });
+  };
+
+  const reconstruirSituacionAcademica = (data) => {
+    const todasLasMaterias = [];
+    const materiasPorAnio = data.materiasPorAnio || {};
+
+    Object.keys(materiasPorAnio).forEach((anio) => {
+      const materiasDelAnio = materiasPorAnio[anio].map((materia) =>
+        transformarMateriaBackend(materia, anio)
+      );
+      todasLasMaterias.push(...materiasDelAnio);
+    });
+
+    const materiasOrdenadas = ordenarMateriasParaVista(todasLasMaterias);
+
+    return {
+      materias: materiasOrdenadas,
+      resumen: data.resumen || {},
+      carrera: data.carrera,
+      planDeEstudio: data.planDeEstudio
+    };
+  };
+
+  const obtenerAccionEstado = (estado) => {
+    switch (estado) {
+      case 'Aprobada':
+        return 'aprobar';
+      case 'Regularizada':
+        return 'regularizar';
+      case 'Cursando':
+        return 'cursar';
+      default:
+        return 'actualizar';
+    }
+  };
+
+  const obtenerTooltipEstado = (materia) => {
+    switch (materia.estado) {
+      case 'Aprobada':
+        return 'Materia finalizada y aprobada.';
+      case 'Regularizada':
+        return 'Materia cursada y regularizada. Falta rendir el final.';
+      case 'Cursando':
+        return 'Materia actualmente en curso.';
+      case 'Disponible':
+        return 'Cumple correlativas y puede marcarse como cursando.';
+      case 'No Disponible':
+        return 'Todavía no cumple las correlativas necesarias.';
+      default:
+        return 'Estado académico de la materia.';
+    }
+  };
+
+  const obtenerOpcionesEstado = (materia) => {
+    if (materia.estado === 'No Disponible') {
+      return ['No Disponible'];
+    }
+
+    return ['Disponible', 'Cursando', 'Regularizada', 'Aprobada'];
+  };
+
+  const renderTablaMaterias = (materias) => {
+    const materiasOrdenadas = ordenarMateriasParaVista(materias);
+    const materiasPorAnio = materiasOrdenadas.reduce((acc, materia) => {
+      if (!acc[materia.anio]) {
+        acc[materia.anio] = [];
+      }
+      acc[materia.anio].push(materia);
+      return acc;
+    }, {});
+
+    const aniosOrdenados = Object.keys(materiasPorAnio).sort(
+      (a, b) => parseInt(a) - parseInt(b)
+    );
+
+    return (
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Materia</TableCell>
+              <TableCell>Estado</TableCell>
+              <TableCell>Acciones</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {aniosOrdenados.map((anio) => (
+              <React.Fragment key={`anio-${anio}`}>
+                <TableRow>
+                  <TableCell colSpan={3} sx={{ bgcolor: 'grey.100' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      {anio}° año
+                    </Typography>
+                    
+                  </TableCell>
+                </TableRow>
+
+                {materiasPorAnio[anio].map((materia, index) => (
+                  <TableRow key={materia.id || `${anio}-${index}`}>
+                    <TableCell>
+                      <Box display="flex" alignItems="center">
+                        {obtenerIconoEstado(materia.estado)}
+                        <Typography sx={{ ml: 1 }}>
+                          {materia.nombre}
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip title={obtenerTooltipEstado(materia)} arrow>
+                        <Box component="span">
+                          <Chip
+                            label={materia.estado}
+                            color={obtenerColorEstado(materia.estado)}
+                            size="small"
+                          />
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip
+                        title={
+                          materia.estado === 'No Disponible'
+                            ? 'No podés cambiar este estado hasta cumplir correlativas.'
+                            : 'Actualizá el estado académico de la materia.'
+                        }
+                        arrow
+                      >
+                        <Box component="span">
+                          <FormControl size="small" sx={{ minWidth: 160 }}>
+                            <Select
+                              value={materia.estado}
+                              disabled={materia.estado === 'No Disponible'}
+                              onChange={(e) => {
+                                const nuevoEstado = e.target.value;
+                                handleCambiarEstadoMateria(materia.id, nuevoEstado);
+                              }}
+                              displayEmpty
+                              sx={{
+                                '& .MuiSelect-select': {
+                                  py: 0.5,
+                                  fontSize: '0.875rem'
+                                }
+                              }}
+                            >
+                              {obtenerOpcionesEstado(materia).map((estado) => (
+                                <MenuItem key={`${materia.id}-${estado}`} value={estado}>
+                                  {estado}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        </Box>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </React.Fragment>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  };
+
   useEffect(() => {
     const cargarDatos = async () => {
       if (!estudianteActual?.id) return;
@@ -58,36 +255,7 @@ export const EstudianteMaterias = () => {
         
         if (response.data) {
           setEstudiante(response.data.estudiante);
-          
-          // Procesar las materias del backend
-          const todasLasMaterias = [];
-          const materiasPorAnio = response.data.materiasPorAnio || {};
-          
-          // Convertir la estructura del backend a la del frontend
-          Object.keys(materiasPorAnio).forEach(anio => {
-            const materiasDelAnio = materiasPorAnio[anio].map(materia => ({
-              id: materia.id,
-              nombre: materia.nombre,
-              anio: parseInt(anio),
-              tipo: materia.tipo || 'cuatrimestral',
-              // Mapear estados del backend al frontend
-              estado: materia.estado === 'aprobada' ? 'Aprobada' :
-                      materia.estado === 'regularizada' ? 'Regularizada' :
-                      materia.estado === 'no_cursada' && materia.disponible ? 'Disponible' :
-                      'No Disponible',
-              disponible: materia.disponible !== false, // Por defecto disponible
-              prerrequisitos: materia.prerrequisitos || []
-            }));
-            
-            todasLasMaterias.push(...materiasDelAnio);
-          });
-          
-          setSituacionAcademica({
-            materias: todasLasMaterias,
-            resumen: response.data.resumen || {},
-            carrera: response.data.carrera,
-            planDeEstudio: response.data.planDeEstudio
-          });
+          setSituacionAcademica(reconstruirSituacionAcademica(response.data));
         }
       } catch (error) {
         console.error('Error al cargar datos del estudiante:', error);
@@ -116,31 +284,7 @@ export const EstudianteMaterias = () => {
       // Recargar los datos para reflejar el cambio
       const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
       if (response.data) {
-        const todasLasMaterias = [];
-        const materiasPorAnio = response.data.materiasPorAnio || {};
-        
-        Object.keys(materiasPorAnio).forEach(anio => {
-          const materiasDelAnio = materiasPorAnio[anio].map(materia => ({
-            id: materia.id,
-            nombre: materia.nombre,
-            anio: parseInt(anio),
-            tipo: materia.tipo || 'cuatrimestral',
-            estado: materia.estado === 'aprobada' ? 'Aprobada' :
-                    materia.estado === 'regularizada' ? 'Regularizada' :
-                    materia.estado === 'no_cursada' && materia.disponible ? 'Disponible' :
-                    'No Disponible',
-            disponible: materia.disponible !== false,
-            prerrequisitos: materia.prerrequisitos || []
-          }));
-          todasLasMaterias.push(...materiasDelAnio);
-        });
-        
-        setSituacionAcademica({
-          materias: todasLasMaterias,
-          resumen: response.data.resumen || {},
-          carrera: response.data.carrera,
-          planDeEstudio: response.data.planDeEstudio
-        });
+        setSituacionAcademica(reconstruirSituacionAcademica(response.data));
         
         console.log(`Materia actualizada exitosamente: ${nuevoEstado}`);
       }
@@ -165,7 +309,7 @@ export const EstudianteMaterias = () => {
           abierto: true,
           materiaNombre: materiaNombre,
           prerequisitosIncumplidos: error.data.prerequisitosIncumplidos || [],
-          accion: nuevoEstado === 'Aprobada' ? 'aprobar' : 'regularizar'
+          accion: obtenerAccionEstado(nuevoEstado)
         });
       } else {
         setError('Error al actualizar el estado de la materia');
@@ -177,6 +321,7 @@ export const EstudianteMaterias = () => {
     switch (estado) {
       case 'Aprobada': return 'success';
       case 'Regularizada': return 'warning';
+      case 'Cursando': return 'info';
       case 'Disponible': return 'primary';
       case 'No Disponible': return 'error';
       default: return 'default';
@@ -222,7 +367,8 @@ export const EstudianteMaterias = () => {
   const mapearEstadoUIaDB = (estadoUI) => {
     const mapeo = {
       'Aprobada': 'aprobada',
-      'Regularizada': 'regularizada', 
+      'Regularizada': 'regularizada',
+      'Cursando': 'cursando',
       'Disponible': 'no_cursada',
       'No Cursada': 'no_cursada'
     };
@@ -232,6 +378,7 @@ export const EstudianteMaterias = () => {
     switch (estado) {
       case 'Aprobada': return <CheckCircleIcon fontSize="small" />;
       case 'Regularizada': return <ScheduleIcon fontSize="small" color="warning" />;
+      case 'Cursando': return <ScheduleIcon fontSize="small" color="info" />;
       case 'Disponible': return <SchoolIcon fontSize="small" color="primary" />;
       default: return <SchoolIcon fontSize="small" />;
     }
@@ -293,7 +440,7 @@ export const EstudianteMaterias = () => {
 
       {/* Resumen estadísticas */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} sm={2.4}>
+        <Grid item xs={6} sm={4} md={2}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main">
@@ -303,7 +450,7 @@ export const EstudianteMaterias = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={6} sm={2.4}>
+        <Grid item xs={6} sm={4} md={2}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main">
@@ -313,7 +460,17 @@ export const EstudianteMaterias = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={6} sm={2.4}>
+        <Grid item xs={6} sm={4} md={2}>
+          <Card>
+            <CardContent sx={{ textAlign: 'center' }}>
+              <Typography variant="h4" color="info.main">
+                {situacionAcademica?.resumen?.cursando || filtrarMateriasPorEstado('Cursando').length}
+              </Typography>
+              <Typography variant="caption">Cursando</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={6} sm={4} md={2}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="info.main">
@@ -323,7 +480,7 @@ export const EstudianteMaterias = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={6} sm={2.4}>
+        <Grid item xs={6} sm={4} md={2}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary.main">
@@ -333,7 +490,7 @@ export const EstudianteMaterias = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={6} sm={2.4}>
+        <Grid item xs={6} sm={4} md={2}>
           <Card>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="text.secondary">
@@ -352,271 +509,19 @@ export const EstudianteMaterias = () => {
             <Tab label={`Todas (${situacionAcademica?.materias?.length || 0})`} />
             <Tab label={`Aprobadas (${filtrarMateriasPorEstado('Aprobada').length})`} />
             <Tab label={`Regularizadas (${filtrarMateriasPorEstado('Regularizada').length})`} />
+            <Tab label={`Cursando (${filtrarMateriasPorEstado('Cursando').length})`} />
             <Tab label={`Disponibles (${filtrarMateriasPorEstado('Disponible').length})`} />
             <Tab label={`No Disponibles (${filtrarMateriasPorEstado('No Disponible').length})`} />
           </Tabs>
         </Box>
 
         <CardContent>
-          {/* Tab 0: Todas las materias */}
-          {tabValue === 0 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Materia</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Acciones</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {situacionAcademica?.materias?.map((materia, index) => (
-                    <TableRow key={materia.id || index}>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          {obtenerIconoEstado(materia.estado)}
-                          <Typography sx={{ ml: 1 }}>
-                            {materia.nombre} ({materia.anio}° año)
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={materia.estado}
-                          color={obtenerColorEstado(materia.estado)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value={materia.estado}
-                            onChange={(e) => {
-                              const nuevoEstado = e.target.value;
-                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
-                            }}
-                            displayEmpty
-                            sx={{ 
-                              '& .MuiSelect-select': { 
-                                py: 0.5,
-                                fontSize: '0.875rem'
-                              }
-                            }}
-                          >
-                            <MenuItem value="Disponible">Disponible</MenuItem>
-                            <MenuItem value="Regularizada">Regularizada</MenuItem>
-                            <MenuItem value="Aprobada">Aprobada</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* Tab 1: Aprobadas */}
-          {tabValue === 1 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Materia</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Acciones</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filtrarMateriasPorEstado('Aprobada').map((materia, index) => (
-                    <TableRow key={materia.id || index}>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          {obtenerIconoEstado(materia.estado)}
-                          <Typography sx={{ ml: 1 }}>
-                            {materia.nombre} ({materia.anio}° año)
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Chip 
-                          label={materia.estado}
-                          color={obtenerColorEstado(materia.estado)}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value={materia.estado}
-                            onChange={(e) => {
-                              const nuevoEstado = e.target.value;
-                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
-                            }}
-                            size="small"
-                          >
-                            <MenuItem value="Disponible">Disponible</MenuItem>
-                            <MenuItem value="Regularizada">Regularizada</MenuItem>
-                            <MenuItem value="Aprobada">Aprobada</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* Tab 2: Regularizadas */}
-          {tabValue === 2 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Materia</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Acciones</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filtrarMateriasPorEstado('Regularizada').map((materia, index) => (
-                    <TableRow key={materia.id || index}>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          {obtenerIconoEstado(materia.estado)}
-                          <Typography sx={{ ml: 1 }}>
-                            {materia.nombre} ({materia.anio}° año)
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Alert severity="warning" sx={{ py: 0 }}>
-                          Regularizada - Debe rendir final
-                        </Alert>
-                      </TableCell>
-                      <TableCell>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value={materia.estado}
-                            onChange={(e) => {
-                              const nuevoEstado = e.target.value;
-                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
-                            }}
-                            size="small"
-                          >
-                            <MenuItem value="Disponible">Disponible</MenuItem>
-                            <MenuItem value="Regularizada">Regularizada</MenuItem>
-                            <MenuItem value="Aprobada">Aprobada</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* Tab 3: Disponibles */}
-          {tabValue === 3 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Materia</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Acciones</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filtrarMateriasPorEstado('Disponible').map((materia, index) => (
-                    <TableRow key={materia.id || index}>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          {obtenerIconoEstado(materia.estado)}
-                          <Typography sx={{ ml: 1 }}>
-                            {materia.nombre} ({materia.anio}° año)
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Alert severity="success" sx={{ py: 0 }}>
-                          Disponible para cursar
-                        </Alert>
-                      </TableCell>
-                      <TableCell>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value={materia.estado}
-                            onChange={(e) => {
-                              const nuevoEstado = e.target.value;
-                              handleCambiarEstadoMateria(materia.id, nuevoEstado);
-                            }}
-                            size="small"
-                          >
-                            <MenuItem value="Disponible">Disponible</MenuItem>
-                            <MenuItem value="Regularizada">Regularizada</MenuItem>
-                            <MenuItem value="Aprobada">Aprobada</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-
-          {/* Tab 4: No Disponibles */}
-          {tabValue === 4 && (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Materia</TableCell>
-                    <TableCell>Estado</TableCell>
-                    <TableCell>Acciones</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filtrarMateriasPorEstado('No Disponible').map((materia, index) => (
-                    <TableRow key={materia.id || index}>
-                      <TableCell>
-                        <Box display="flex" alignItems="center">
-                          {obtenerIconoEstado(materia.estado)}
-                          <Typography sx={{ ml: 1 }}>
-                            {materia.nombre} ({materia.anio}° año)
-                          </Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Alert severity="info" sx={{ py: 0 }}>
-                          Faltan correlativas
-                        </Alert>
-                      </TableCell>
-                      <TableCell>
-                        <FormControl size="small" sx={{ minWidth: 120 }}>
-                          <Select
-                            value="No Disponible"
-                            disabled={true}
-                            size="small"
-                            sx={{
-                              '& .MuiSelect-select': { 
-                                color: 'text.disabled'
-                              }
-                            }}
-                          >
-                            <MenuItem value="No Disponible">No Disponible</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
+          {tabValue === 0 && renderTablaMaterias(situacionAcademica?.materias || [])}
+          {tabValue === 1 && renderTablaMaterias(filtrarMateriasPorEstado('Aprobada'))}
+          {tabValue === 2 && renderTablaMaterias(filtrarMateriasPorEstado('Regularizada'))}
+          {tabValue === 3 && renderTablaMaterias(filtrarMateriasPorEstado('Cursando'))}
+          {tabValue === 4 && renderTablaMaterias(filtrarMateriasPorEstado('Disponible'))}
+          {tabValue === 5 && renderTablaMaterias(filtrarMateriasPorEstado('No Disponible'))}
 
         </CardContent>
       </Card>
