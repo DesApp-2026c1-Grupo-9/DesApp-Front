@@ -39,6 +39,7 @@ const AppRouter = () => {
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminPage />} />
           </Route>
+          <Route path="*" element={<AppErrorPage />} />
         </Routes>
       </Router>
     </AuthProvider>

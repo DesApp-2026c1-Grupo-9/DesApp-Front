@@ -2,14 +2,42 @@ import axios from 'axios';
 
 const ERROR_STORAGE_KEY = 'app_unexpected_error';
 
-const guardarErrorInesperado = (error) => {
-  const payload = {
+const buildErrorPayload = (error) => {
+  const status = error?.response?.status;
+  const isNetworkError = !error.response;
+  const isServerError = status >= 500;
+  const isNotFound = status === 404;
+  const isForbidden = status === 403;
+  const isRateLimited = status === 429;
+
+  let kind = 'unexpected';
+  if (isNetworkError) {
+    kind = 'network';
+  } else if (isServerError) {
+    kind = 'server';
+  } else if (isNotFound) {
+    kind = 'not_found';
+  } else if (isForbidden) {
+    kind = 'forbidden';
+  } else if (isRateLimited) {
+    kind = 'rate_limited';
+  }
+
+  return {
     type: 'api_error',
-    message: error?.response?.data?.message || error?.message || 'Error inesperado de red',
-    status: error?.response?.status,
+    kind,
+    message:
+      error?.response?.data?.message ||
+      error?.message ||
+      'Error inesperado de red',
+    status,
     endpoint: error?.config?.url,
     timestamp: new Date().toISOString(),
   };
+};
+
+const guardarErrorInesperado = (error) => {
+  const payload = buildErrorPayload(error);
 
   try {
     sessionStorage.setItem(ERROR_STORAGE_KEY, JSON.stringify(payload));
@@ -46,11 +74,26 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const esErrorInesperado = !error.response || error.response.status >= 500;
+    const esErrorQueDebeSeguirEnLaVista =
+      error.response?.status === 400 ||
+      error.response?.status === 409 ||
+      error.response?.status === 422;
+
+    if (esErrorQueDebeSeguirEnLaVista) {
+      return Promise.reject(error);
+    }
+
+    const esErrorInesperado =
+      !error.response ||
+      error.response.status >= 500 ||
+      error.response.status === 403 ||
+      error.response.status === 404 ||
+      error.response.status === 429;
+
     if (esErrorInesperado) {
       guardarErrorInesperado(error);
       if (window.location.pathname !== '/error') {
-        window.location.href = '/error';
+        window.location.replace('/error');
       }
     }
 
