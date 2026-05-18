@@ -528,28 +528,6 @@ export const EstudianteDashboard = () => {
           </Card>
         </Grid>
 
-        {/* Últimas Materias */}
-        <Grid item xs={12}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Estado Actual de Materias
-              </Typography>
-              <Box display="flex" flexWrap="wrap" gap={1}>
-                {(situacionAcademica?.situacionAcademica || [])
-                  .slice(0, 8)
-                  .map((materia, index) => (
-                  <Chip
-                    key={index}
-                    label={`${materia.nombre} (${materia.estado})`}
-                    color={obtenerColorEstado(materia.estado)}
-                    variant={materia.estado === 'Cursando' ? 'filled' : 'outlined'}
-                  />
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
       </Grid>
 
       <Snackbar
