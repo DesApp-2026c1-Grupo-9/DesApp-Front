@@ -68,7 +68,7 @@ const SectionCard = ({
         </Box>
       )}
       {showDivider && (title || action) && <Divider />}
-      {actionPosition === 'bottom' && (
+      {actionPosition === 'bottom' ? (
         <>
           <CardContent sx={contentStyles} {...contentProps}>
             {children}
