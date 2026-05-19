@@ -3,13 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
-import { 
-  Box, 
-  Typography, 
-  Card, 
-  CardContent, 
-  Grid, 
-  Chip, 
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+  Chip,
   LinearProgress,
   List,
   ListItem,
@@ -21,11 +21,11 @@ import {
   Avatar,
   Paper
 } from '@mui/material';
-import { 
-  School, 
-  Person, 
-  Book, 
-  TrendingUp, 
+import {
+  School,
+  Person,
+  Book,
+  TrendingUp,
   CalendarToday,
   CheckCircle,
   PlayArrow,
@@ -34,6 +34,8 @@ import {
   Event,
   AdminPanelSettings
 } from '@mui/icons-material';
+
+import { PageContainer, LoadingSpinner } from '../components/ui';
 
 const Home = () => {
   const navigate = useNavigate();
@@ -92,7 +94,7 @@ const Home = () => {
 
   if (esAdmin) {
     return (
-      <Box sx={{ maxWidth: 1400, mx: 'auto', p: 3 }}>
+      <PageContainer maxWidth={1400}>
         <Box sx={{ mb: 4 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center">
@@ -112,24 +114,24 @@ const Home = () => {
             </Box>
           </Box>
         </Box>
-      </Box>
+      </PageContainer>
     );
   }
 
   // Loading state
   if (authLoading || loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
-        <Typography>Cargando datos del estudiante...</Typography>
-      </Box>
+      <PageContainer centered padding={3}>
+        <LoadingSpinner message="Cargando datos del estudiante..." />
+      </PageContainer>
     );
   }
 
   if (!estudianteInfo) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+      <PageContainer centered padding={3}>
         <Typography color="error">Error al cargar datos del estudiante</Typography>
-      </Box>
+      </PageContainer>
     );
   }
 
@@ -154,7 +156,7 @@ const Home = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto', p: 3 }}>
+    <PageContainer maxWidth={1400}>
       {/* Header de Bienvenida */}
       <Box sx={{ mb: 4 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
@@ -348,7 +350,7 @@ const Home = () => {
           Usa el menú superior para acceder a información detallada de tu perfil, carreras y situación académica
         </Typography>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

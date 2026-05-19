@@ -14,4 +14,5 @@ export { default as ConnectionCard } from './ConnectionCard';
 export { default as RequestCard } from './RequestCard';
 export { default as DiscoverCard } from './DiscoverCard';
 
+export * from './admin';
 export * from './ui';
