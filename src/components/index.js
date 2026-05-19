@@ -10,5 +10,8 @@ export { default as TopMenu } from './TopMenu';
 export { default as AppErrorBoundary } from './AppErrorBoundary';
 export { default as DashboardAcademicoCompleto } from './DashboardAcademicoCompleto';
 export { default as AcademicAnalysisComponent } from './AcademicAnalysisComponent';
+export { default as ConnectionCard } from './ConnectionCard';
+export { default as RequestCard } from './RequestCard';
+export { default as DiscoverCard } from './DiscoverCard';
 
 export * from './ui';
