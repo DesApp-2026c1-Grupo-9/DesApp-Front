@@ -56,19 +56,23 @@ export function TopMenu() {
   ];
 
   return (
-    <AppBar position="static" sx={{ mb: 3 }}>
+    <AppBar position="static" sx={{ mb: 3, borderRadius: 0 }}>
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
           Sistema Académico UNAHUR
 
         </Typography>
 
-        <FormControl size="small" sx={{ minWidth: 240, mr: 2 }} disabled={loadingStudents || !students?.length}>
+        <FormControl size="small" sx={{ minWidth: 240, mr: 2, bgcolor: 'background.paper', borderRadius: 1 }} disabled={loadingStudents || !students?.length}>
           <InputLabel>Simular Usuario</InputLabel>
           <Select
             value={user?.id || ''}
             label="Simular Usuario"
             onChange={(e) => handleSwitchUsuarioGlobal(e.target.value)}
+            sx={{ 
+              borderRadius: 0,
+              '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+            }}
             renderValue={(selected) => {
               const student = students.find((s) => s.id === selected);
               return (
@@ -109,6 +113,7 @@ export function TopMenu() {
           {menuItems.map((item) => (
             <Button
               key={item.label}
+              variant="text"
               color="inherit"
               onClick={() => {
                 if (item.label === 'Materias') {
