@@ -42,6 +42,8 @@ export function TopMenu() {
     await cambiarEstudiantePorUsuarioId(usuarioIdNumero);
   };
 
+  const showAdmin = user?.rol === 'administrador';
+
   const menuItems = [
     { label: 'Inicio', path: '/', icon: <Home /> },
     { label: 'Mi Perfil', path: '/mi-perfil', icon: <Person /> },
@@ -51,8 +53,7 @@ export function TopMenu() {
     { label: 'Conexiones', path: '/conexiones', icon: <Groups /> },
     { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },
     { label: 'Materiales', path: '/materiales', icon: <LibraryBooks /> },
-    { label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> },
-    // Demo oculto - cambiar manualmente la URL a /demo-selector
+    ...(showAdmin ? [{ label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> }] : []),
   ];
 
   return (
