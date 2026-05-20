@@ -64,7 +64,7 @@ export function TopMenu() {
         </Typography>
 
         <FormControl size="small" sx={{ minWidth: 240, mr: 2, bgcolor: 'background.paper', borderRadius: 1 }} disabled={loadingStudents || !students?.length}>
-          <InputLabel>Simular Usuario</InputLabel>
+          
           <Select
             value={user?.id || ''}
             label="Simular Usuario"
