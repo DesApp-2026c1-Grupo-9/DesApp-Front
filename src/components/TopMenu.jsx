@@ -60,8 +60,25 @@ export function TopMenu() {
     <AppBar position="static" sx={{ mb: 3, borderRadius: 0 }}>
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Sistema Académico UNAHUR
-
+          <Box
+            component="a"
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/');
+            }}
+            sx={{
+              fontWeight: 'bold',
+              color: 'inherit',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              '&:hover': {
+                color: 'inherit'
+              }
+            }}
+          >
+            Sistema Académico UNAHUR
+          </Box>
         </Typography>
 
         <FormControl size="small" sx={{ minWidth: 240, mr: 2, bgcolor: 'background.paper', borderRadius: 1 }} disabled={loadingStudents || !students?.length}>
@@ -111,7 +128,7 @@ export function TopMenu() {
         </FormControl>
         
         <Box sx={{ display: 'flex', gap: 1 }}>
-          {menuItems.map((item) => (
+          {menuItems.filter(item => item.label !== 'Inicio').map((item) => (
             <Button
               key={item.label}
               variant="text"

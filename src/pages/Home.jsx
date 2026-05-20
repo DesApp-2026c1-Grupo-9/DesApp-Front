@@ -184,7 +184,7 @@ const Home = () => {
       {/* Métricas Rápidas */}
       <Grid container spacing={2} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={4}>
-          <Card>
+          <Card sx={{ height: '100%' }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <CheckCircle sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
               <Typography variant="h4" color="success.main">
@@ -201,7 +201,7 @@ const Home = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Card>
+          <Card sx={{ height: '100%' }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <PlayArrow sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
               <Typography variant="h4" color="info.main">
@@ -215,7 +215,7 @@ const Home = () => {
         </Grid>
 
         <Grid item xs={12} sm={6} md={4}>
-          <Card>
+          <Card sx={{ height: '100%' }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Warning sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
               <Typography variant="h4" color="warning.main">
@@ -246,7 +246,7 @@ const Home = () => {
       <Grid container spacing={3}>
         {/* Mi Cursada Actual */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 Mi Cursada Actual (2026-1)
@@ -293,7 +293,7 @@ const Home = () => {
 
         {/* Próximas Fechas Importantes */}
         <Grid item xs={12} md={6}>
-          <Card>
+          <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 Próximas Fechas Importantes
