@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography,
@@ -23,6 +23,7 @@ import {
   setFilter,
 } from '../features/materiales/slice';
 import { SORT_OPTIONS } from '../utils';
+import { useFilter } from '../hooks';
 
 import MaterialCard from '../components/MaterialCard';
 import MaterialUploadDialog from '../components/MaterialUploadDialog';
@@ -37,22 +38,31 @@ const Materiales = () => {
   const currentUserId = user?.id || 1;
   const currentUserName = user?.nombre || user?.name || 'Usuario';
 
-  const [search, setSearch] = useState('');
+  const { filters, setFilter: setFilterValue, clearFilters, hasActiveFilters } = useFilter({
+    initialFilters: {
+      search: '',
+      materiaId: '',
+    },
+    debounceMs: 300,
+  });
+
   const [sortBy, setSortBy] = useState(SORT_OPTIONS.FECHA_DESC);
-  const [materiaFilter, setMateriaFilter] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchMateriales({ ...filter, search, sortBy, usuarioId: currentUserId }));
     dispatch(fetchMaterias());
-  }, []);
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(
-      fetchMateriales({ ...filter, search: search || '', sortBy, usuarioId: currentUserId })
+      fetchMateriales({ ...filter, search: filters.search || '', sortBy, usuarioId: currentUserId })
     );
-  }, [search, sortBy, filter]);
+  }, [filters.search, sortBy, filter, dispatch, currentUserId]);
+
+  useEffect(() => {
+    dispatch(fetchMateriales({ ...filter, materiaId: filters.materiaId || null, sortBy, usuarioId: currentUserId }));
+  }, [filters.materiaId, dispatch]);
 
   const handleFilterChange = (newFilter) => {
     dispatch(setFilter(newFilter));
@@ -60,7 +70,7 @@ const Materiales = () => {
 
   const handleMateriaChange = (e) => {
     const value = e.target.value;
-    setMateriaFilter(value);
+    setFilterValue('materiaId', value);
     handleFilterChange({ materiaId: value || null });
   };
 
@@ -102,9 +112,8 @@ const Materiales = () => {
   };
 
   const handleClearFilters = () => {
-    setSearch('');
+    clearFilters();
     setSortBy(SORT_OPTIONS.FECHA_DESC);
-    setMateriaFilter('');
     handleFilterChange({ materiaId: null });
   };
 
@@ -134,8 +143,8 @@ const Materiales = () => {
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <TextField
           placeholder="Buscar por título, tags o materia..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={filters.search}
+          onChange={(e) => setFilterValue('search', e.target.value)}
           sx={{ flex: 1, minWidth: 250 }}
           InputProps={{
             startAdornment: (
@@ -149,7 +158,7 @@ const Materiales = () => {
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Materia</InputLabel>
           <Select
-            value={materiaFilter}
+            value={filters.materiaId}
             label="Materia"
             onChange={handleMateriaChange}
           >
@@ -212,7 +221,7 @@ const Materiales = () => {
         }}
         onSave={handleDialogSave}
         materias={materias || []}
-        defaultMateriaId={materiaFilter || null}
+        defaultMateriaId={filters.materiaId || null}
         material={editingMaterial}
       />
     </PageContainer>

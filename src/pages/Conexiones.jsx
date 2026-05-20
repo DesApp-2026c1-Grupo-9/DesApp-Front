@@ -36,6 +36,7 @@ import {
   deleteConexion,
   clearConexionesError,
 } from '../features/conexiones/slice';
+import { useFilter, useSnackbar } from '../hooks';
 
 import ConnectionCard from '../components/ConnectionCard';
 import RequestCard from '../components/RequestCard';
@@ -47,13 +48,17 @@ export default function Conexiones() {
   const { list, requests, loading, error } = useSelector((state) => state.conexiones);
   const { user, students, loadingStudents } = useSelector((state) => state.auth);
 
+  const { showSuccess, showError, showWarning, showInfo, snackbar, closeSnackbar } = useSnackbar();
+
   const [tabValue, setTabValue] = useState(0);
   const [email, setEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const { filters, setFilter, clearFilters, hasActiveFilters } = useFilter({
+    initialFilters: { search: '' },
+    debounceMs: 300,
+  });
   const [invitingUserId, setInvitingUserId] = useState(null);
   const [invitedUserIds, setInvitedUserIds] = useState(new Set());
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const [confirmDelete, setConfirmDelete] = useState({ open: false, conexionId: null, contacto: null });
 
   useEffect(() => {
@@ -67,10 +72,6 @@ export default function Conexiones() {
     }
   }, [user, dispatch]);
 
-  const showSnackbar = (message, severity = 'info') => {
-    setSnackbar({ open: true, message, severity });
-  };
-
   const handleInvite = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
@@ -78,10 +79,10 @@ export default function Conexiones() {
     try {
       await dispatch(inviteContact({ email, usuarioId: user.id })).unwrap();
       setEmail('');
-      showSnackbar('Invitación enviada exitosamente', 'success');
+      showSuccess('Invitación enviada exitosamente');
       dispatch(fetchPendientes(user.id));
     } catch (err) {
-      showSnackbar(err || 'Error al enviar invitación', 'error');
+      showError(err || 'Error al enviar invitación');
     } finally {
       setInviteLoading(false);
     }
@@ -90,11 +91,11 @@ export default function Conexiones() {
   const handleRespond = async (id, estado) => {
     try {
       await dispatch(respondToInvitation({ id, estado, usuarioId: user.id })).unwrap();
-      showSnackbar(`Solicitud ${estado} exitosamente`, 'success');
+      showSuccess(`Solicitud ${estado} exitosamente`);
       dispatch(fetchPendientes(user.id));
       dispatch(fetchConexiones(user.id));
     } catch (err) {
-      showSnackbar(err || 'Error al responder solicitud', 'error');
+      showError(err || 'Error al responder solicitud');
     }
   };
 
@@ -107,10 +108,10 @@ export default function Conexiones() {
     setConfirmDelete({ open: false, conexionId: null, contacto: null });
     try {
       await dispatch(deleteConexion({ id: conexionId, usuarioId: user.id })).unwrap();
-      showSnackbar('Conexión eliminada exitosamente', 'success');
+      showSuccess('Conexión eliminada exitosamente');
       dispatch(fetchConexiones(user.id));
     } catch (err) {
-      showSnackbar(err || 'Error al eliminar conexión', 'error');
+      showError(err || 'Error al eliminar conexión');
     }
   };
 
@@ -128,7 +129,7 @@ export default function Conexiones() {
       s.rol !== 'administrador'
   );
 
-  const filterText = searchText.toLowerCase().trim();
+  const filterText = filters.search.toLowerCase().trim();
   const resultadosBusqueda = filterText
     ? usuariosDescubribles.filter(
         (s) =>
@@ -141,17 +142,17 @@ export default function Conexiones() {
     setInvitingUserId(targetId);
     const target = students.find((s) => s.id === targetId);
     if (!target?.email) {
-      showSnackbar('El usuario no tiene email registrado', 'error');
+      showError('El usuario no tiene email registrado');
       setInvitingUserId(null);
       return;
     }
     try {
       await dispatch(inviteContact({ email: target.email, usuarioId: user.id })).unwrap();
-      showSnackbar('Invitación enviada exitosamente', 'success');
+      showSuccess('Invitación enviada exitosamente');
       setInvitedUserIds((prev) => new Set(prev).add(targetId));
       dispatch(fetchPendientes(user.id));
     } catch (err) {
-      showSnackbar(err || 'Error al enviar invitación', 'error');
+      showError(err || 'Error al enviar invitación');
     } finally {
       setInvitingUserId(null);
     }
@@ -276,16 +277,16 @@ export default function Conexiones() {
             fullWidth
             size="small"
             placeholder="Buscar por nombre o apellido..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
+            value={filters.search}
+            onChange={(e) => setFilter('search', e.target.value)}
           />
         </Paper>
 
         {resultadosBusqueda.length === 0 ? (
           <EmptyState
-            title={searchText ? 'Sin resultados' : 'No hay más estudiantes'}
+            title={filters.search ? 'Sin resultados' : 'No hay más estudiantes'}
             message={
-              searchText
+              filters.search
                 ? 'No se encontraron estudiantes con ese nombre'
                 : 'No hay más estudiantes disponibles para conectar'
             }
@@ -326,7 +327,7 @@ export default function Conexiones() {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        onClose={closeSnackbar}
       >
         <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}

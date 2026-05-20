@@ -1,5 +1,5 @@
-import { Box } from '@mui/material';
 import { VideoLibrary, Cloud, GitHub, OpenInNew } from '@mui/icons-material';
+import { DiscordIcon } from './dateHelpers';
 
 export const LINK_TIPO = {
   YOUTUBE: 'youtube',
@@ -32,19 +32,6 @@ export const getLinkIcon = (tipoLink) => {
       return <OpenInNew sx={{ color: '#1976d2' }} />;
   }
 };
-
-export const DiscordIcon = () => (
-  <Box
-    component="span"
-    sx={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      fontSize: '1.3rem',
-    }}
-  >
-    🎮
-  </Box>
-);
 
 export const isDiscordLink = (url) => {
   return url && url.includes('discord');

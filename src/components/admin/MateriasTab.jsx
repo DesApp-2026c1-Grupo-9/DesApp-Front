@@ -27,6 +27,7 @@ import {
 } from '@mui/material';
 import { MenuBook, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import { useSnackbar } from '../../hooks';
 
 function MateriasTab() {
   const [materias, setMaterias] = useState([]);
@@ -37,16 +38,17 @@ function MateriasTab() {
   const [open, setOpen] = useState(false);
   const [editMateria, setEditMateria] = useState(null);
   const [form, setForm] = useState({ nombre: '', anio: '', tipo: 'cuatrimestral' });
-  const [snackbar, setSnackbar] = useState(null);
+
+  const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const cargarMaterias = useCallback(async () => {
     try {
       const res = await api.get('/api/materias');
       setMaterias(res.data.data || []);
     } catch {
-      setSnackbar({ severity: 'error', message: 'Error al cargar materias' });
+      showError('Error al cargar materias');
     }
-  }, []);
+  }, [showError]);
 
   const cargarCarreras = useCallback(async () => {
     try {
@@ -76,22 +78,22 @@ function MateriasTab() {
     try {
       if (editMateria) {
         await api.put(`/api/materias/${editMateria.id}`, form);
-        setSnackbar({ severity: 'success', message: 'Materia actualizada' });
+        showSuccess('Materia actualizada');
       } else {
         await api.post('/api/materias', form);
-        setSnackbar({ severity: 'success', message: 'Materia creada' });
+        showSuccess('Materia creada');
       }
       setOpen(false);
       cargarMaterias();
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al guardar' });
+      showError(err.response?.data?.message || 'Error al guardar');
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await api.delete(`/api/materias/${id}`);
-      setSnackbar({ severity: 'success', message: 'Materia eliminada' });
+      showSuccess('Materia eliminada');
       cargarMaterias();
     } catch (err) {
       setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al eliminar' });

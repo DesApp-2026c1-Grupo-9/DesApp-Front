@@ -35,6 +35,7 @@ import {
 import api from '../api/axiosConfig';
 import { likeComentario, unlikeComentario } from '../features/feed/comentariosSlice';
 import { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
+import { formatFechaRelative, formatFechaSeguro } from '../utils';
 
 const getIconForTipoEvento = (tipo) => {
   switch (tipo) {
@@ -62,23 +63,7 @@ const getLabelForTipoEvento = (tipo) => {
   }
 };
 
-const formatFechaComentario = (fecha) => {
-  const date = new Date(fecha);
-  const now = new Date();
-  const diffMins = Math.floor((now - date) / 60000);
-  if (diffMins < 1) return 'ahora';
-  if (diffMins < 60) return `${diffMins}m`;
-  const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h`;
-  return date.toLocaleDateString();
-};
-
-const formatFechaSeguro = (fecha) => {
-  if (!fecha) return 'Fecha no disponible';
-  const date = new Date(fecha);
-  if (isNaN(date.getTime())) return 'Fecha no disponible';
-  return date.toLocaleString();
-};
+const formatFechaComentario = (fecha) => formatFechaRelative(fecha);
 
 function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdateComentariosCount }) {
   const dispatch = useDispatch();

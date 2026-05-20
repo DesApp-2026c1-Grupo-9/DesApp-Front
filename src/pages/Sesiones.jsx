@@ -15,7 +15,7 @@ import { fetchSesiones, addSesion, editSesion, removeSesion, joinToSesion,
   approveParticipanteThunk, rejectParticipanteThunk, leaveSesionThunk } from '../features/sesiones/slice';
 import { fetchStudents, fetchConexiones } from '../features/auth/slice';
 
-import { useFetchData } from '../hooks';
+import { useFetchData, useFilter } from '../hooks';
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 const Sesiones = () => {
@@ -23,9 +23,13 @@ const Sesiones = () => {
   const { user, students, conexiones, loading: loadingStudents } = useSelector(state => state.auth);
   const { list: sesiones, loading, error, operationLoading } = useSelector(state => state.sesiones);
 
-  const [filterMateria, setFilterMateria] = useState(null);
-  const [filterFecha, setFilterFecha] = useState(null);
-  const [filterTipo, setFilterTipo] = useState(null);
+  const { filters, setFilter, clearFilters, hasActiveFilters } = useFilter({
+    initialFilters: {
+      materia: null,
+      fecha: null,
+      tipo: null,
+    },
+  });
 
   const [activeTab, setActiveTab] = useState('todas');
   const [showPastEvents, setShowPastEvents] = useState(false);
@@ -65,12 +69,6 @@ const Sesiones = () => {
     }
   }, [user, dispatch]);
 
-  const handleClearFilters = useCallback(() => {
-    setFilterMateria(null);
-    setFilterFecha(null);
-    setFilterTipo(null);
-  }, []);
-
   const today = new Date().toISOString().split('T')[0];
   const misMateriasIdsArray = Array.isArray(misMateriasIds) ? misMateriasIds : [];
 
@@ -89,11 +87,11 @@ const Sesiones = () => {
       if (s.creadorId !== user.id) return false;
     }
 
-    if (activeTab !== 'misMaterias' && filterMateria && s.materiaId !== Number(filterMateria)) return false;
-    if (filterTipo && s.tipo !== filterTipo) return false;
-    if (filterFecha) {
+    if (activeTab !== 'misMaterias' && filters.materia && s.materiaId !== Number(filters.materia)) return false;
+    if (filters.tipo && s.tipo !== filters.tipo) return false;
+    if (filters.fecha) {
       const sesionDate = s.fechaHora?.split('T')[0];
-      if (sesionDate !== filterFecha) return false;
+      if (sesionDate !== filters.fecha) return false;
     }
 
     return true;
@@ -252,8 +250,8 @@ const Sesiones = () => {
             <InputLabel>Materia</InputLabel>
             <Select
               label="Materia"
-              value={filterMateria || ''}
-              onChange={(e) => setFilterMateria(e.target.value || null)}
+              value={filters.materia || ''}
+              onChange={(e) => setFilter('materia', e.target.value || null)}
             >
               <MenuItem value="">Todas</MenuItem>
               {materias?.map(m => (
@@ -269,8 +267,8 @@ const Sesiones = () => {
           label="Fecha"
           type="date"
           InputLabelProps={{ shrink: true }}
-          value={filterFecha || ''}
-          onChange={(e) => setFilterFecha(e.target.value || null)}
+          value={filters.fecha || ''}
+          onChange={(e) => setFilter('fecha', e.target.value || null)}
           sx={{ minWidth: 180 }}
         />
 
@@ -278,8 +276,8 @@ const Sesiones = () => {
           <InputLabel>Tipo</InputLabel>
           <Select
             label="Tipo"
-            value={filterTipo || ''}
-            onChange={(e) => setFilterTipo(e.target.value || null)}
+            value={filters.tipo || ''}
+            onChange={(e) => setFilter('tipo', e.target.value || null)}
           >
             <MenuItem value="">Todos</MenuItem>
             <MenuItem value="virtual">Virtual</MenuItem>
@@ -287,10 +285,10 @@ const Sesiones = () => {
           </Select>
         </FormControl>
 
-        {(filterMateria || filterFecha || filterTipo) && (
+        {hasActiveFilters && (
           <Button
             variant="text"
-            onClick={handleClearFilters}
+            onClick={clearFilters}
           >
             Limpiar filtros
           </Button>
@@ -322,13 +320,13 @@ const Sesiones = () => {
       </Tabs>
 
       {/* Active Filters Display */}
-      {(filterMateria || filterFecha || filterTipo) && (
+      {hasActiveFilters && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="textSecondary">
             Filtros activos:
-            {filterMateria && ` Materia ID: ${filterMateria}`}
-            {filterFecha && ` Fecha: ${filterFecha}`}
-            {filterTipo && ` Tipo: ${filterTipo}`}
+            {filters.materia && ` Materia ID: ${filters.materia}`}
+            {filters.fecha && ` Fecha: ${filters.fecha}`}
+            {filters.tipo && ` Tipo: ${filters.tipo}`}
           </Typography>
         </Box>
       )}
@@ -359,7 +357,7 @@ const Sesiones = () => {
           message="No hay sesiones que coincidan con los filtros seleccionados."
           icon="search"
           actionLabel="Limpiar filtros"
-          onAction={handleClearFilters}
+          onAction={clearFilters}
         />
       ) : !showLoading && (
         <Box>

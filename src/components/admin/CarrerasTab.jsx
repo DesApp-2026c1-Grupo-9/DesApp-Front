@@ -28,6 +28,7 @@ import {
 } from '@mui/material';
 import { School, Edit, Delete, Add, MenuBook, RemoveCircleOutline } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import { useSnackbar } from '../../hooks';
 
 function CarrerasTab() {
   const [carreras, setCarreras] = useState([]);
@@ -43,16 +44,17 @@ function CarrerasTab() {
   const [allMaterias, setAllMaterias] = useState([]);
   const [materiasEditDialog, setMateriasEditDialog] = useState({ open: false, plan: null });
   const [materiaToAdd, setMateriaToAdd] = useState(null);
-  const [snackbar, setSnackbar] = useState(null);
+
+  const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const cargarCarreras = useCallback(async () => {
     try {
       const res = await api.get('/api/carreras');
       setCarreras(res.data.data || []);
     } catch {
-      setSnackbar({ severity: 'error', message: 'Error al cargar carreras' });
+      showError('Error al cargar carreras');
     }
-  }, []);
+  }, [showError]);
 
   useEffect(() => {
     cargarCarreras();
@@ -74,25 +76,25 @@ function CarrerasTab() {
     try {
       if (editCarrera) {
         await api.put(`/api/carreras/${editCarrera.id}`, form);
-        setSnackbar({ severity: 'success', message: 'Carrera actualizada' });
+        showSuccess('Carrera actualizada');
       } else {
         await api.post('/api/carreras', form);
-        setSnackbar({ severity: 'success', message: 'Carrera creada' });
+        showSuccess('Carrera creada');
       }
       setOpen(false);
       cargarCarreras();
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al guardar' });
+      showError(err.response?.data?.message || 'Error al guardar');
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await api.delete(`/api/carreras/${id}`);
-      setSnackbar({ severity: 'success', message: 'Carrera eliminada' });
+      showSuccess('Carrera eliminada');
       cargarCarreras();
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al eliminar' });
+      showError(err.response?.data?.message || 'Error al eliminar');
     }
   };
 
@@ -115,12 +117,12 @@ function CarrerasTab() {
   const handleCreatePlan = async () => {
     try {
       await api.post(`/api/carreras/${planDialog.carreraId}/planes`, planForm);
-      setSnackbar({ severity: 'success', message: 'Plan creado' });
+      showSuccess('Plan creado');
       setPlanForm({ nombre: '', estado: 'vigente' });
       const res = await api.get(`/api/carreras/${planDialog.carreraId}/planes`);
       setPlanes(res.data.data || []);
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al crear plan' });
+      showError(err.response?.data?.message || 'Error al crear plan');
     }
   };
 
@@ -140,38 +142,38 @@ function CarrerasTab() {
     if (!materiaToAdd) return;
     try {
       await api.post(`/api/carreras/${planDialog.carreraId}/planes/${planId}/materias`, { materiaId: materiaToAdd.id });
-      setSnackbar({ severity: 'success', message: 'Materia asignada al plan' });
+      showSuccess('Materia asignada al plan');
       setMateriaToAdd(null);
       const res = await api.get(`/api/carreras/${planDialog.carreraId}/planes`);
       const nuevosPlanes = res.data.data || [];
       setPlanes(nuevosPlanes);
       actualizarPlanEnDialog(nuevosPlanes, planId);
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al asignar materia' });
+      showError(err.response?.data?.message || 'Error al asignar materia');
     }
   };
 
   const handleRemoveMateriaFromPlan = async (planId, materiaId) => {
     try {
       await api.delete(`/api/carreras/${planDialog.carreraId}/planes/${planId}/materias/${materiaId}`);
-      setSnackbar({ severity: 'success', message: 'Materia removida del plan' });
+      showSuccess('Materia removida del plan');
       const res = await api.get(`/api/carreras/${planDialog.carreraId}/planes`);
       const nuevosPlanes = res.data.data || [];
       setPlanes(nuevosPlanes);
       actualizarPlanEnDialog(nuevosPlanes, planId);
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al remover materia' });
+      showError(err.response?.data?.message || 'Error al remover materia');
     }
   };
 
   const handleDeletePlan = async (planId) => {
     try {
       await api.delete(`/api/carreras/${planDialog.carreraId}/planes/${planId}`);
-      setSnackbar({ severity: 'success', message: 'Plan eliminado' });
+      showSuccess('Plan eliminado');
       const res = await api.get(`/api/carreras/${planDialog.carreraId}/planes`);
       setPlanes(res.data.data || []);
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al eliminar plan' });
+      showError(err.response?.data?.message || 'Error al eliminar plan');
     }
   };
 
@@ -373,8 +375,8 @@ function CarrerasTab() {
       </Dialog>
 
       {snackbar && (
-        <Snackbar open autoHideDuration={6000} onClose={() => setSnackbar(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)} variant="filled">{snackbar.message}</Alert>
+        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={closeSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+          <Alert severity={snackbar.severity} onClose={closeSnackbar} variant="filled">{snackbar.message}</Alert>
         </Snackbar>
       )}
     </Box>

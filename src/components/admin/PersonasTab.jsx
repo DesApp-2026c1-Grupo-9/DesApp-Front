@@ -28,6 +28,7 @@ import {
 } from '@mui/material';
 import { PersonAdd, Edit, Delete, Refresh } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
+import { useSnackbar } from '../../hooks';
 
 function PersonasTab() {
   const [usuarios, setUsuarios] = useState([]);
@@ -40,16 +41,17 @@ function PersonasTab() {
   const [userToDelete, setUserToDelete] = useState(null);
   const [form, setForm] = useState({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true });
   const [errors, setErrors] = useState({});
-  const [snackbar, setSnackbar] = useState(null);
+
+  const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const cargarUsuarios = useCallback(async () => {
     try {
       const res = await api.get('/api/usuarios');
       setUsuarios(res.data.data || []);
     } catch {
-      setSnackbar({ severity: 'error', message: 'Error al cargar usuarios' });
+      showError('Error al cargar usuarios');
     }
-  }, []);
+  }, [showError]);
 
   useEffect(() => {
     cargarUsuarios();
@@ -96,15 +98,15 @@ function PersonasTab() {
     try {
       if (esEdicion) {
         await api.put(`/api/usuarios/${editUser.id}`, body);
-        setSnackbar({ severity: 'success', message: 'Usuario actualizado exitosamente' });
+        showSuccess('Usuario actualizado exitosamente');
       } else {
         await api.post('/api/usuarios', body);
-        setSnackbar({ severity: 'success', message: 'Usuario creado exitosamente' });
+        showSuccess('Usuario creado exitosamente');
       }
       setDialogOpen(false);
       cargarUsuarios();
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al guardar usuario' });
+      showError(err.response?.data?.message || 'Error al guardar usuario');
     }
   };
 
@@ -117,12 +119,12 @@ function PersonasTab() {
     if (!userToDelete) return;
     try {
       await api.delete(`/api/usuarios/${userToDelete.id}`);
-      setSnackbar({ severity: 'success', message: 'Usuario eliminado exitosamente' });
+      showSuccess('Usuario eliminado exitosamente');
       setDeleteDialogOpen(false);
       setUserToDelete(null);
       cargarUsuarios();
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al eliminar usuario' });
+      showError(err.response?.data?.message || 'Error al eliminar usuario');
     }
   };
 
@@ -274,8 +276,8 @@ function PersonasTab() {
       </Dialog>
 
       {snackbar && (
-        <Snackbar open autoHideDuration={6000} onClose={() => setSnackbar(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)} variant="filled">{snackbar.message}</Alert>
+        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={closeSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+          <Alert severity={snackbar.severity} onClose={closeSnackbar} variant="filled">{snackbar.message}</Alert>
         </Snackbar>
       )}
     </Box>
