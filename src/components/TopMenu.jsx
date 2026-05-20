@@ -81,7 +81,36 @@ export function TopMenu() {
           </Box>
         </Typography>
 
-        <FormControl size="small" sx={{ minWidth: 240, mr: 2, bgcolor: 'background.paper', borderRadius: 1 }} disabled={loadingStudents || !students?.length}>
+        <Box sx={{ display: 'flex', gap: 1, mr: 2 }}>
+          {menuItems.filter(item => item.label !== 'Inicio').map((item) => (
+            <Button
+              key={item.label}
+              variant="text"
+              color="inherit"
+              onClick={() => {
+                if (item.label === 'Materias') {
+                  navigate(getMateriasPath());
+                } else {
+                  navigate(item.path);
+                }
+              }}
+              startIcon={item.icon}
+              sx={{ 
+                backgroundColor: (
+                  location.pathname === item.path || 
+                  (item.label === 'Materias' && location.pathname.includes('/materias'))
+                ) ? 'rgba(255,255,255,0.2)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </Box>
+
+        <FormControl size="small" sx={{ minWidth: 240, bgcolor: 'background.paper', borderRadius: 1 }} disabled={loadingStudents || !students?.length}>
           
           <Select
             value={user?.id || ''}
@@ -126,35 +155,6 @@ export function TopMenu() {
             ))}
           </Select>
         </FormControl>
-        
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {menuItems.filter(item => item.label !== 'Inicio').map((item) => (
-            <Button
-              key={item.label}
-              variant="text"
-              color="inherit"
-              onClick={() => {
-                if (item.label === 'Materias') {
-                  navigate(getMateriasPath());
-                } else {
-                  navigate(item.path);
-                }
-              }}
-              startIcon={item.icon}
-              sx={{ 
-                backgroundColor: (
-                  location.pathname === item.path || 
-                  (item.label === 'Materias' && location.pathname.includes('/materias'))
-                ) ? 'rgba(255,255,255,0.2)' : 'transparent',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </Box>
       </Toolbar>
     </AppBar>
   );
