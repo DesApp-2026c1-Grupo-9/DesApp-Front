@@ -168,51 +168,17 @@ export default function Conexiones() {
 
   return (
     <PageContainer maxWidth={800}>
-      <Box sx={{ mb: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" fontWeight="bold" color="primary">
+      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h4">
           Conexiones
         </Typography>
       </Box>
-
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Tu email: {user?.email}
-      </Typography>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => dispatch(clearConexionesError())}>
           {error}
         </Alert>
       )}
-
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 2, boxShadow: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          <Mail sx={{ mr: 1, verticalAlign: 'middle' }} />
-          Enviar Invitación
-        </Typography>
-        <Box
-          component="form"
-          onSubmit={handleInvite}
-          sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}
-        >
-          <TextField
-            fullWidth
-            size="small"
-            label="Email del estudiante"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="ejemplo@universidad.edu"
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={inviteLoading || !email.trim()}
-            startIcon={<PersonAdd />}
-          >
-            Invitar
-          </Button>
-        </Box>
-      </Paper>
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
