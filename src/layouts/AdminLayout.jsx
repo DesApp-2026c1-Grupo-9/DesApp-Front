@@ -7,14 +7,15 @@ export default function AdminLayout() {
 
   return (
     <>
-      <AppBar position="static" sx={{ mb: 3, bgcolor: 'warning.dark' }}>
+      <AppBar position="static" sx={{ mb: 3, bgcolor: 'warning.dark', borderRadius: 0 }}>
         <Toolbar>
           <AdminPanelSettings sx={{ mr: 1 }} />
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Panel de Administración
           </Typography>
           <Button
-            color="inherit"
+            variant="outlined"
+            sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white' }}
             startIcon={<ArrowBack />}
             onClick={() => navigate('/')}
           >

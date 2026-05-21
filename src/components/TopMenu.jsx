@@ -42,6 +42,8 @@ export function TopMenu() {
     await cambiarEstudiantePorUsuarioId(usuarioIdNumero);
   };
 
+  const showAdmin = user?.rol === 'administrador';
+
   const menuItems = [
     { label: 'Inicio', path: '/', icon: <Home /> },
     { label: 'Mi Perfil', path: '/mi-perfil', icon: <Person /> },
@@ -51,24 +53,73 @@ export function TopMenu() {
     { label: 'Conexiones', path: '/conexiones', icon: <Groups /> },
     { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },
     { label: 'Materiales', path: '/materiales', icon: <LibraryBooks /> },
-    { label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> },
-    // Demo oculto - cambiar manualmente la URL a /demo-selector
+    ...(showAdmin ? [{ label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> }] : []),
   ];
 
   return (
-    <AppBar position="static" sx={{ mb: 3 }}>
+    <AppBar position="static" sx={{ mb: 3, borderRadius: 0 }}>
       <Toolbar>
         <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          Sistema Académico UNAHUR
-
+          <Box
+            component="a"
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              navigate('/');
+            }}
+            sx={{
+              fontWeight: 'bold',
+              color: 'inherit',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              '&:hover': {
+                color: 'inherit'
+              }
+            }}
+          >
+            Sistema Académico UNAHUR
+          </Box>
         </Typography>
 
-        <FormControl size="small" sx={{ minWidth: 240, mr: 2 }} disabled={loadingStudents || !students?.length}>
-          <InputLabel>Simular Usuario</InputLabel>
+        <Box sx={{ display: 'flex', gap: 1, mr: 2 }}>
+          {menuItems.filter(item => item.label !== 'Inicio').map((item) => (
+            <Button
+              key={item.label}
+              variant="text"
+              color="inherit"
+              onClick={() => {
+                if (item.label === 'Materias') {
+                  navigate(getMateriasPath());
+                } else {
+                  navigate(item.path);
+                }
+              }}
+              startIcon={item.icon}
+              sx={{ 
+                backgroundColor: (
+                  location.pathname === item.path || 
+                  (item.label === 'Materias' && location.pathname.includes('/materias'))
+                ) ? 'rgba(255,255,255,0.2)' : 'transparent',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,0.1)'
+                }
+              }}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </Box>
+
+        <FormControl size="small" sx={{ minWidth: 240, bgcolor: 'background.paper', borderRadius: 1 }} disabled={loadingStudents || !students?.length}>
+          
           <Select
             value={user?.id || ''}
             label="Simular Usuario"
             onChange={(e) => handleSwitchUsuarioGlobal(e.target.value)}
+            sx={{ 
+              borderRadius: 0,
+              '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
+            }}
             renderValue={(selected) => {
               const student = students.find((s) => s.id === selected);
               return (
@@ -104,34 +155,6 @@ export function TopMenu() {
             ))}
           </Select>
         </FormControl>
-        
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          {menuItems.map((item) => (
-            <Button
-              key={item.label}
-              color="inherit"
-              onClick={() => {
-                if (item.label === 'Materias') {
-                  navigate(getMateriasPath());
-                } else {
-                  navigate(item.path);
-                }
-              }}
-              startIcon={item.icon}
-              sx={{ 
-                backgroundColor: (
-                  location.pathname === item.path || 
-                  (item.label === 'Materias' && location.pathname.includes('/materias'))
-                ) ? 'rgba(255,255,255,0.2)' : 'transparent',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              {item.label}
-            </Button>
-          ))}
-        </Box>
       </Toolbar>
     </AppBar>
   );

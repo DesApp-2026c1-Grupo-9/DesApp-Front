@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, Typography, Card, CardContent, Button, Table, TableBody, 
-  TableCell, TableContainer, TableHead, TableRow, Paper, Chip, 
-  Alert, CircularProgress, Tabs, Tab, Grid, Avatar, ButtonGroup, 
-  Select, MenuItem, FormControl, Dialog, DialogActions, 
-  DialogContent, DialogContentText, DialogTitle, List, ListItem, 
-  ListItemText, ListItemIcon, Tooltip 
+import {
+  Box, Typography, Card, CardContent, Button, Table, TableBody,
+  TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
+  Alert, Tabs, Tab, Grid, Avatar, ButtonGroup,
+  Select, MenuItem, FormControl, Dialog, DialogActions,
+  DialogContent, DialogContentText, DialogTitle, List, ListItem,
+  ListItemText, ListItemIcon, Tooltip
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -19,6 +19,8 @@ import {
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+
+import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 export const EstudianteMaterias = () => {
   const navigate = useNavigate();
@@ -401,30 +403,40 @@ export const EstudianteMaterias = () => {
 
   if (authLoading || loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-        <CircularProgress />
-      </Box>
+      <PageContainer centered padding={3}>
+        <LoadingSpinner message="Cargando información académica..." />
+      </PageContainer>
     );
   }
 
   if (error) {
     return (
-      <Box p={3}>
-        <Alert severity="error">{error}</Alert>
-      </Box>
+      <PageContainer padding={3}>
+        <EmptyState
+          title="Error al cargar"
+          message={error}
+          icon="error"
+          actionLabel="Reintentar"
+          onAction={() => window.location.reload()}
+        />
+      </PageContainer>
     );
   }
 
   if (!estudiante || !situacionAcademica) {
     return (
-      <Box p={3}>
-        <Alert severity="info">No se encontró información del estudiante</Alert>
-      </Box>
+      <PageContainer padding={3}>
+        <EmptyState
+          title="Sin información"
+          message="No se encontró información del estudiante"
+          icon="inbox"
+        />
+      </PageContainer>
     );
   }
 
   return (
-    <Box p={3}>
+    <PageContainer padding={3}>
       {/* Header */}
       <Box display="flex" alignItems="center" mb={3}>
         <Button 
@@ -447,7 +459,7 @@ export const EstudianteMaterias = () => {
       {/* Resumen estadísticas */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main">
                 {situacionAcademica?.resumen?.aprobadas || 0}
@@ -457,7 +469,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main">
                 {situacionAcademica?.resumen?.regularizadas || 0}
@@ -467,7 +479,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="info.main">
                 {situacionAcademica?.resumen?.cursando || filtrarMateriasPorEstado('Cursando').length}
@@ -477,7 +489,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="info.main">
                 {situacionAcademica?.resumen?.noCursadas || 0}
@@ -487,7 +499,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary.main">
                 {situacionAcademica?.resumen?.disponibles || 0}
@@ -497,7 +509,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="text.secondary">
                 {situacionAcademica?.resumen?.total || 0}
@@ -509,7 +521,7 @@ export const EstudianteMaterias = () => {
       </Grid>
 
       {/* Tabs */}
-      <Card>
+      <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label={`Todas (${situacionAcademica?.materias?.length || 0})`} />
@@ -640,7 +652,7 @@ export const EstudianteMaterias = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

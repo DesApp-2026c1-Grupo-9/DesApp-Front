@@ -18,6 +18,7 @@ import {
   Divider,
   Snackbar
 } from '@mui/material';
+import { PageContainer } from '../components/ui';
 import {
   Person as PersonIcon,
   School as SchoolIcon,
@@ -31,6 +32,7 @@ import {
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
 import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
+import { useSnackbar } from '../hooks';
 
 export const EstudianteDashboard = () => {
   const dispatch = useDispatch();
@@ -56,8 +58,8 @@ export const EstudianteDashboard = () => {
   const [pubInscripciones, setPubInscripciones] = useState(true);
   const [pubRegularizaciones, setPubRegularizaciones] = useState(true);
   const [pubAprobaciones, setPubAprobaciones] = useState(true);
-  
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+
+  const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const usuarioId = estudianteActual?.usuario?.id;
 
@@ -88,11 +90,11 @@ export const EstudianteDashboard = () => {
       }))
         .unwrap()
         .then(() => {
-          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+          showSuccess('Preferencia guardada');
         })
         .catch((err) => {
           setPerfilPublico(!newValue);
-          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+          showError('Error al guardar: ' + (err.message || 'Error desconocido'));
         });
     }
   };
@@ -108,11 +110,11 @@ export const EstudianteDashboard = () => {
       }))
         .unwrap()
         .then(() => {
-          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+          showSuccess('Preferencia guardada');
         })
         .catch((err) => {
           setVisibleEnDescubrir(!newValue);
-          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+          showError('Error al guardar: ' + (err.message || 'Error desconocido'));
         });
     }
   };
@@ -127,17 +129,13 @@ export const EstudianteDashboard = () => {
       }))
         .unwrap()
         .then(() => {
-          setSnackbar({ open: true, message: 'Preferencia guardada', severity: 'success' });
+          showSuccess('Preferencia guardada');
         })
         .catch((err) => {
           setter(!newValue);
-          setSnackbar({ open: true, message: 'Error al guardar: ' + (err.message || 'Error desconocido'), severity: 'error' });
+          showError('Error al guardar: ' + (err.message || 'Error desconocido'));
         });
     }
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   useEffect(() => {
@@ -340,15 +338,11 @@ export const EstudianteDashboard = () => {
   }
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        Bienvenido, {estudiante.nombre} {estudiante.apellido}
-      </Typography>
-
+    <PageContainer maxWidth={800}>
       <Grid container spacing={3}>
         {/* Información Personal */}
-        <Grid item xs={12} md={4}>
-          <Card>
+        <Grid item xs={12}>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Avatar 
@@ -475,8 +469,8 @@ export const EstudianteDashboard = () => {
         </Grid>
 
         {/* Información Académica */}
-        <Grid item xs={12} md={8}>
-          <Card>
+        <Grid item xs={12}>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <SchoolIcon sx={{ mr: 1 }} />
@@ -533,13 +527,13 @@ export const EstudianteDashboard = () => {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={3000}
-        onClose={handleCloseSnackbar}
+        onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled">
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </PageContainer>
   );
 };
