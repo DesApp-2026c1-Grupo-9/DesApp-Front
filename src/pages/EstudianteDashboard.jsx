@@ -18,6 +18,7 @@ import {
   Divider,
   Snackbar
 } from '@mui/material';
+import { PageContainer } from '../components/ui';
 import {
   Person as PersonIcon,
   School as SchoolIcon,
@@ -337,14 +338,10 @@ export const EstudianteDashboard = () => {
   }
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>
-        Bienvenido, {estudiante.nombre} {estudiante.apellido}
-      </Typography>
-
+    <PageContainer maxWidth={800}>
       <Grid container spacing={3}>
         {/* Información Personal */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12}>
           <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -472,7 +469,7 @@ export const EstudianteDashboard = () => {
         </Grid>
 
         {/* Información Académica */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12}>
           <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
@@ -537,6 +534,6 @@ export const EstudianteDashboard = () => {
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </PageContainer>
   );
 };
