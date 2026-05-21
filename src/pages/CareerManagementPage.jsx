@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Card, CardContent, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Accordion, AccordionSummary,  AccordionDetails, List, ListItem, ListItemText, Divider} from '@mui/material';
 import { School, ExpandMore, Business, Schedule, Assignment } from '@mui/icons-material';
+import { PageContainer } from '../components/ui';
 
 export function CareerManagementPage() {
   // Mock data de carreras y planes de estudio
@@ -76,11 +77,12 @@ export function CareerManagementPage() {
   );
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto', p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        <School sx={{ mr: 1, verticalAlign: 'middle' }} />
-        Gestión de Carreras y Planes de Estudio
-      </Typography>
+    <PageContainer maxWidth={1200}>
+      <Box sx={{ mb: 3, pt: 0.5, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h4">
+          Gestión de Carreras y Planes de Estudio
+        </Typography>
+      </Box>
 
       {/* Resumen General */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -137,7 +139,7 @@ export function CareerManagementPage() {
                     <Business sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
                     {carrera.instituto} • Duración: {carrera.duracionEstimada} años
                   </Typography>
-                </Box>
+    </Box>
               </AccordionSummary>
               
               <AccordionDetails>
@@ -215,6 +217,6 @@ export function CareerManagementPage() {
           ))}
         </CardContent>
       </Card>
-    </Box>
+    </PageContainer>
   );
 }

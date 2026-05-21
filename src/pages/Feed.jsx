@@ -1,12 +1,13 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Container, Typography, Box } from '@mui/material';
+import { Typography, Box } from '@mui/material';
 import { fetchFeed, addPost, removePost, toggleLike, editPost } from '../features/feed/slice';
 import { fetchStudents } from '../features/auth/slice';
 
 import PostCard from '../components/PostCard';
 import CreatePostForm from '../components/CreatePostForm';
+import { PageContainer } from '../components/ui';
 
 export { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
 
@@ -27,16 +28,16 @@ function Feed() {
 
   if (loadingStudents || !user) {
     return (
-      <Container sx={{ py: 6, textAlign: 'center' }}>
+      <PageContainer centered padding={3}>
         <Typography>Cargando usuarios...</Typography>
-      </Container>
+      </PageContainer>
     );
   }
 
   return (
-    <Container sx={{ py: 6, maxWidth: '800px !important' }}>
-      <Box sx={{ mb: 5, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h4" fontWeight="bold" color="primary">
+    <PageContainer maxWidth={800}>
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+        <Typography variant="h4">
           Novedades
         </Typography>
       </Box>
@@ -66,7 +67,7 @@ function Feed() {
           }
         />
       ))}
-    </Container>
+    </PageContainer>
   );
 }
 
