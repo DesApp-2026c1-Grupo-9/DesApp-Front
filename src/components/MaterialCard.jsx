@@ -49,8 +49,6 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
         p: 2,
         mb: 2,
         backgroundColor: isDiscord ? '#f5f2ff' : '#fff',
-        transition: 'box-shadow 0.2s',
-        '&:hover': { boxShadow: 2 },
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>

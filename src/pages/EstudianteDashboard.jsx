@@ -345,7 +345,7 @@ export const EstudianteDashboard = () => {
       <Grid container spacing={3}>
         {/* Información Personal */}
         <Grid item xs={12} md={4}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Avatar 
@@ -473,7 +473,7 @@ export const EstudianteDashboard = () => {
 
         {/* Información Académica */}
         <Grid item xs={12} md={8}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <SchoolIcon sx={{ mr: 1 }} />

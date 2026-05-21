@@ -10,7 +10,7 @@ import { PersonAdd } from '@mui/icons-material';
 
 const DiscoverCard = ({ student, onInvite, isInviting, isInvited }) => {
   return (
-    <Card sx={{ mb: 2, borderRadius: 2 }}>
+    <Card sx={{ mb: 2, borderRadius: 2, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
       <CardContent>
         <Box
           sx={{

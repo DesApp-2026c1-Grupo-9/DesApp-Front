@@ -13,7 +13,7 @@ const RequestCard = ({ request, onAccept, onReject }) => {
   const usuario = request.usuario;
 
   return (
-    <Card sx={{ mb: 2, borderRadius: 2 }}>
+    <Card sx={{ mb: 2, borderRadius: 2, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
       <CardContent>
         <Box
           sx={{

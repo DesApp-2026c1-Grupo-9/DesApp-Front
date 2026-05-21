@@ -36,7 +36,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
   });
 
   return (
-    <Card sx={{ mb: 2, transition: '0.3s', '&:hover': { boxShadow: 6 } }}>
+    <Card sx={{ mb: 2, transition: 'none', boxShadow: theme => theme.shadows[2], '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
       <CardContent>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <Box sx={{ flex: 1 }}>

@@ -215,7 +215,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const isEvento = post.tipo === TIPO_POST.EVENTO_ACADEMICO;
 
   return (
-    <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2 }}>
+    <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2, '&:hover': { boxShadow: 2 } }}>
       {isEvento ? (
         <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>

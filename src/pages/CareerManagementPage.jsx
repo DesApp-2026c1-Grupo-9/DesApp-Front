@@ -85,7 +85,7 @@ export function CareerManagementPage() {
       {/* Resumen General */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={4}>
-          <Card sx={{ bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+          <Card sx={{ bgcolor: 'primary.light', color: 'primary.contrastText', '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <School sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h4">{totalCarreras}</Typography>
@@ -95,7 +95,7 @@ export function CareerManagementPage() {
         </Grid>
         
         <Grid item xs={12} sm={4}>
-          <Card sx={{ bgcolor: 'secondary.light', color: 'secondary.contrastText' }}>
+          <Card sx={{ bgcolor: 'secondary.light', color: 'secondary.contrastText', '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Assignment sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h4">{totalPlanes}</Typography>
@@ -105,7 +105,7 @@ export function CareerManagementPage() {
         </Grid>
         
         <Grid item xs={12} sm={4}>
-          <Card sx={{ bgcolor: 'success.light', color: 'success.contrastText' }}>
+          <Card sx={{ bgcolor: 'success.light', color: 'success.contrastText', '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Schedule sx={{ fontSize: 40, mb: 1 }} />
               <Typography variant="h4">{planesVigentes}</Typography>
@@ -116,7 +116,7 @@ export function CareerManagementPage() {
       </Grid>
 
       {/* Lista de Carreras */}
-      <Card>
+      <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>
             Carreras Disponibles

@@ -459,7 +459,7 @@ export const EstudianteMaterias = () => {
       {/* Resumen estadísticas */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="success.main">
                 {situacionAcademica?.resumen?.aprobadas || 0}
@@ -469,7 +469,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="warning.main">
                 {situacionAcademica?.resumen?.regularizadas || 0}
@@ -479,7 +479,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="info.main">
                 {situacionAcademica?.resumen?.cursando || filtrarMateriasPorEstado('Cursando').length}
@@ -489,7 +489,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="info.main">
                 {situacionAcademica?.resumen?.noCursadas || 0}
@@ -499,7 +499,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="primary.main">
                 {situacionAcademica?.resumen?.disponibles || 0}
@@ -509,7 +509,7 @@ export const EstudianteMaterias = () => {
           </Card>
         </Grid>
         <Grid item xs={6} sm={4} md={2}>
-          <Card>
+          <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
               <Typography variant="h4" color="text.secondary">
                 {situacionAcademica?.resumen?.total || 0}
@@ -521,7 +521,7 @@ export const EstudianteMaterias = () => {
       </Grid>
 
       {/* Tabs */}
-      <Card>
+      <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
         <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
           <Tabs value={tabValue} onChange={handleTabChange}>
             <Tab label={`Todas (${situacionAcademica?.materias?.length || 0})`} />
