@@ -94,7 +94,7 @@ const Home = () => {
 
   if (esAdmin) {
     return (
-      <PageContainer maxWidth={1400}>
+      <PageContainer maxWidth={800}>
         <Box sx={{ mb: 4 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center">
@@ -142,9 +142,10 @@ const Home = () => {
   // Calcular progreso basado en datos reales del backend
   const materiasAprobadas = situacionAcademica?.resumen?.aprobadas || 0;
   const materiasRegularizadas = situacionAcademica?.resumen?.regularizadas || 0;
-  const materiasCursando = []; // Por ahora empty array, se puede calcular si es necesario
   const totalMaterias = situacionAcademica?.resumen?.total || 0;
-  const progresoCarrera = totalMaterias > 0 ? (materiasAprobadas / totalMaterias) * 100 : 0;
+  const progresoCarrera = totalMaterias > 0 ? ((materiasAprobadas + materiasRegularizadas + (situacionAcademica?.resumen?.cursando || 0)) / totalMaterias) * 100 : 0;
+  const materiasCursandoList = situacionAcademica?.situacionAcademica?.filter(m => m.estado === 'cursando') || [];
+  const materiasRegularizadasList = situacionAcademica?.situacionAcademica?.filter(m => m.estado === 'regularizada') || [];
 
   const getEventIcon = (tipo) => {
     switch (tipo) {
@@ -156,7 +157,7 @@ const Home = () => {
   };
 
   return (
-    <PageContainer maxWidth={1400}>
+    <PageContainer maxWidth={800}>
       {/* Header de Bienvenida */}
       <Box sx={{ mb: 4 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
@@ -205,7 +206,7 @@ const Home = () => {
             <CardContent sx={{ textAlign: 'center' }}>
               <PlayArrow sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
               <Typography variant="h4" color="info.main">
-                {materiasCursando.length}
+                {materiasCursandoList.length}
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Cursando Ahora
@@ -252,7 +253,7 @@ const Home = () => {
                 Mi Cursada Actual (2026-1)
               </Typography>
               <List>
-                {materiasCursando.map((materia, index) => (
+                {materiasCursandoList.map((materia, index) => (
                   <ListItem key={index}>
                     <ListItemIcon>
                       <PlayArrow color="info" />
@@ -266,14 +267,14 @@ const Home = () => {
                 ))}
               </List>
               
-              {materiasRegularizadas.length > 0 && (
+              {materiasRegularizadasList.length > 0 && (
                 <>
                   <Divider sx={{ my: 2 }} />
                   <Alert severity="warning" sx={{ mb: 2 }}>
                     <strong>Materias Regularizadas:</strong>
                   </Alert>
                   <List>
-                    {materiasRegularizadas.map((materia, index) => (
+                    {materiasRegularizadasList.map((materia, index) => (
                       <ListItem key={index}>
                         <ListItemIcon>
                           <Warning color="warning" />
