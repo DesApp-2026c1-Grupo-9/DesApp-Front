@@ -19,6 +19,7 @@ import {
   Snackbar
 } from '@mui/material';
 import { PageContainer } from '../components/ui';
+import { calcularEdad } from '../utils';
 import {
   Person as PersonIcon,
   School as SchoolIcon,
@@ -367,7 +368,7 @@ export const EstudianteDashboard = () => {
                 <strong>Fecha de Nacimiento:</strong> {estudiante.fechaNacimiento}
               </Typography>
               <Typography variant="body2">
-                <strong>Edad:</strong> {estudiante.edad} años
+                <strong>Edad:</strong> {calcularEdad(estudiante.fechaNacimiento)} años
               </Typography>
 
               <Divider sx={{ my: 2 }} />

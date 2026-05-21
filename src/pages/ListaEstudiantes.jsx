@@ -15,6 +15,7 @@ import {
   Paper,
   IconButton
 } from '@mui/material';
+import { calcularEdad } from '../utils';
 import {
   Person as PersonIcon,
   School as SchoolIcon,
@@ -154,7 +155,7 @@ export const ListaEstudiantes = () => {
                   {/* Información adicional */}
                   <Box sx={{ textAlign: 'center', width: '100%' }}>
                     <Typography variant="body2" color="text.secondary">
-                      Edad: {estudiante.edad} años
+                      Edad: {calcularEdad(estudiante.fechaNacimiento)} años
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Plan: {estudiante.planEstudio}
