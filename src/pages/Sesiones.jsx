@@ -4,8 +4,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography, Button, Box, FormControl, InputLabel, Select, MenuItem,
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
-  DialogContentText, Tabs, Tab, FormControlLabel, Checkbox
+  DialogContentText, Tabs, Tab, FormControlLabel, Checkbox, Grid
 } from '@mui/material';
+import { Add } from '@mui/icons-material';
 import SesionCard from '../components/SesionCard';
 import SesionModal from '../components/SesionModal';
 import AprobacionModal from '../components/AprobacionModal';
@@ -87,7 +88,7 @@ const Sesiones = () => {
       if (s.creadorId !== user.id) return false;
     }
 
-    if (activeTab !== 'misMaterias' && filters.materia && s.materiaId !== Number(filters.materia)) return false;
+    if (filters.materia && s.materiaId !== Number(filters.materia)) return false;
     if (filters.tipo && s.tipo !== filters.tipo) return false;
     if (filters.fecha) {
       const sesionDate = s.fechaHora?.split('T')[0];
@@ -231,81 +232,84 @@ const Sesiones = () => {
   return (
     <PageContainer maxWidth={1200}>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-        <Typography variant="h4" gutterBottom sx={{ mb: 0 }}>
+        <Typography variant="h4" sx={{ mb: 0 }}>
           Sesiones de Estudio
         </Typography>
-      </Box>
-
-      <Box sx={{ mb: 3, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
         <Button
           variant="contained"
           onClick={handleCreate}
-          sx={{ height: 56 }}
+          startIcon={<Add />}
         >
           Nueva Sesión
         </Button>
-
-        {activeTab === 'todas' && (
-          <FormControl sx={{ minWidth: 200 }} disabled={loadingMaterias}>
-            <InputLabel>Materia</InputLabel>
-            <Select
-              label="Materia"
-              value={filters.materia || ''}
-              onChange={(e) => setFilter('materia', e.target.value || null)}
-            >
-              <MenuItem value="">Todas</MenuItem>
-              {materias?.map(m => (
-                <MenuItem key={m.id} value={m.id}>
-                  {m.nombre}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        )}
-
-        <TextField
-          label="Fecha"
-          type="date"
-          InputLabelProps={{ shrink: true }}
-          value={filters.fecha || ''}
-          onChange={(e) => setFilter('fecha', e.target.value || null)}
-          sx={{ minWidth: 180 }}
-        />
-
-        <FormControl sx={{ minWidth: 150 }}>
-          <InputLabel>Tipo</InputLabel>
-          <Select
-            label="Tipo"
-            value={filters.tipo || ''}
-            onChange={(e) => setFilter('tipo', e.target.value || null)}
-          >
-            <MenuItem value="">Todos</MenuItem>
-            <MenuItem value="virtual">Virtual</MenuItem>
-            <MenuItem value="presencial">Presencial</MenuItem>
-          </Select>
-        </FormControl>
-
-        {hasActiveFilters && (
-          <Button
-            variant="text"
-            onClick={clearFilters}
-          >
-            Limpiar filtros
-          </Button>
-        )}
       </Box>
 
-      {/* Past events checkbox - separate line */}
-      <Box sx={{ mb: 2 }}>
-        <FormControlLabel
-          control={
-            <Checkbox 
-              checked={showPastEvents} 
-              onChange={(e) => setShowPastEvents(e.target.checked)} 
+      {/* Filtros */}
+      <Box sx={{ mb: 3 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth disabled={loadingMaterias}>
+              <InputLabel>Materia</InputLabel>
+              <Select
+                label="Materia"
+                value={filters.materia || ''}
+                onChange={(e) => setFilter('materia', e.target.value || null)}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {materias?.map(m => (
+                  <MenuItem key={m.id} value={m.id}>
+                    {m.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              label="Fecha"
+              type="date"
+              InputLabelProps={{ shrink: true }}
+              value={filters.fecha || ''}
+              onChange={(e) => setFilter('fecha', e.target.value || null)}
             />
-          }
-          label="Mostrar eventos pasados"
-        />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>Tipo</InputLabel>
+              <Select
+                label="Tipo"
+                value={filters.tipo || ''}
+                onChange={(e) => setFilter('tipo', e.target.value || null)}
+              >
+                <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="virtual">Virtual</MenuItem>
+                <MenuItem value="presencial">Presencial</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <FormControlLabel
+            control={
+              <Checkbox 
+                checked={showPastEvents} 
+                onChange={(e) => setShowPastEvents(e.target.checked)} 
+              />
+            }
+            label="Mostrar eventos pasados"
+          />
+
+          {hasActiveFilters && (
+            <Button
+              variant="text"
+              onClick={clearFilters}
+            >
+              Limpiar filtros
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {/* Tab bar */}
