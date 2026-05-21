@@ -200,16 +200,10 @@ export const EstudianteDashboard = () => {
 
   if (esAdmin) {
     return (
-      <Box p={3}>
-        <Typography variant="h4" gutterBottom>
-          Bienvenido, {user?.nombre || 'Administrador'}
-        </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-          Panel de administracion del sistema. Usuario activo: {user?.email || 'sin email'}
-        </Typography>
+      <PageContainer maxWidth={800}>
 
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12}>
             <Card sx={{ height: '100%' }}>
               <CardContent>
                 <Box display="flex" alignItems="center" mb={2}>
@@ -255,7 +249,7 @@ export const EstudianteDashboard = () => {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={8}>
+          <Grid item xs={12}>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={4}>
                 <Paper sx={{ p: 2, textAlign: 'center', height: '100%' }}>
@@ -310,7 +304,7 @@ export const EstudianteDashboard = () => {
             </Card>
           </Grid>
         </Grid>
-      </Box>
+      </PageContainer>
     );
   }
 
