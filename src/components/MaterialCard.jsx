@@ -136,7 +136,22 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
             gap: 1,
           }}
         >
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            {isOwner && (
+              <>
+                <IconButton size="small" onClick={() => onEdit(material)}>
+                  <Edit fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  color="error"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </>
+            )}
+
             {material.tipo === 'file' ? (
               <Button
                 size="small"
@@ -167,21 +182,6 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
               >
                 Abrir
               </Button>
-            )}
-
-            {isOwner && (
-              <>
-                <IconButton size="small" onClick={() => onEdit(material)}>
-                  <Edit fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </>
             )}
           </Box>
 

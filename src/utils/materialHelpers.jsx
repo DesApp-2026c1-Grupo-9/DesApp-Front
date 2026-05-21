@@ -51,7 +51,7 @@ export const MAX_FILE_SIZE = 25 * 1024 * 1024;
 export const validateMagicBytes = async (file) => {
   return new Promise((resolve) => {
     const allowedTypes = {
-      pdf: ['%PDF'],
+      pdf: [0x25, 0x50, 0x44, 0x46],
       doc: [0xd0, 0xcf],
       docx: [0x50, 0x4b, 0x03, 0x04],
       ppt: [0xd0, 0xcf],
