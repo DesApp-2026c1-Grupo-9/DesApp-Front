@@ -32,7 +32,6 @@ import {
   Warning,
   Assignment,
   Event,
-  AdminPanelSettings
 } from '@mui/icons-material';
 
 import { PageContainer, LoadingSpinner } from '../components/ui';
@@ -44,6 +43,15 @@ const Home = () => {
   const [estudianteInfo, setEstudianteInfo] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const esAdmin =
+    user?.rol === 'administrador';
+
+  useEffect(() => {
+    if (esAdmin && user) {
+      navigate('/admin', { replace: true });
+    }
+  }, [esAdmin, user, navigate]);
 
   // Cargar datos del estudiante actual
   useEffect(() => {
@@ -86,37 +94,6 @@ const Home = () => {
       loadStudentData();
     }
   }, [estudianteActual]);
-
-  const esAdmin =
-    user?.rol === 'administrador' ||
-    String(user?.nombre || '').toLowerCase().includes('admin') ||
-    String(user?.apellido || '').toLowerCase().includes('admin');
-
-  if (esAdmin) {
-    return (
-      <PageContainer maxWidth={800}>
-        <Box sx={{ mb: 4 }}>
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
-            <Box display="flex" alignItems="center">
-              <Avatar
-                sx={{ width: 80, height: 80, mr: 3, bgcolor: 'primary.main' }}
-              >
-                <AdminPanelSettings sx={{ fontSize: 40 }} />
-              </Avatar>
-              <Box>
-                <Typography variant="h3" gutterBottom>
-                  ¡Bienvenido, {user?.nombre || 'Admin Inicial'}!
-                </Typography>
-                <Typography variant="h6" color="text.secondary">
-                  Panel de administracion del sistema
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </PageContainer>
-    );
-  }
 
   // Loading state
   if (authLoading || loading) {

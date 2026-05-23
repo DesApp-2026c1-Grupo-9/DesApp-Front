@@ -16,3 +16,5 @@ export { default as DiscoverCard } from './DiscoverCard';
 
 export * from './admin';
 export * from './ui';
+export { UserSelector } from './UserSelector';
+export { AdminAppBar } from './AdminAppBar';
