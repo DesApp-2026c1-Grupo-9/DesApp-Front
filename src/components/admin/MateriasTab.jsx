@@ -96,7 +96,7 @@ function MateriasTab() {
       showSuccess('Materia eliminada');
       cargarMaterias();
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al eliminar' });
+      showError(err.response?.data?.message || 'Error al eliminar');
     }
   };
 
@@ -202,8 +202,8 @@ function MateriasTab() {
       </Dialog>
 
       {snackbar && (
-        <Snackbar open autoHideDuration={6000} onClose={() => setSnackbar(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)} variant="filled">{snackbar.message}</Alert>
+        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={closeSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+          <Alert severity={snackbar.severity} onClose={closeSnackbar} variant="filled">{snackbar.message}</Alert>
         </Snackbar>
       )}
     </Box>
