@@ -26,7 +26,7 @@ import {
   Snackbar,
   Alert,
 } from '@mui/material';
-import { PersonAdd, Edit, Delete, Refresh } from '@mui/icons-material';
+import { PersonAdd, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
 
@@ -142,9 +142,6 @@ function PersonasTab() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
         <Typography variant="h6">Gestión de Personas ({usuarios.length})</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button variant="outlined" startIcon={<Refresh />} onClick={cargarUsuarios}>
-            Recargar
-          </Button>
           <Button variant="contained" startIcon={<PersonAdd />} onClick={openCreate}>
             Nueva Persona
           </Button>
