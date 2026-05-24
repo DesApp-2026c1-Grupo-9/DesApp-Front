@@ -7,13 +7,14 @@ import {
   Chip,
   IconButton,
 } from '@mui/material';
-import { Delete } from '@mui/icons-material';
+import { Delete, Block } from '@mui/icons-material';
 
 const ConnectionCard = ({ conexion, onDelete }) => {
   const contacto = conexion.contacto;
+  const inactivo = contacto?.activo === false;
 
   return (
-    <Card sx={{ mb: 2, borderRadius: 2, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
+    <Card sx={{ mb: 2, borderRadius: 2, opacity: inactivo ? 0.6 : 1, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
       <CardContent>
         <Box
           sx={{
@@ -36,12 +37,11 @@ const ConnectionCard = ({ conexion, onDelete }) => {
               <Typography variant="body2" color="text.secondary">
                 {contacto?.email}
               </Typography>
-              <Chip
-                label="Conectado"
-                size="small"
-                color="success"
-                sx={{ mt: 0.5 }}
-              />
+              {inactivo ? (
+                <Chip icon={<Block />} label="Cuenta desactivada" size="small" color="default" sx={{ mt: 0.5 }} />
+              ) : (
+                <Chip label="Conectado" size="small" color="success" sx={{ mt: 0.5 }} />
+              )}
             </Box>
           </Box>
           <IconButton

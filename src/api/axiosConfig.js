@@ -60,6 +60,10 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const mockStudentId = localStorage.getItem('mockStudentId');
+    if (mockStudentId) {
+      config.headers['X-User-Id'] = mockStudentId;
+    }
     return config;
   },
   (error) => Promise.reject(error)
@@ -76,6 +80,7 @@ api.interceptors.response.use(
 
     const esErrorQueDebeSeguirEnLaVista =
       error.response?.status === 400 ||
+      error.response?.status === 403 ||
       error.response?.status === 409 ||
       error.response?.status === 422;
 

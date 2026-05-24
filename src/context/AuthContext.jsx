@@ -17,8 +17,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const normalizarEstudiantes = (payload) => {
-    if (Array.isArray(payload)) return payload;
-    return payload?.data || [];
+    const raw = Array.isArray(payload) ? payload : payload?.data || [];
+    return raw;
   };
 
   const cargarEstudiantesDisponibles = async () => {
@@ -89,14 +89,30 @@ export const AuthProvider = ({ children }) => {
     cargarEstudianteActual();
   }, []);
 
+  useEffect(() => {
+    const handler = (e) => {
+      const { usuarioId, activo } = e.detail;
+      setEstudianteActual((prev) =>
+        prev?.usuario?.id === usuarioId ? { ...prev, usuario: { ...prev.usuario, activo } } : prev
+      );
+      setEstudiantesDisponibles((prev) =>
+        prev.map((est) =>
+          est.usuario?.id === usuarioId ? { ...est, usuario: { ...est.usuario, activo } } : est
+        )
+      );
+    };
+    window.addEventListener('usuario-estado-cambiado', handler);
+    return () => window.removeEventListener('usuario-estado-cambiado', handler);
+  }, []);
+
   const cambiarEstudiante = async (nuevoId) => {
     try {
       setLoading(true);
       const estudianteData = await EstudianteService.obtenerEstudiante(nuevoId);
-      console.log('Datos recibidos para cambiar estudiante:', estudianteData);
-      // El backend devuelve { data: estudiante }
       const estudiante = estudianteData.data || estudianteData;
-      console.log('Estudiante seleccionado:', estudiante);
+      if (estudiante.usuario?.activo === false) {
+        console.warn('El estudiante seleccionado está inactivo');
+      }
       setEstudianteActual(estudiante);
     } catch (error) {
       console.error('Error al cambiar estudiante:', error);

@@ -25,6 +25,7 @@ import {
   Grid,
   Snackbar,
   Alert,
+  TablePagination,
 } from '@mui/material';
 import { Add, Delete, Edit, MenuBook, RemoveCircleOutline } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
@@ -43,6 +44,44 @@ function PlanesTab() {
   const [selectedAnio, setSelectedAnio] = useState(1);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, plan: null });
   const [removeMateriaDialog, setRemoveMateriaDialog] = useState({ open: false, planId: null, materia: null });
+  const [materiasPlan, setMateriasPlan] = useState([]);
+  const [totalMateriasPlan, setTotalMateriasPlan] = useState(0);
+  const [materiasPlanPage, setMateriasPlanPage] = useState(0);
+  const materiasRowsPerPage = 10;
+  const [highlightMateriaId, setHighlightMateriaId] = useState(null);
+  const [refreshMateriasKey, setRefreshMateriasKey] = useState(0);
+
+  useEffect(() => {
+    if (!materiasEditDialog.open) return;
+    setMateriasPlanPage(0);
+  }, [materiasEditDialog.open, materiasEditDialog.plan?.id]);
+
+  useEffect(() => {
+    if (!materiasEditDialog.open || !materiasEditDialog.plan?.id) return;
+    const fetchData = async () => {
+      try {
+        const res = await api.get(`/api/carreras/${carreraId}/planes/${materiasEditDialog.plan.id}/materias`, {
+          params: { page: materiasPlanPage + 1, limit: materiasRowsPerPage, sort: 'anio', dir: 'asc' },
+        });
+        setMateriasPlan(res.data.data || []);
+        setTotalMateriasPlan(res.data.total ?? 0);
+        const maxPage = Math.max(0, Math.ceil((res.data.total ?? 0) / materiasRowsPerPage) - 1);
+        if (materiasPlanPage > maxPage) {
+          setMateriasPlanPage(maxPage);
+        }
+      } catch {
+        setMateriasPlan([]);
+        setTotalMateriasPlan(0);
+      }
+    };
+    fetchData();
+  }, [materiasEditDialog.open, materiasEditDialog.plan?.id, materiasPlanPage, carreraId, materiasRowsPerPage, refreshMateriasKey]);
+
+  useEffect(() => {
+    if (!highlightMateriaId) return;
+    const t = setTimeout(() => setHighlightMateriaId(null), 4000);
+    return () => clearTimeout(t);
+  }, [highlightMateriaId]);
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
@@ -108,14 +147,18 @@ function PlanesTab() {
 
   const handleAddMateriaToPlan = async (planId) => {
     if (!materiaToAdd) return;
+    const addedMateriaId = materiaToAdd.id;
     try {
-      await api.post(`/api/carreras/${carreraId}/planes/${planId}/materias`, { materiaId: materiaToAdd.id, anio: selectedAnio });
+      await api.post(`/api/carreras/${carreraId}/planes/${planId}/materias`, { materiaId: addedMateriaId, anio: selectedAnio });
       showSuccess('Materia asignada al plan');
       setMateriaToAdd(null);
       const res = await api.get(`/api/carreras/${carreraId}/planes`);
       const nuevosPlanes = res.data.data || [];
       setPlanes(nuevosPlanes);
       actualizarPlanEnDialog(nuevosPlanes, planId);
+      setHighlightMateriaId(addedMateriaId);
+      setMateriasPlanPage(0);
+      setRefreshMateriasKey((k) => k + 1);
       cargarCarreras();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al asignar materia');
@@ -137,6 +180,8 @@ function PlanesTab() {
       const nuevosPlanes = res.data.data || [];
       setPlanes(nuevosPlanes);
       actualizarPlanEnDialog(nuevosPlanes, planId);
+      setMateriasPlanPage(0);
+      setRefreshMateriasKey((k) => k + 1);
       cargarCarreras();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al remover materia');
@@ -184,7 +229,7 @@ function PlanesTab() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">Gestión de Planes de Estudio</Typography>
       </Box>
 
@@ -330,25 +375,37 @@ function PlanesTab() {
               </Paper>
 
               <Typography variant="subtitle2" gutterBottom>Materias del plan</Typography>
-              <TableContainer component={Paper} variant="outlined">
-                <Table size="small">
-                  <TableHead><TableRow><TableCell>Materia</TableCell><TableCell width={80}>Año</TableCell><TableCell width={130}>Tipo</TableCell><TableCell width={80} align="center">Acciones</TableCell></TableRow></TableHead>
-                  <TableBody>
-                    {!materiasEditDialog.plan?.materias?.length ? (
-                      <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}><Typography color="text.secondary">Este plan no tiene materias asignadas</Typography></TableCell></TableRow>
-                    ) : (
-                      [...(materiasEditDialog.plan?.materias || [])].sort((a, b) => (a.PlanMateria?.anio || a.anio) - (b.PlanMateria?.anio || b.anio) || a.nombre.localeCompare(b.nombre)).map((m) => (
-                        <TableRow key={m.id}>
-                          <TableCell>{m.nombre}</TableCell>
-                          <TableCell>{m.PlanMateria?.anio || m.anio}° año</TableCell>
-                          <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} sx={{ textTransform: 'capitalize' }} /></TableCell>
-                          <TableCell align="center"><IconButton size="small" color="error" onClick={() => openRemoveMateriaDialog(materiasEditDialog.plan?.id, m)} title="Remover del plan"><RemoveCircleOutline fontSize="small" /></IconButton></TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                <>
+                  <TableContainer component={Paper} variant="outlined">
+                    <Table size="small">
+                      <TableHead><TableRow><TableCell>Materia</TableCell><TableCell width={80}>Año</TableCell><TableCell width={130}>Tipo</TableCell><TableCell width={80} align="center">Acciones</TableCell></TableRow></TableHead>
+                      <TableBody>
+                        {!totalMateriasPlan ? (
+                          <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}><Typography color="text.secondary">Este plan no tiene materias asignadas</Typography></TableCell></TableRow>
+                        ) : (
+                          materiasPlan.map((m) => (
+                            <TableRow key={m.id} sx={{ transition: 'background-color 0.5s', backgroundColor: m.id === highlightMateriaId ? 'action.selected' : 'inherit' }}>
+                              <TableCell>{m.nombre}</TableCell>
+                              <TableCell>{m.anio}° año</TableCell>
+                              <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} sx={{ textTransform: 'capitalize' }} /></TableCell>
+                              <TableCell align="center"><IconButton size="small" color="error" onClick={() => openRemoveMateriaDialog(materiasEditDialog.plan?.id, m)} title="Remover del plan"><RemoveCircleOutline fontSize="small" /></IconButton></TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  {totalMateriasPlan > 0 && (
+                    <TablePagination
+                      component="div"
+                      count={totalMateriasPlan}
+                      page={materiasPlanPage}
+                      onPageChange={(_, p) => setMateriasPlanPage(p)}
+                      rowsPerPage={materiasRowsPerPage}
+                      rowsPerPageOptions={[materiasRowsPerPage]}
+                    />
+                  )}
+                </>
             </DialogContent>
             <DialogActions><Button onClick={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })}>Cerrar</Button></DialogActions>
           </Dialog>

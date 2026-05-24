@@ -10,9 +10,11 @@ import {
   Select,
   MenuItem,
   Avatar,
+  Alert,
+  AlertTitle,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks, AdminPanelSettings } from '@mui/icons-material';
+import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks, AdminPanelSettings, Block } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import { fetchStudents, switchStudent } from '../features/auth/slice';
@@ -22,7 +24,7 @@ export function TopMenu() {
   const location = useLocation();
   const dispatch = useDispatch();
   const { user, students, loadingStudents } = useSelector((state) => state.auth);
-  const { cambiarEstudiantePorUsuarioId } = useAuth();
+  const { cambiarEstudiantePorUsuarioId, estudianteActual } = useAuth();
 
   useEffect(() => {
     if (!students?.length) {
@@ -135,14 +137,14 @@ export function TopMenu() {
             }}
           >
             {students.map((s) => (
-              <MenuItem key={s.id} value={s.id}>
+              <MenuItem key={s.id} value={s.id} sx={s.activo === false ? { opacity: 0.5 } : undefined}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Avatar src={s.avatarUrl || s.avatar} sx={{ width: 28, height: 28 }}>
                     {s.nombre?.charAt(0)}
                   </Avatar>
                   <Box>
                     <Typography>
-                      {s.nombre} {s.apellido}
+                      {s.nombre} {s.apellido} {s.activo === false ? '(inactivo)' : ''}
                     </Typography>
                     {s.rol === 'administrador' && (
                       <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'bold' }}>
@@ -156,6 +158,14 @@ export function TopMenu() {
           </Select>
         </FormControl>
       </Toolbar>
+      {estudianteActual?.usuario?.activo === false && (
+        <Alert severity="warning" sx={{ borderRadius: 0, justifyContent: 'center', '& .MuiAlert-message': { textAlign: 'center', width: '100%' } }} icon={false}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+            <Block />
+            <AlertTitle sx={{ mb: 0 }}>Cuenta desactivada</AlertTitle>
+          </Box>
+        </Alert>
+      )}
     </AppBar>
   );
 }

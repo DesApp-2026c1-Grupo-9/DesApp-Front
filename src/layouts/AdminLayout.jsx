@@ -1,15 +1,17 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box, Tabs, Tab } from '@mui/material';
-import { ArrowBack, AdminPanelSettings, PersonAdd, School } from '@mui/icons-material';
+import { AppBar, Toolbar, Typography, Button, Box, Tabs, Tab, Alert, AlertTitle } from '@mui/material';
+import { ArrowBack, AdminPanelSettings, PersonAdd, School, Block } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudents } from '../features/auth/slice';
+import { useAuth } from '../context/AuthContext';
 
 export default function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
   const students = useSelector((state) => state.auth.students);
+  const { estudianteActual } = useAuth();
   const tab = location.pathname.includes('/academico') ? 1 : 0;
 
   useEffect(() => {
@@ -46,6 +48,14 @@ export default function AdminLayout() {
           </Button>
         </Toolbar>
       </AppBar>
+      {estudianteActual?.usuario?.activo === false && (
+        <Alert severity="warning" sx={{ borderRadius: 0, justifyContent: 'center', '& .MuiAlert-message': { textAlign: 'center', width: '100%' } }} icon={false}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+            <Block />
+            <AlertTitle sx={{ mb: 0 }}>Cuenta desactivada</AlertTitle>
+          </Box>
+        </Alert>
+      )}
       <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
         <Outlet />
       </Box>
