@@ -26,15 +26,17 @@ import {
   Snackbar,
   Alert,
   TableSortLabel,
+  TablePagination,
 } from '@mui/material';
 import { PersonAdd, Edit, Delete } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateStudentActiveStatus } from '../../features/auth/slice';
+import { updateStudentActiveStatus, fetchStudents } from '../../features/auth/slice';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
 
 function PersonasTab() {
   const [usuarios, setUsuarios] = useState([]);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroRol, setFiltroRol] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -47,38 +49,57 @@ function PersonasTab() {
   const [errors, setErrors] = useState({});
   const [sortField, setSortField] = useState('apellido');
   const [sortDir, setSortDir] = useState('asc');
+  const [highlightId, setHighlightId] = useState(null);
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 10;
   const dispatch = useDispatch();
   const currentUserId = useSelector((state) => state.auth.user?.id);
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const handleSort = (field) => {
-    setSortDir((prev) => (sortField === field && prev === 'asc' ? 'desc' : 'asc'));
-    setSortField(field);
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir('asc');
+    } else {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    }
+    setPage(0);
   };
 
   const cargarUsuarios = useCallback(async () => {
     try {
-      const res = await api.get('/api/usuarios');
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        sort: sortField,
+        dir: sortDir,
+        search: searchTerm,
+        ...(filtroRol !== 'todos' && { rol: filtroRol }),
+        ...(filtroEstado !== 'todos' && { activo: filtroEstado === 'activo' }),
+      };
+      const res = await api.get('/api/usuarios', { params });
       setUsuarios(res.data.data || []);
+      setTotal(res.data.total ?? 0);
     } catch {
       showError('Error al cargar usuarios');
+      setTotal(0);
     }
-  }, [showError]);
+  }, [page, sortField, sortDir, searchTerm, filtroRol, filtroEstado, rowsPerPage, showError]);
 
   useEffect(() => {
     cargarUsuarios();
   }, [cargarUsuarios]);
 
-  const validarForm = () => {
-    const errs = {};
-    if (!form.nombre.trim()) errs.nombre = 'Requerido';
-    if (!form.apellido.trim()) errs.apellido = 'Requerido';
-    if (!form.email.trim()) errs.email = 'Requerido';
-    else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Email inválido';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, filtroRol, filtroEstado]);
+
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = setTimeout(() => setHighlightId(null), 4000);
+    return () => clearTimeout(t);
+  }, [highlightId]);
 
   const openCreate = () => {
     setEditUser(null);
@@ -89,35 +110,30 @@ function PersonasTab() {
 
   const openEdit = (user) => {
     setEditUser(user);
-    setForm({
-      nombre: user.nombre || '',
-      apellido: user.apellido || '',
-      email: user.email || '',
-      password: '',
-      rol: user.rol || 'estudiante',
-      activo: user.activo !== false,
-    });
+    setForm({ nombre: user.nombre, apellido: user.apellido, email: user.email, password: '', rol: user.rol, activo: user.activo });
     setErrors({});
     setDialogOpen(true);
   };
 
   const handleSave = async () => {
-    const esEdicion = !!editUser;
-    if (!validarForm()) return;
-
-    const body = { ...form };
-    if (esEdicion && !body.password) delete body.password;
+    const newErrors = {};
+    if (!form.nombre.trim()) newErrors.nombre = 'Requerido';
+    if (!form.apellido.trim()) newErrors.apellido = 'Requerido';
+    if (!form.email.trim()) newErrors.email = 'Requerido';
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
     try {
-      if (esEdicion) {
-        await api.put(`/api/usuarios/${editUser.id}`, body);
+      if (editUser) {
+        await api.put(`/api/usuarios/${editUser.id}`, form);
         showSuccess('Usuario actualizado exitosamente');
         cargarUsuarios();
       } else {
-        const res = await api.post('/api/usuarios', body);
-        const nuevo = { ...res.data.data, activo: true, perfilPublico: true, visibleEnDescubrir: true };
-        setUsuarios((prev) => [nuevo, ...prev]);
+        const res = await api.post('/api/usuarios', form);
+        setHighlightId(res.data.data.id);
+        setPage(0);
         showSuccess('Usuario creado exitosamente');
+        dispatch(fetchStudents());
       }
       setDialogOpen(false);
     } catch (err) {
@@ -130,70 +146,53 @@ function PersonasTab() {
     setDeleteDialogOpen(true);
   };
 
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      const wasCurrentUser = userToDelete.id?.toString() === currentUserId?.toString();
+      await api.delete(`/api/usuarios/${userToDelete.id}`);
+      showSuccess('Usuario eliminado exitosamente');
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+      if (wasCurrentUser) {
+        localStorage.removeItem('mockStudentId');
+      }
+      cargarUsuarios();
+      dispatch(fetchStudents());
+      if (wasCurrentUser) {
+        window.location.reload();
+      }
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al eliminar usuario');
+    }
+  };
+
   const handleToggleEstadoClick = (user) => {
     setUserToToggle(user);
   };
 
   const handleToggleEstadoConfirm = async () => {
     if (!userToToggle) return;
-    const user = userToToggle;
     try {
-      const nuevoEstado = !user.activo;
-      await api.put(`/api/usuarios/${user.id}`, { activo: nuevoEstado });
-      setUsuarios((prev) =>
-        prev.map((u) => (u.id === user.id ? { ...u, activo: nuevoEstado } : u))
-      );
-      dispatch(updateStudentActiveStatus({ studentId: user.id, activo: nuevoEstado }));
-      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: user.id, activo: nuevoEstado } }));
-      if (currentUserId === user.id && !nuevoEstado) {
-        showError('⚠️ Este usuario está siendo simulado. Al desactivarlo, perderá acceso al cambiar de página.');
-      }
+      const res = await api.put(`/api/usuarios/${userToToggle.id}`, { activo: !userToToggle.activo });
+      showSuccess(`Usuario ${userToToggle.activo ? 'desactivado' : 'activado'} exitosamente`);
       setUserToToggle(null);
-    } catch {
-      showError('Error al cambiar estado del usuario');
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!userToDelete) return;
-    try {
-      await api.delete(`/api/usuarios/${userToDelete.id}`);
-      showSuccess('Usuario eliminado exitosamente');
-      setDeleteDialogOpen(false);
-      setUserToDelete(null);
       cargarUsuarios();
+      dispatch(fetchStudents());
+      if (res.data.data?.id?.toString() === currentUserId?.toString()) {
+        dispatch(updateStudentActiveStatus(res.data.data.activo));
+        window.dispatchEvent(new CustomEvent('activo-changed', { detail: { activo: res.data.data.activo } }));
+      }
     } catch (err) {
-      showError(err.response?.data?.message || 'Error al eliminar usuario');
+      showError(err.response?.data?.message || 'Error al cambiar estado');
     }
   };
-
-  const filteredUsuarios = usuarios
-    .filter((u) => {
-      const matchSearch = !searchTerm.trim() ||
-        `${u.nombre} ${u.apellido} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchRol = filtroRol === 'todos' || u.rol === filtroRol;
-      const matchEstado = filtroEstado === 'todos' ||
-        (filtroEstado === 'activo' ? u.activo : !u.activo);
-      return matchSearch && matchRol && matchEstado;
-    })
-    .sort((a, b) => {
-      let valA, valB;
-      if (sortField === 'nombre') {
-        valA = `${a.apellido}, ${a.nombre}`.toLowerCase();
-        valB = `${b.apellido}, ${b.nombre}`.toLowerCase();
-      } else {
-        valA = (a[sortField] || '').toString().toLowerCase();
-        valB = (b[sortField] || '').toString().toLowerCase();
-      }
-      const cmp = valA.localeCompare(valB, 'es');
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h6">Gestión de Personas ({usuarios.length})</Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h6" sx={{ lineHeight: '36px', my: 0 }}>Gestión de Personas ({usuarios.length})</Typography>
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <Button variant="contained" startIcon={<PersonAdd />} onClick={openCreate}>
             Nueva Persona
           </Button>
@@ -246,15 +245,15 @@ function PersonasTab() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredUsuarios.length === 0 ? (
+            {usuarios.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
             ) : (
-              filteredUsuarios.map((u) => (
-                <TableRow key={u.id}>
+              usuarios.map((u) => (
+                <TableRow key={u.id} sx={{ transition: 'background-color 0.5s', backgroundColor: u.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 28, height: 28, fontSize: 14 }}>
@@ -284,6 +283,17 @@ function PersonasTab() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {usuarios.length > 0 && (
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_, p) => setPage(p)}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[rowsPerPage]}
+        />
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editUser ? 'Editar Persona' : 'Crear Nueva Persona'}</DialogTitle>

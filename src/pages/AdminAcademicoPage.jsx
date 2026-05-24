@@ -7,8 +7,6 @@ import {
   Button,
   Tabs,
   Tab,
-  Card,
-  CardContent,
   CircularProgress,
 } from '@mui/material';
 import {
@@ -59,16 +57,12 @@ export default function AdminAcademicoPage() {
   }
 
   return (
-    <PageContainer maxWidth={1400}>
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ pb: 0 }}>
-          <Tabs value={subTab} onChange={(_, v) => setSubTab(v)}>
+    <PageContainer maxWidth={1400} padding={0}>
+      <Tabs value={subTab} onChange={(_, v) => setSubTab(v)} sx={{ mb: 3, minHeight: 10, '& .MuiTab-root': { pt: 1, pb: 1, minHeight: 10, '& .MuiTab-iconWrapper': { mb: 0 } } }}>
             <Tab icon={<School />} label="Carreras" iconPosition="start" />
             <Tab icon={<MenuBook />} label="Materias" iconPosition="start" />
             <Tab icon={<LibraryBooks />} label="Planes" iconPosition="start" />
           </Tabs>
-        </CardContent>
-      </Card>
 
       <TabPanel value={subTab} index={0}><CarrerasTab /></TabPanel>
       <TabPanel value={subTab} index={1}><MateriasTab /></TabPanel>

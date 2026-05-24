@@ -24,6 +24,7 @@ import {
   Snackbar,
   Alert,
   TableSortLabel,
+  TablePagination,
 } from '@mui/material';
 import { School, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
@@ -31,6 +32,8 @@ import { useSnackbar } from '../../hooks';
 
 function CarrerasTab() {
   const [carreras, setCarreras] = useState([]);
+  const [allCarreras, setAllCarreras] = useState([]);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroInstituto, setFiltroInstituto] = useState('todos');
   const [filtroDuracion, setFiltroDuracion] = useState('todos');
@@ -40,26 +43,60 @@ function CarrerasTab() {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, carrera: null });
   const [sortField, setSortField] = useState('nombre');
   const [sortDir, setSortDir] = useState('asc');
+  const [highlightId, setHighlightId] = useState(null);
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 10;
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const handleSort = (field) => {
-    setSortDir((prev) => (sortField === field && prev === 'asc' ? 'desc' : 'asc'));
-    setSortField(field);
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir('asc');
+    } else {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    }
+    setPage(0);
   };
 
   const cargarCarreras = useCallback(async () => {
     try {
-      const res = await api.get('/api/carreras');
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        sort: sortField,
+        dir: sortDir,
+        search: searchTerm,
+        ...(filtroInstituto !== 'todos' && { instituto: filtroInstituto }),
+        ...(filtroDuracion !== 'todos' && { duracion: filtroDuracion }),
+      };
+      const res = await api.get('/api/carreras', { params });
       setCarreras(res.data.data || []);
+      setTotal(res.data.total ?? 0);
     } catch {
       showError('Error al cargar carreras');
+      setTotal(0);
     }
-  }, [showError]);
+  }, [page, sortField, sortDir, searchTerm, filtroInstituto, filtroDuracion, rowsPerPage, showError]);
+
+  const cargarAllCarreras = useCallback(async () => {
+    try {
+      const res = await api.get('/api/carreras', { params: { limit: 1000 } });
+      setAllCarreras(res.data.data || []);
+    } catch { }
+  }, []);
 
   useEffect(() => {
     cargarCarreras();
   }, [cargarCarreras]);
+
+  useEffect(() => {
+    cargarAllCarreras();
+  }, [cargarAllCarreras]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, filtroInstituto, filtroDuracion]);
 
   const openEdit = (carrera) => {
     setEditCarrera(carrera);
@@ -81,8 +118,8 @@ function CarrerasTab() {
         cargarCarreras();
       } else {
         const res = await api.post('/api/carreras', form);
-        const nueva = { ...res.data.data, planVigente: null, totalPlanes: 0 };
-        setCarreras((prev) => [nueva, ...prev]);
+        setHighlightId(res.data.data.id);
+        setPage(0);
         showSuccess('Carrera creada');
       }
       setOpen(false);
@@ -108,27 +145,22 @@ function CarrerasTab() {
     }
   };
 
-  const filteredCarreras = carreras
-    .filter((c) => {
-      const matchSearch = !searchTerm.trim() ||
-        `${c.nombre} ${c.titulo} ${c.instituto}`.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchInstituto = filtroInstituto === 'todos' || c.instituto === filtroInstituto;
-      const matchDuracion = filtroDuracion === 'todos' || c.duracion?.toString() === filtroDuracion.toString();
-      return matchSearch && matchInstituto && matchDuracion;
-    })
-    .sort((a, b) => {
-      const valA = (a[sortField] || '').toString().toLowerCase();
-      const valB = (b[sortField] || '').toString().toLowerCase();
-      const cmp = valA.localeCompare(valB, 'es');
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = setTimeout(() => setHighlightId(null), 4000);
+    return () => clearTimeout(t);
+  }, [highlightId]);
 
-  const institutos = [...new Set(carreras.filter(c => c.instituto).map(c => c.instituto))].sort();
-  const duraciones = [...new Set(carreras.filter(c => c.duracion).map(c => c.duracion))].sort((a, b) => a - b);
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, filtroInstituto, filtroDuracion]);
+
+  const institutos = [...new Set(allCarreras.filter(c => c.instituto).map(c => c.instituto))].sort();
+  const duraciones = [...new Set(allCarreras.filter(c => c.duracion).map(c => c.duracion))].sort((a, b) => a - b);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">Gestión de Carreras</Typography>
         <Button variant="contained" startIcon={<School />} onClick={openCreate}>
           Nueva Carrera
@@ -176,13 +208,13 @@ function CarrerasTab() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredCarreras.length === 0 ? (
+            {carreras.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 4 }}>No hay carreras registradas</TableCell>
               </TableRow>
             ) : (
-              filteredCarreras.map((c) => (
-                <TableRow key={c.id}>
+              carreras.map((c) => (
+                <TableRow key={c.id} sx={{ transition: 'background-color 0.5s', backgroundColor: c.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontWeight: 'medium' }}>{c.nombre}</TableCell>
                   <TableCell>{c.titulo}</TableCell>
                   <TableCell>{c.instituto}</TableCell>
@@ -198,6 +230,17 @@ function CarrerasTab() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {carreras.length > 0 && (
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_, p) => setPage(p)}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[rowsPerPage]}
+        />
+      )}
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editCarrera ? 'Editar Carrera' : 'Nueva Carrera'}</DialogTitle>

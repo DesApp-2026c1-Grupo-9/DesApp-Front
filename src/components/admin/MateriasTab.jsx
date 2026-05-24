@@ -25,6 +25,7 @@ import {
   Snackbar,
   Alert,
   TableSortLabel,
+  TablePagination,
 } from '@mui/material';
 import { MenuBook, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
@@ -32,6 +33,7 @@ import { useSnackbar } from '../../hooks';
 
 function MateriasTab() {
   const [materias, setMaterias] = useState([]);
+  const [total, setTotal] = useState(0);
   const [carreras, setCarreras] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todos');
@@ -41,22 +43,40 @@ function MateriasTab() {
   const [deleteDialog, setDeleteDialog] = useState({ open: false, materia: null });
   const [sortField, setSortField] = useState('nombre');
   const [sortDir, setSortDir] = useState('asc');
+  const [highlightId, setHighlightId] = useState(null);
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 10;
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const handleSort = (field) => {
-    setSortDir((prev) => (sortField === field && prev === 'asc' ? 'desc' : 'asc'));
-    setSortField(field);
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir('asc');
+    } else {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    }
+    setPage(0);
   };
 
   const cargarMaterias = useCallback(async () => {
     try {
-      const res = await api.get('/api/materias');
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        sort: sortField,
+        dir: sortDir,
+        search: searchTerm,
+        ...(filtroTipo !== 'todos' && { tipo: filtroTipo }),
+      };
+      const res = await api.get('/api/materias', { params });
       setMaterias(res.data.data || []);
+      setTotal(res.data.total ?? 0);
     } catch {
       showError('Error al cargar materias');
+      setTotal(0);
     }
-  }, [showError]);
+  }, [page, sortField, sortDir, searchTerm, filtroTipo, rowsPerPage, showError]);
 
   const cargarCarreras = useCallback(async () => {
     try {
@@ -67,8 +87,15 @@ function MateriasTab() {
 
   useEffect(() => {
     cargarMaterias();
+  }, [cargarMaterias]);
+
+  useEffect(() => {
     cargarCarreras();
-  }, [cargarMaterias, cargarCarreras]);
+  }, [cargarCarreras]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, filtroTipo]);
 
   const openEdit = (materia) => {
     setEditMateria(materia);
@@ -90,8 +117,8 @@ function MateriasTab() {
         cargarMaterias();
       } else {
         const res = await api.post('/api/materias', form);
-        const nueva = { ...res.data.data, carreras: [] };
-        setMaterias((prev) => [nueva, ...prev]);
+        setHighlightId(res.data.data.id);
+        setPage(0);
         showSuccess('Materia creada');
       }
       setOpen(false);
@@ -121,29 +148,15 @@ function MateriasTab() {
     return materia.carreras?.map((c) => c.nombre).join(', ') || 'Sin carrera';
   };
 
-  const filteredMaterias = materias
-    .filter((m) => {
-      const matchSearch = !searchTerm.trim() ||
-        `${m.nombre} ${m.tipo} ${(m.carreras || []).map(c => c.nombre).join(' ')}`.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchTipo = filtroTipo === 'todos' || m.tipo === filtroTipo;
-      return matchSearch && matchTipo;
-    })
-    .sort((a, b) => {
-      let valA, valB;
-      if (sortField === 'carreras') {
-        valA = (a.carreras || []).map(c => c.nombre).join(', ').toLowerCase();
-        valB = (b.carreras || []).map(c => c.nombre).join(', ').toLowerCase();
-      } else {
-        valA = (a[sortField] || '').toString().toLowerCase();
-        valB = (b[sortField] || '').toString().toLowerCase();
-      }
-      const cmp = valA.localeCompare(valB, 'es');
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = setTimeout(() => setHighlightId(null), 4000);
+    return () => clearTimeout(t);
+  }, [highlightId]);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">Gestión de Materias</Typography>
         <Button variant="contained" startIcon={<MenuBook />} onClick={openCreate}>
           Nueva Materia
@@ -179,13 +192,13 @@ function MateriasTab() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredMaterias.length === 0 ? (
+            {materias.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 4 }}>No hay materias registradas</TableCell>
               </TableRow>
             ) : (
-              filteredMaterias.map((m) => (
-                <TableRow key={m.id}>
+              materias.map((m) => (
+                <TableRow key={m.id} sx={{ transition: 'background-color 0.5s', backgroundColor: m.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontWeight: 'medium' }}>{m.nombre}</TableCell>
                   <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} /></TableCell>
                   <TableCell>{getCarrerasForMateria(m)}</TableCell>
@@ -199,6 +212,17 @@ function MateriasTab() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {materias.length > 0 && (
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_, p) => setPage(p)}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[rowsPerPage]}
+        />
+      )}
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editMateria ? 'Editar Materia' : 'Nueva Materia'}</DialogTitle>

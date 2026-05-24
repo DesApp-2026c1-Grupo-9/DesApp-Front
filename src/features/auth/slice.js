@@ -5,7 +5,7 @@ export const fetchStudents = createAsyncThunk(
   'auth/fetchStudents',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/api/usuarios');
+      const response = await api.get('/api/usuarios', { params: { limit: 1000 } });
       return response.data.data.map(u => ({
         id: u.id,
         nombre: u.nombre,
@@ -135,7 +135,16 @@ const authSlice = createSlice({
         state.students = action.payload;
         const storedId = parseInt(localStorage.getItem('mockStudentId'), 10);
         const found = action.payload.find(s => s.id === storedId);
-        state.user = found || action.payload[0] || null;
+        if (found) {
+          state.user = found;
+        } else {
+          state.user = action.payload[0] || null;
+          if (state.user) {
+            localStorage.setItem('mockStudentId', state.user.id);
+          } else {
+            localStorage.removeItem('mockStudentId');
+          }
+        }
       })
       .addCase(fetchStudents.rejected, (state, action) => {
         state.loadingStudents = false;
