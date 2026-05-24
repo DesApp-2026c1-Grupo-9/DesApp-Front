@@ -124,6 +124,7 @@ export default function Conexiones() {
   const usuariosDescubribles = students.filter(
     (s) =>
       s.id !== user?.id &&
+      s.activo !== false &&
       s.visibleEnDescubrir !== false &&
       !conexionIds.has(s.id) &&
       s.rol !== 'administrador'

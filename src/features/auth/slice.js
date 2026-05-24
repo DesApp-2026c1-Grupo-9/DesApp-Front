@@ -114,6 +114,16 @@ const authSlice = createSlice({
         student.perfilPublico = perfilPublico;
       }
     },
+    updateStudentActiveStatus: (state, action) => {
+      const { studentId, activo } = action.payload;
+      const student = state.students.find(s => s.id === studentId);
+      if (student) {
+        student.activo = activo;
+      }
+      if (state.user?.id === studentId) {
+        state.user.activo = activo;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -177,5 +187,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { setCredentials, logout, switchStudent, clearPreferencias, clearConexiones, updateStudentProfileVisibility } = authSlice.actions;
+export const { setCredentials, logout, switchStudent, clearPreferencias, clearConexiones, updateStudentProfileVisibility, updateStudentActiveStatus } = authSlice.actions;
 export default authSlice.reducer;

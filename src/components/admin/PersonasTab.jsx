@@ -25,8 +25,11 @@ import {
   Avatar,
   Snackbar,
   Alert,
+  TableSortLabel,
 } from '@mui/material';
 import { PersonAdd, Edit, Delete } from '@mui/icons-material';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateStudentActiveStatus } from '../../features/auth/slice';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
 
@@ -39,10 +42,20 @@ function PersonasTab() {
   const [editUser, setEditUser] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const [userToToggle, setUserToToggle] = useState(null);
   const [form, setForm] = useState({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true });
   const [errors, setErrors] = useState({});
+  const [sortField, setSortField] = useState('apellido');
+  const [sortDir, setSortDir] = useState('asc');
+  const dispatch = useDispatch();
+  const currentUserId = useSelector((state) => state.auth.user?.id);
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
+
+  const handleSort = (field) => {
+    setSortDir((prev) => (sortField === field && prev === 'asc' ? 'desc' : 'asc'));
+    setSortField(field);
+  };
 
   const cargarUsuarios = useCallback(async () => {
     try {
@@ -99,12 +112,14 @@ function PersonasTab() {
       if (esEdicion) {
         await api.put(`/api/usuarios/${editUser.id}`, body);
         showSuccess('Usuario actualizado exitosamente');
+        cargarUsuarios();
       } else {
-        await api.post('/api/usuarios', body);
+        const res = await api.post('/api/usuarios', body);
+        const nuevo = { ...res.data.data, activo: true, perfilPublico: true, visibleEnDescubrir: true };
+        setUsuarios((prev) => [nuevo, ...prev]);
         showSuccess('Usuario creado exitosamente');
       }
       setDialogOpen(false);
-      cargarUsuarios();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al guardar usuario');
     }
@@ -113,6 +128,30 @@ function PersonasTab() {
   const openDelete = (user) => {
     setUserToDelete(user);
     setDeleteDialogOpen(true);
+  };
+
+  const handleToggleEstadoClick = (user) => {
+    setUserToToggle(user);
+  };
+
+  const handleToggleEstadoConfirm = async () => {
+    if (!userToToggle) return;
+    const user = userToToggle;
+    try {
+      const nuevoEstado = !user.activo;
+      await api.put(`/api/usuarios/${user.id}`, { activo: nuevoEstado });
+      setUsuarios((prev) =>
+        prev.map((u) => (u.id === user.id ? { ...u, activo: nuevoEstado } : u))
+      );
+      dispatch(updateStudentActiveStatus({ studentId: user.id, activo: nuevoEstado }));
+      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: user.id, activo: nuevoEstado } }));
+      if (currentUserId === user.id && !nuevoEstado) {
+        showError('⚠️ Este usuario está siendo simulado. Al desactivarlo, perderá acceso al cambiar de página.');
+      }
+      setUserToToggle(null);
+    } catch {
+      showError('Error al cambiar estado del usuario');
+    }
   };
 
   const handleDelete = async () => {
@@ -128,14 +167,27 @@ function PersonasTab() {
     }
   };
 
-  const filteredUsuarios = usuarios.filter((u) => {
-    const matchSearch = !searchTerm.trim() ||
-      `${u.nombre} ${u.apellido} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchRol = filtroRol === 'todos' || u.rol === filtroRol;
-    const matchEstado = filtroEstado === 'todos' ||
-      (filtroEstado === 'activo' ? u.activo : !u.activo);
-    return matchSearch && matchRol && matchEstado;
-  });
+  const filteredUsuarios = usuarios
+    .filter((u) => {
+      const matchSearch = !searchTerm.trim() ||
+        `${u.nombre} ${u.apellido} ${u.email}`.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchRol = filtroRol === 'todos' || u.rol === filtroRol;
+      const matchEstado = filtroEstado === 'todos' ||
+        (filtroEstado === 'activo' ? u.activo : !u.activo);
+      return matchSearch && matchRol && matchEstado;
+    })
+    .sort((a, b) => {
+      let valA, valB;
+      if (sortField === 'nombre') {
+        valA = `${a.apellido}, ${a.nombre}`.toLowerCase();
+        valB = `${b.apellido}, ${b.nombre}`.toLowerCase();
+      } else {
+        valA = (a[sortField] || '').toString().toLowerCase();
+        valB = (b[sortField] || '').toString().toLowerCase();
+      }
+      const cmp = valA.localeCompare(valB, 'es');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
 
   return (
     <Box>
@@ -178,10 +230,18 @@ function PersonasTab() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Rol</TableCell>
-              <TableCell>Estado</TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'email'} direction={sortField === 'email' ? sortDir : 'asc'} onClick={() => handleSort('email')}>Email</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'rol'} direction={sortField === 'rol' ? sortDir : 'asc'} onClick={() => handleSort('rol')}>Rol</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'activo'} direction={sortField === 'activo' ? sortDir : 'asc'} onClick={() => handleSort('activo')}>Estado</TableSortLabel>
+              </TableCell>
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -200,7 +260,7 @@ function PersonasTab() {
                       <Avatar sx={{ width: 28, height: 28, fontSize: 14 }}>
                         {u.nombre?.charAt(0)}{u.apellido?.charAt(0)}
                       </Avatar>
-                      {u.nombre} {u.apellido}
+                      {u.apellido}, {u.nombre}
                     </Box>
                   </TableCell>
                   <TableCell>{u.email}</TableCell>
@@ -208,7 +268,7 @@ function PersonasTab() {
                     <Chip label={u.rol} size="small" color={u.rol === 'administrador' ? 'warning' : 'primary'} />
                   </TableCell>
                   <TableCell>
-                    <Chip label={u.activo ? 'Activo' : 'Inactivo'} size="small" color={u.activo ? 'success' : 'default'} />
+                    <Chip label={u.activo ? 'Activo' : 'Inactivo'} size="small" color={u.activo ? 'success' : 'default'} onClick={() => handleToggleEstadoClick(u)} clickable />
                   </TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => openEdit(u)} title="Editar">
@@ -269,6 +329,20 @@ function PersonasTab() {
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
           <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={!!userToToggle} onClose={() => setUserToToggle(null)}>
+        <DialogTitle>{userToToggle?.activo ? 'Desactivar' : 'Activar'} Usuario</DialogTitle>
+        <DialogContent>
+          <Typography>¿Estás seguro de que deseas {userToToggle?.activo ? 'desactivar' : 'activar'} a <strong>{userToToggle?.apellido}, {userToToggle?.nombre}</strong>?</Typography>
+          {userToToggle?.activo && (
+            <Alert severity="warning" sx={{ mt: 2 }}>El usuario no podrá realizar operaciones en el sistema hasta que sea activado nuevamente.</Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUserToToggle(null)}>Cancelar</Button>
+          <Button variant="contained" color={userToToggle?.activo ? 'error' : 'success'} onClick={handleToggleEstadoConfirm}>Sí, {userToToggle?.activo ? 'desactivar' : 'activar'}</Button>
         </DialogActions>
       </Dialog>
 

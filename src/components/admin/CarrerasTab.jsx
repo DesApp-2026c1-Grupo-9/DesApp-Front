@@ -23,6 +23,7 @@ import {
   Grid,
   Snackbar,
   Alert,
+  TableSortLabel,
 } from '@mui/material';
 import { School, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
@@ -37,8 +38,15 @@ function CarrerasTab() {
   const [editCarrera, setEditCarrera] = useState(null);
   const [form, setForm] = useState({ nombre: '', titulo: '', instituto: '', duracion: '' });
   const [deleteDialog, setDeleteDialog] = useState({ open: false, carrera: null });
+  const [sortField, setSortField] = useState('nombre');
+  const [sortDir, setSortDir] = useState('asc');
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
+
+  const handleSort = (field) => {
+    setSortDir((prev) => (sortField === field && prev === 'asc' ? 'desc' : 'asc'));
+    setSortField(field);
+  };
 
   const cargarCarreras = useCallback(async () => {
     try {
@@ -70,12 +78,14 @@ function CarrerasTab() {
       if (editCarrera) {
         await api.put(`/api/carreras/${editCarrera.id}`, form);
         showSuccess('Carrera actualizada');
+        cargarCarreras();
       } else {
-        await api.post('/api/carreras', form);
+        const res = await api.post('/api/carreras', form);
+        const nueva = { ...res.data.data, planVigente: null, totalPlanes: 0 };
+        setCarreras((prev) => [nueva, ...prev]);
         showSuccess('Carrera creada');
       }
       setOpen(false);
-      cargarCarreras();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al guardar');
     }
@@ -98,13 +108,20 @@ function CarrerasTab() {
     }
   };
 
-  const filteredCarreras = carreras.filter((c) => {
-    const matchSearch = !searchTerm.trim() ||
-      `${c.nombre} ${c.titulo} ${c.instituto}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchInstituto = filtroInstituto === 'todos' || c.instituto === filtroInstituto;
-    const matchDuracion = filtroDuracion === 'todos' || c.duracion?.toString() === filtroDuracion.toString();
-    return matchSearch && matchInstituto && matchDuracion;
-  });
+  const filteredCarreras = carreras
+    .filter((c) => {
+      const matchSearch = !searchTerm.trim() ||
+        `${c.nombre} ${c.titulo} ${c.instituto}`.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchInstituto = filtroInstituto === 'todos' || c.instituto === filtroInstituto;
+      const matchDuracion = filtroDuracion === 'todos' || c.duracion?.toString() === filtroDuracion.toString();
+      return matchSearch && matchInstituto && matchDuracion;
+    })
+    .sort((a, b) => {
+      const valA = (a[sortField] || '').toString().toLowerCase();
+      const valB = (b[sortField] || '').toString().toLowerCase();
+      const cmp = valA.localeCompare(valB, 'es');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
 
   const institutos = [...new Set(carreras.filter(c => c.instituto).map(c => c.instituto))].sort();
   const duraciones = [...new Set(carreras.filter(c => c.duracion).map(c => c.duracion))].sort((a, b) => a - b);
@@ -140,11 +157,21 @@ function CarrerasTab() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Título</TableCell>
-              <TableCell>Instituto</TableCell>
-              <TableCell>Duración</TableCell>
-              <TableCell>Planes</TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'titulo'} direction={sortField === 'titulo' ? sortDir : 'asc'} onClick={() => handleSort('titulo')}>Título</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'instituto'} direction={sortField === 'instituto' ? sortDir : 'asc'} onClick={() => handleSort('instituto')}>Instituto</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'duracion'} direction={sortField === 'duracion' ? sortDir : 'asc'} onClick={() => handleSort('duracion')}>Duración</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'totalPlanes'} direction={sortField === 'totalPlanes' ? sortDir : 'asc'} onClick={() => handleSort('totalPlanes')}>Planes</TableSortLabel>
+              </TableCell>
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>

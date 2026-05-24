@@ -24,6 +24,7 @@ import {
   Grid,
   Snackbar,
   Alert,
+  TableSortLabel,
 } from '@mui/material';
 import { MenuBook, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
@@ -38,8 +39,15 @@ function MateriasTab() {
   const [editMateria, setEditMateria] = useState(null);
   const [form, setForm] = useState({ nombre: '', tipo: 'cuatrimestral' });
   const [deleteDialog, setDeleteDialog] = useState({ open: false, materia: null });
+  const [sortField, setSortField] = useState('nombre');
+  const [sortDir, setSortDir] = useState('asc');
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
+
+  const handleSort = (field) => {
+    setSortDir((prev) => (sortField === field && prev === 'asc' ? 'desc' : 'asc'));
+    setSortField(field);
+  };
 
   const cargarMaterias = useCallback(async () => {
     try {
@@ -79,12 +87,14 @@ function MateriasTab() {
       if (editMateria) {
         await api.put(`/api/materias/${editMateria.id}`, form);
         showSuccess('Materia actualizada');
+        cargarMaterias();
       } else {
-        await api.post('/api/materias', form);
+        const res = await api.post('/api/materias', form);
+        const nueva = { ...res.data.data, carreras: [] };
+        setMaterias((prev) => [nueva, ...prev]);
         showSuccess('Materia creada');
       }
       setOpen(false);
-      cargarMaterias();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al guardar');
     }
@@ -111,12 +121,25 @@ function MateriasTab() {
     return materia.carreras?.map((c) => c.nombre).join(', ') || 'Sin carrera';
   };
 
-  const filteredMaterias = materias.filter((m) => {
-    const matchSearch = !searchTerm.trim() ||
-      `${m.nombre} ${m.tipo} ${(m.carreras || []).map(c => c.nombre).join(' ')}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchTipo = filtroTipo === 'todos' || m.tipo === filtroTipo;
-    return matchSearch && matchTipo;
-  });
+  const filteredMaterias = materias
+    .filter((m) => {
+      const matchSearch = !searchTerm.trim() ||
+        `${m.nombre} ${m.tipo} ${(m.carreras || []).map(c => c.nombre).join(' ')}`.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchTipo = filtroTipo === 'todos' || m.tipo === filtroTipo;
+      return matchSearch && matchTipo;
+    })
+    .sort((a, b) => {
+      let valA, valB;
+      if (sortField === 'carreras') {
+        valA = (a.carreras || []).map(c => c.nombre).join(', ').toLowerCase();
+        valB = (b.carreras || []).map(c => c.nombre).join(', ').toLowerCase();
+      } else {
+        valA = (a[sortField] || '').toString().toLowerCase();
+        valB = (b[sortField] || '').toString().toLowerCase();
+      }
+      const cmp = valA.localeCompare(valB, 'es');
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
 
   return (
     <Box>
@@ -143,9 +166,15 @@ function MateriasTab() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Tipo</TableCell>
-              <TableCell>Carreras</TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'tipo'} direction={sortField === 'tipo' ? sortDir : 'asc'} onClick={() => handleSort('tipo')}>Tipo</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'carreras'} direction={sortField === 'carreras' ? sortDir : 'asc'} onClick={() => handleSort('carreras')}>Carreras</TableSortLabel>
+              </TableCell>
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>
