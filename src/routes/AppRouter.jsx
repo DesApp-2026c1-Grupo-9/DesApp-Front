@@ -12,6 +12,7 @@ import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
+import AdminAcademicoPage from '../pages/AdminAcademicoPage';
 import AppErrorPage from '../pages/AppErrorPage';
 import AuthProvider from '../context/AuthContext';
 import PublicLayout from '../layouts/PublicLayout';
@@ -37,6 +38,8 @@ const AppRouter = () => {
             <Route path="/demo-selector" element={<SelectorEstudiante />} />
           </Route>
           <Route element={<AdminLayout />}>
+            <Route path="/admin/usuarios" element={<AdminPage />} />
+            <Route path="/admin/academico" element={<AdminAcademicoPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>
           <Route path="*" element={<AppErrorPage />} />
