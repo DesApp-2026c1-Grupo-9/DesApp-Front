@@ -1,19 +1,27 @@
+import { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
   Button,
+  Tabs,
+  Tab,
   CircularProgress,
 } from '@mui/material';
 import {
+  School,
+  MenuBook,
+  LibraryBooks,
   AdminPanelSettings,
 } from '@mui/icons-material';
 
-import { PersonasTab } from '../components/admin';
+import { CarrerasTab, MateriasTab, PlanesTab } from '../components/admin';
+import { TabPanel } from '../components/ui';
 import { PageContainer } from '../components/ui';
 
-export default function AdminPage() {
+export default function AdminAcademicoPage() {
+  const [subTab, setSubTab] = useState(0);
   const user = useSelector((state) => state.auth.user);
   const loadingStudents = useSelector((state) => state.auth.loadingStudents);
   const navigate = useNavigate();
@@ -50,9 +58,15 @@ export default function AdminPage() {
 
   return (
     <PageContainer maxWidth={1400} padding={0}>
-      <Box sx={{ mt: '112px' }}>
-        <PersonasTab />
-      </Box>
+      <Tabs value={subTab} onChange={(_, v) => setSubTab(v)} sx={{ mb: 3, minHeight: 10, '& .MuiTab-root': { pt: 1, pb: 1, minHeight: 10, '& .MuiTab-iconWrapper': { mb: 0 } } }}>
+            <Tab icon={<School />} label="Carreras" iconPosition="start" />
+            <Tab icon={<MenuBook />} label="Materias" iconPosition="start" />
+            <Tab icon={<LibraryBooks />} label="Planes" iconPosition="start" />
+          </Tabs>
+
+      <TabPanel value={subTab} index={0}><CarrerasTab /></TabPanel>
+      <TabPanel value={subTab} index={1}><MateriasTab /></TabPanel>
+      <TabPanel value={subTab} index={2}><PlanesTab /></TabPanel>
     </PageContainer>
   );
 }

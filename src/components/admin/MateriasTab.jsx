@@ -24,6 +24,8 @@ import {
   Grid,
   Snackbar,
   Alert,
+  TableSortLabel,
+  TablePagination,
 } from '@mui/material';
 import { MenuBook, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
@@ -31,24 +33,50 @@ import { useSnackbar } from '../../hooks';
 
 function MateriasTab() {
   const [materias, setMaterias] = useState([]);
+  const [total, setTotal] = useState(0);
   const [carreras, setCarreras] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filtroAnio, setFiltroAnio] = useState('todos');
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [open, setOpen] = useState(false);
   const [editMateria, setEditMateria] = useState(null);
-  const [form, setForm] = useState({ nombre: '', anio: '', tipo: 'cuatrimestral' });
+  const [form, setForm] = useState({ nombre: '', tipo: 'cuatrimestral' });
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, materia: null });
+  const [sortField, setSortField] = useState('nombre');
+  const [sortDir, setSortDir] = useState('asc');
+  const [highlightId, setHighlightId] = useState(null);
+  const [page, setPage] = useState(0);
+  const rowsPerPage = 10;
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
+  const handleSort = (field) => {
+    if (sortField !== field) {
+      setSortField(field);
+      setSortDir('asc');
+    } else {
+      setSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    }
+    setPage(0);
+  };
+
   const cargarMaterias = useCallback(async () => {
     try {
-      const res = await api.get('/api/materias');
+      const params = {
+        page: page + 1,
+        limit: rowsPerPage,
+        sort: sortField,
+        dir: sortDir,
+        search: searchTerm,
+        ...(filtroTipo !== 'todos' && { tipo: filtroTipo }),
+      };
+      const res = await api.get('/api/materias', { params });
       setMaterias(res.data.data || []);
+      setTotal(res.data.total ?? 0);
     } catch {
       showError('Error al cargar materias');
+      setTotal(0);
     }
-  }, [showError]);
+  }, [page, sortField, sortDir, searchTerm, filtroTipo, rowsPerPage, showError]);
 
   const cargarCarreras = useCallback(async () => {
     try {
@@ -59,18 +87,25 @@ function MateriasTab() {
 
   useEffect(() => {
     cargarMaterias();
+  }, [cargarMaterias]);
+
+  useEffect(() => {
     cargarCarreras();
-  }, [cargarMaterias, cargarCarreras]);
+  }, [cargarCarreras]);
+
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, filtroTipo]);
 
   const openEdit = (materia) => {
     setEditMateria(materia);
-    setForm({ nombre: materia.nombre, anio: materia.anio?.toString() || '', tipo: materia.tipo || 'cuatrimestral' });
+    setForm({ nombre: materia.nombre, tipo: materia.tipo || 'cuatrimestral' });
     setOpen(true);
   };
 
   const openCreate = () => {
     setEditMateria(null);
-    setForm({ nombre: '', anio: '', tipo: 'cuatrimestral' });
+    setForm({ nombre: '', tipo: 'cuatrimestral' });
     setOpen(true);
   };
 
@@ -79,24 +114,33 @@ function MateriasTab() {
       if (editMateria) {
         await api.put(`/api/materias/${editMateria.id}`, form);
         showSuccess('Materia actualizada');
+        cargarMaterias();
       } else {
-        await api.post('/api/materias', form);
+        const res = await api.post('/api/materias', form);
+        setHighlightId(res.data.data.id);
+        setPage(0);
         showSuccess('Materia creada');
       }
       setOpen(false);
-      cargarMaterias();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al guardar');
     }
   };
 
-  const handleDelete = async (id) => {
+  const openDeleteDialog = (materia) => {
+    setDeleteDialog({ open: true, materia });
+  };
+
+  const handleDelete = async () => {
+    const materia = deleteDialog.materia;
+    if (!materia) return;
     try {
-      await api.delete(`/api/materias/${id}`);
+      await api.delete(`/api/materias/${materia.id}`);
       showSuccess('Materia eliminada');
+      setDeleteDialog({ open: false, materia: null });
       cargarMaterias();
     } catch (err) {
-      setSnackbar({ severity: 'error', message: err.response?.data?.message || 'Error al eliminar' });
+      showError(err.response?.data?.message || 'Error al eliminar');
     }
   };
 
@@ -104,17 +148,15 @@ function MateriasTab() {
     return materia.carreras?.map((c) => c.nombre).join(', ') || 'Sin carrera';
   };
 
-  const filteredMaterias = materias.filter((m) => {
-    const matchSearch = !searchTerm.trim() ||
-      `${m.nombre} ${m.tipo} ${(m.carreras || []).map(c => c.nombre).join(' ')}`.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchAnio = filtroAnio === 'todos' || m.anio?.toString() === filtroAnio.toString();
-    const matchTipo = filtroTipo === 'todos' || m.tipo === filtroTipo;
-    return matchSearch && matchAnio && matchTipo;
-  });
+  useEffect(() => {
+    if (!highlightId) return;
+    const t = setTimeout(() => setHighlightId(null), 4000);
+    return () => clearTimeout(t);
+  }, [highlightId]);
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h6">Gestión de Materias</Typography>
         <Button variant="contained" startIcon={<MenuBook />} onClick={openCreate}>
           Nueva Materia
@@ -123,13 +165,6 @@ function MateriasTab() {
 
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <TextField fullWidth size="small" placeholder="Buscar materia por nombre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Año</InputLabel>
-          <Select value={filtroAnio} label="Año" onChange={(e) => setFiltroAnio(e.target.value)}>
-            <MenuItem value="todos">Todos</MenuItem>
-            {[1, 2, 3, 4, 5].map((a) => (<MenuItem key={a} value={a}>{a}° Año</MenuItem>))}
-          </Select>
-        </FormControl>
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Tipo</InputLabel>
           <Select value={filtroTipo} label="Tipo" onChange={(e) => setFiltroTipo(e.target.value)}>
@@ -144,28 +179,32 @@ function MateriasTab() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Año</TableCell>
-              <TableCell>Tipo</TableCell>
-              <TableCell>Carreras</TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'tipo'} direction={sortField === 'tipo' ? sortDir : 'asc'} onClick={() => handleSort('tipo')}>Tipo</TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel active={sortField === 'carreras'} direction={sortField === 'carreras' ? sortDir : 'asc'} onClick={() => handleSort('carreras')}>Carreras</TableSortLabel>
+              </TableCell>
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredMaterias.length === 0 ? (
+            {materias.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>No hay materias registradas</TableCell>
+                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>No hay materias registradas</TableCell>
               </TableRow>
             ) : (
-              filteredMaterias.map((m) => (
-                <TableRow key={m.id}>
+              materias.map((m) => (
+                <TableRow key={m.id} sx={{ transition: 'background-color 0.5s', backgroundColor: m.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontWeight: 'medium' }}>{m.nombre}</TableCell>
-                  <TableCell>{m.anio}° Año</TableCell>
                   <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} /></TableCell>
                   <TableCell>{getCarrerasForMateria(m)}</TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => openEdit(m)} title="Editar"><Edit fontSize="small" /></IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(m.id)} title="Eliminar" color="error"><Delete fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => openDeleteDialog(m)} title="Eliminar" color="error"><Delete fontSize="small" /></IconButton>
                   </TableCell>
                 </TableRow>
               ))
@@ -174,15 +213,23 @@ function MateriasTab() {
         </Table>
       </TableContainer>
 
+      {materias.length > 0 && (
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_, p) => setPage(p)}
+          rowsPerPage={rowsPerPage}
+          rowsPerPageOptions={[rowsPerPage]}
+        />
+      )}
+
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editMateria ? 'Editar Materia' : 'Nueva Materia'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={8}>
+            <Grid item xs={12}>
               <TextField fullWidth label="Nombre" value={form.nombre} onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
-            </Grid>
-            <Grid item xs={4}>
-              <TextField fullWidth label="Año" type="number" value={form.anio} onChange={(e) => setForm({ ...form, anio: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
               <FormControl fullWidth>
@@ -201,9 +248,21 @@ function MateriasTab() {
         </DialogActions>
       </Dialog>
 
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+        <DialogTitle>Confirmar Eliminación</DialogTitle>
+        <DialogContent>
+          <Typography>¿Estás seguro de que deseas eliminar la materia <strong>{deleteDialog.materia?.nombre}</strong>?</Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. Si la materia está asignada a algún plan, no podrá eliminarse.</Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
+        </DialogActions>
+      </Dialog>
+
       {snackbar && (
-        <Snackbar open autoHideDuration={6000} onClose={() => setSnackbar(null)} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-          <Alert severity={snackbar.severity} onClose={() => setSnackbar(null)} variant="filled">{snackbar.message}</Alert>
+        <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={closeSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+          <Alert severity={snackbar.severity} onClose={closeSnackbar} variant="filled">{snackbar.message}</Alert>
         </Snackbar>
       )}
     </Box>
