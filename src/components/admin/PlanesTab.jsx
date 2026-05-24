@@ -40,7 +40,9 @@ function PlanesTab() {
   const [planEditForm, setPlanEditForm] = useState({ nombre: '', estado: 'vigente' });
   const [materiasEditDialog, setMateriasEditDialog] = useState({ open: false, plan: null });
   const [materiaToAdd, setMateriaToAdd] = useState(null);
+  const [selectedAnio, setSelectedAnio] = useState(1);
   const [deleteDialog, setDeleteDialog] = useState({ open: false, plan: null });
+  const [removeMateriaDialog, setRemoveMateriaDialog] = useState({ open: false, planId: null, materia: null });
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
@@ -94,6 +96,7 @@ function PlanesTab() {
   const openMateriasEdit = (plan) => {
     setMateriasEditDialog({ open: true, plan });
     setMateriaToAdd(null);
+    setSelectedAnio(1);
   };
 
   const actualizarPlanEnDialog = (nuevosPlanes, planId) => {
@@ -106,7 +109,7 @@ function PlanesTab() {
   const handleAddMateriaToPlan = async (planId) => {
     if (!materiaToAdd) return;
     try {
-      await api.post(`/api/carreras/${carreraId}/planes/${planId}/materias`, { materiaId: materiaToAdd.id });
+      await api.post(`/api/carreras/${carreraId}/planes/${planId}/materias`, { materiaId: materiaToAdd.id, anio: selectedAnio });
       showSuccess('Materia asignada al plan');
       setMateriaToAdd(null);
       const res = await api.get(`/api/carreras/${carreraId}/planes`);
@@ -119,10 +122,17 @@ function PlanesTab() {
     }
   };
 
-  const handleRemoveMateriaFromPlan = async (planId, materiaId) => {
+  const openRemoveMateriaDialog = (planId, materia) => {
+    setRemoveMateriaDialog({ open: true, planId, materia });
+  };
+
+  const handleRemoveMateriaFromPlan = async () => {
+    const { planId, materia } = removeMateriaDialog;
+    if (!planId || !materia) return;
     try {
-      await api.delete(`/api/carreras/${carreraId}/planes/${planId}/materias/${materiaId}`);
+      await api.delete(`/api/carreras/${carreraId}/planes/${planId}/materias/${materia.id}`);
       showSuccess('Materia removida del plan');
+      setRemoveMateriaDialog({ open: false, planId: null, materia: null });
       const res = await api.get(`/api/carreras/${carreraId}/planes`);
       const nuevosPlanes = res.data.data || [];
       setPlanes(nuevosPlanes);
@@ -298,11 +308,17 @@ function PlanesTab() {
               <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
                 <Typography variant="subtitle2" gutterBottom>Asignar nueva materia al plan</Typography>
                 <Box sx={{ display: 'flex', gap: 2 }}>
+                  <FormControl size="small" sx={{ minWidth: 100 }}>
+                    <InputLabel>Año</InputLabel>
+                    <Select value={selectedAnio} label="Año" onChange={(e) => setSelectedAnio(e.target.value)}>
+                      {[1, 2, 3, 4, 5].map((a) => (<MenuItem key={a} value={a}>{a}° Año</MenuItem>))}
+                    </Select>
+                  </FormControl>
                   <Autocomplete
                     fullWidth
                     size="small"
-                    options={allMaterias.filter((m) => !materiasEditDialog.plan?.materias?.some((pm) => pm.id === m.id)).sort((a, b) => a.anio - b.anio || a.nombre.localeCompare(b.nombre))}
-                    getOptionLabel={(m) => `${m.nombre} (${m.anio}° año, ${m.tipo})`}
+                    options={allMaterias.filter((m) => !materiasEditDialog.plan?.materias?.some((pm) => pm.id === m.id)).sort((a, b) => a.nombre.localeCompare(b.nombre))}
+                    getOptionLabel={(m) => `${m.nombre} (${m.tipo})`}
                     value={materiaToAdd}
                     onChange={(_, newValue) => setMateriaToAdd(newValue)}
                     isOptionEqualToValue={(opt, val) => opt.id === val?.id}
@@ -321,12 +337,12 @@ function PlanesTab() {
                     {!materiasEditDialog.plan?.materias?.length ? (
                       <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}><Typography color="text.secondary">Este plan no tiene materias asignadas</Typography></TableCell></TableRow>
                     ) : (
-                      [...(materiasEditDialog.plan?.materias || [])].sort((a, b) => a.anio - b.anio || a.nombre.localeCompare(b.nombre)).map((m) => (
+                      [...(materiasEditDialog.plan?.materias || [])].sort((a, b) => (a.PlanMateria?.anio || a.anio) - (b.PlanMateria?.anio || b.anio) || a.nombre.localeCompare(b.nombre)).map((m) => (
                         <TableRow key={m.id}>
                           <TableCell>{m.nombre}</TableCell>
-                          <TableCell>{m.anio}° año</TableCell>
+                          <TableCell>{m.PlanMateria?.anio || m.anio}° año</TableCell>
                           <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} sx={{ textTransform: 'capitalize' }} /></TableCell>
-                          <TableCell align="center"><IconButton size="small" color="error" onClick={() => handleRemoveMateriaFromPlan(materiasEditDialog.plan?.id, m.id)} title="Remover del plan"><RemoveCircleOutline fontSize="small" /></IconButton></TableCell>
+                          <TableCell align="center"><IconButton size="small" color="error" onClick={() => openRemoveMateriaDialog(materiasEditDialog.plan?.id, m)} title="Remover del plan"><RemoveCircleOutline fontSize="small" /></IconButton></TableCell>
                         </TableRow>
                       ))
                     )}
@@ -335,6 +351,17 @@ function PlanesTab() {
               </TableContainer>
             </DialogContent>
             <DialogActions><Button onClick={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })}>Cerrar</Button></DialogActions>
+          </Dialog>
+
+          <Dialog open={removeMateriaDialog.open} onClose={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>
+            <DialogTitle>Remover materia del plan</DialogTitle>
+            <DialogContent>
+              <Typography>¿Estás seguro de que deseas remover <strong>{removeMateriaDialog.materia?.nombre}</strong> del plan?</Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>Cancelar</Button>
+              <Button variant="contained" color="error" onClick={handleRemoveMateriaFromPlan}>Remover</Button>
+            </DialogActions>
           </Dialog>
         </>
       )}

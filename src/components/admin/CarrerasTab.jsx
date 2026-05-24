@@ -36,6 +36,7 @@ function CarrerasTab() {
   const [open, setOpen] = useState(false);
   const [editCarrera, setEditCarrera] = useState(null);
   const [form, setForm] = useState({ nombre: '', titulo: '', instituto: '', duracion: '' });
+  const [deleteDialog, setDeleteDialog] = useState({ open: false, carrera: null });
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
@@ -80,10 +81,17 @@ function CarrerasTab() {
     }
   };
 
-  const handleDelete = async (id) => {
+  const openDeleteDialog = (carrera) => {
+    setDeleteDialog({ open: true, carrera });
+  };
+
+  const handleDelete = async () => {
+    const carrera = deleteDialog.carrera;
+    if (!carrera) return;
     try {
-      await api.delete(`/api/carreras/${id}`);
+      await api.delete(`/api/carreras/${carrera.id}`);
       showSuccess('Carrera eliminada');
+      setDeleteDialog({ open: false, carrera: null });
       cargarCarreras();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al eliminar');
@@ -155,7 +163,7 @@ function CarrerasTab() {
                   <TableCell>{c.totalPlanes}</TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => openEdit(c)} title="Editar"><Edit fontSize="small" /></IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(c.id)} title="Eliminar" color="error"><Delete fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => openDeleteDialog(c)} title="Eliminar" color="error"><Delete fontSize="small" /></IconButton>
                   </TableCell>
                 </TableRow>
               ))
@@ -185,6 +193,18 @@ function CarrerasTab() {
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave}>{editCarrera ? 'Guardar' : 'Crear'}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+        <DialogTitle>Confirmar Eliminación</DialogTitle>
+        <DialogContent>
+          <Typography>¿Estás seguro de que deseas eliminar la carrera <strong>{deleteDialog.carrera?.nombre}</strong>?</Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. Si la carrera tiene planes de estudio asociados, no podrá eliminarse.</Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
         </DialogActions>
       </Dialog>
 
