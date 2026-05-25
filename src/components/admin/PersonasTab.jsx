@@ -67,10 +67,10 @@ function PersonasTab() {
     setPage(0);
   };
 
-  const cargarUsuarios = useCallback(async () => {
+  const cargarUsuarios = useCallback(async (targetPage) => {
     try {
       const params = {
-        page: page + 1,
+        page: targetPage !== undefined ? targetPage + 1 : page + 1,
         limit: rowsPerPage,
         sort: sortField,
         dir: sortDir,
@@ -130,10 +130,22 @@ function PersonasTab() {
         cargarUsuarios();
       } else {
         const res = await api.post('/api/usuarios', form);
-        setHighlightId(res.data.data.id);
-        setPage(0);
+        const newId = res.data.data.id;
+        const sortParams = {
+          limit: 100,
+          sort: sortField,
+          dir: sortDir,
+          ...(filtroRol !== 'todos' && { rol: filtroRol }),
+          ...(filtroEstado !== 'todos' && { activo: filtroEstado === 'activo' }),
+        };
+        const sortedRes = await api.get('/api/usuarios', { params: sortParams });
+        const sortedData = sortedRes.data.data || [];
+        const idx = sortedData.findIndex(u => u.id === newId);
+        const targetPage = idx >= 0 ? Math.floor(idx / rowsPerPage) : 0;
+        setHighlightId(newId);
+        setPage(targetPage);
         showSuccess('Usuario creado exitosamente');
-        dispatch(fetchStudents());
+        cargarUsuarios(targetPage);
       }
       setDialogOpen(false);
     } catch (err) {
@@ -158,7 +170,6 @@ function PersonasTab() {
         localStorage.removeItem('mockStudentId');
       }
       cargarUsuarios();
-      dispatch(fetchStudents());
       if (wasCurrentUser) {
         window.location.reload();
       }
@@ -178,7 +189,6 @@ function PersonasTab() {
       showSuccess(`Usuario ${userToToggle.activo ? 'desactivado' : 'activado'} exitosamente`);
       setUserToToggle(null);
       cargarUsuarios();
-      dispatch(fetchStudents());
       if (res.data.data?.id?.toString() === currentUserId?.toString()) {
         dispatch(updateStudentActiveStatus(res.data.data.activo));
         window.dispatchEvent(new CustomEvent('activo-changed', { detail: { activo: res.data.data.activo } }));
