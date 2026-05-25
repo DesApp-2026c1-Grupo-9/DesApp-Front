@@ -34,9 +34,10 @@ import { useSnackbar } from '../../hooks';
 function MateriasTab() {
   const [materias, setMaterias] = useState([]);
   const [total, setTotal] = useState(0);
-  const [carreras, setCarreras] = useState([]);
+  const [allCarreras, setAllCarreras] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todos');
+  const [filtroCarrera, setFiltroCarrera] = useState('todos');
   const [open, setOpen] = useState(false);
   const [editMateria, setEditMateria] = useState(null);
   const [form, setForm] = useState({ nombre: '', tipo: 'cuatrimestral' });
@@ -59,15 +60,16 @@ function MateriasTab() {
     setPage(0);
   };
 
-  const cargarMaterias = useCallback(async () => {
+  const cargarMaterias = useCallback(async (targetPage) => {
     try {
       const params = {
-        page: page + 1,
+        page: targetPage !== undefined ? targetPage + 1 : page + 1,
         limit: rowsPerPage,
         sort: sortField,
         dir: sortDir,
         search: searchTerm,
         ...(filtroTipo !== 'todos' && { tipo: filtroTipo }),
+        ...(filtroCarrera !== 'todos' && { carreraId: filtroCarrera }),
       };
       const res = await api.get('/api/materias', { params });
       setMaterias(res.data.data || []);
@@ -76,12 +78,12 @@ function MateriasTab() {
       showError('Error al cargar materias');
       setTotal(0);
     }
-  }, [page, sortField, sortDir, searchTerm, filtroTipo, rowsPerPage, showError]);
+  }, [page, sortField, sortDir, searchTerm, filtroTipo, filtroCarrera, rowsPerPage, showError]);
 
   const cargarCarreras = useCallback(async () => {
     try {
       const res = await api.get('/api/carreras');
-      setCarreras(res.data.data || []);
+      setAllCarreras(res.data.data || []);
     } catch { }
   }, []);
 
@@ -95,7 +97,7 @@ function MateriasTab() {
 
   useEffect(() => {
     setPage(0);
-  }, [searchTerm, filtroTipo]);
+  }, [searchTerm, filtroTipo, filtroCarrera]);
 
   const openEdit = (materia) => {
     setEditMateria(materia);
@@ -117,9 +119,21 @@ function MateriasTab() {
         cargarMaterias();
       } else {
         const res = await api.post('/api/materias', form);
-        setHighlightId(res.data.data.id);
-        setPage(0);
+        const newId = res.data.data.id;
+        const sortParams = {
+          limit: 100,
+          sort: sortField,
+          dir: sortDir,
+          ...(filtroTipo !== 'todos' && { tipo: filtroTipo }),
+        };
+        const sortedRes = await api.get('/api/materias', { params: sortParams });
+        const sortedData = sortedRes.data.data || [];
+        const idx = sortedData.findIndex(m => m.id === newId);
+        const targetPage = idx >= 0 ? Math.floor(idx / rowsPerPage) : 0;
+        setHighlightId(newId);
+        setPage(targetPage);
         showSuccess('Materia creada');
+        cargarMaterias(targetPage);
       }
       setOpen(false);
     } catch (err) {
@@ -157,7 +171,7 @@ function MateriasTab() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h6">Gestión de Materias</Typography>
+        <Typography variant="h6">Gesti&oacute;n de Materias</Typography>
         <Button variant="contained" startIcon={<MenuBook />} onClick={openCreate}>
           Nueva Materia
         </Button>
@@ -165,6 +179,13 @@ function MateriasTab() {
 
       <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
         <TextField fullWidth size="small" placeholder="Buscar materia por nombre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <FormControl size="small" sx={{ minWidth: 200 }}>
+          <InputLabel>Carrera</InputLabel>
+          <Select value={filtroCarrera} label="Carrera" onChange={(e) => setFiltroCarrera(e.target.value)}>
+            <MenuItem value="todos">Todas</MenuItem>
+            {allCarreras.map((c) => (<MenuItem key={c.id} value={c.id}>{c.nombre}</MenuItem>))}
+          </Select>
+        </FormControl>
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>Tipo</InputLabel>
           <Select value={filtroTipo} label="Tipo" onChange={(e) => setFiltroTipo(e.target.value)}>
@@ -249,7 +270,7 @@ function MateriasTab() {
       </Dialog>
 
       <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
-        <DialogTitle>Confirmar Eliminación</DialogTitle>
+        <DialogTitle>Confirmar Eliminaci&oacute;n</DialogTitle>
         <DialogContent>
           <Typography>¿Estás seguro de que deseas eliminar la materia <strong>{deleteDialog.materia?.nombre}</strong>?</Typography>
           <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. Si la materia está asignada a algún plan, no podrá eliminarse.</Alert>

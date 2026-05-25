@@ -26,8 +26,9 @@ import {
   Snackbar,
   Alert,
   TablePagination,
+  Checkbox,
 } from '@mui/material';
-import { Add, Delete, Edit, MenuBook, RemoveCircleOutline } from '@mui/icons-material';
+import { Add, Delete, Edit, MenuBook, RemoveCircleOutline, EditNote, CheckCircle } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
 
@@ -47,9 +48,11 @@ function PlanesTab() {
   const [materiasPlan, setMateriasPlan] = useState([]);
   const [totalMateriasPlan, setTotalMateriasPlan] = useState(0);
   const [materiasPlanPage, setMateriasPlanPage] = useState(0);
-  const materiasRowsPerPage = 10;
+  const [highlightPlanId, setHighlightPlanId] = useState(null);
   const [highlightMateriaId, setHighlightMateriaId] = useState(null);
   const [refreshMateriasKey, setRefreshMateriasKey] = useState(0);
+  const materiasRowsPerPage = 10;
+  const [editAnioDialog, setEditAnioDialog] = useState({ open: false, planId: null, materia: null, anio: 1 });
 
   useEffect(() => {
     if (!materiasEditDialog.open) return;
@@ -76,6 +79,12 @@ function PlanesTab() {
     };
     fetchData();
   }, [materiasEditDialog.open, materiasEditDialog.plan?.id, materiasPlanPage, carreraId, materiasRowsPerPage, refreshMateriasKey]);
+
+  useEffect(() => {
+    if (!highlightPlanId) return;
+    const t = setTimeout(() => setHighlightPlanId(null), 4000);
+    return () => clearTimeout(t);
+  }, [highlightPlanId]);
 
   useEffect(() => {
     if (!highlightMateriaId) return;
@@ -107,7 +116,7 @@ function PlanesTab() {
       try {
         const [planesRes, materiasRes] = await Promise.all([
           api.get(`/api/carreras/${carreraId}/planes`),
-          api.get('/api/materias'),
+          api.get(`/api/carreras/${carreraId}/materias`),
         ]);
         setPlanes(planesRes.data.data || []);
         setAllMaterias(materiasRes.data.data || []);
@@ -121,11 +130,12 @@ function PlanesTab() {
 
   const handleCreatePlan = async () => {
     try {
-      await api.post(`/api/carreras/${carreraId}/planes`, planForm);
+      const res = await api.post(`/api/carreras/${carreraId}/planes`, planForm);
       showSuccess('Plan creado');
       setPlanForm({ nombre: '', estado: 'vigente' });
-      const res = await api.get(`/api/carreras/${carreraId}/planes`);
-      setPlanes(res.data.data || []);
+      setHighlightPlanId(res.data.data.id);
+      const planesRes = await api.get(`/api/carreras/${carreraId}/planes`);
+      setPlanes(planesRes.data.data || []);
       cargarCarreras();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al crear plan');
@@ -162,6 +172,30 @@ function PlanesTab() {
       cargarCarreras();
     } catch (err) {
       showError(err.response?.data?.message || 'Error al asignar materia');
+    }
+  };
+
+  const openEditAnioDialog = (planId, materia) => {
+    setEditAnioDialog({ open: true, planId, materia, anio: materia.anio || 1 });
+  };
+
+  const handleEditAnio = async () => {
+    const { planId, materia } = editAnioDialog;
+    if (!planId || !materia) return;
+    try {
+      await api.delete(`/api/carreras/${carreraId}/planes/${planId}/materias/${materia.id}`);
+      await api.post(`/api/carreras/${carreraId}/planes/${planId}/materias`, { materiaId: materia.id, anio: editAnioDialog.anio });
+      showSuccess('Año actualizado');
+      setEditAnioDialog({ open: false, planId: null, materia: null, anio: 1 });
+      const res = await api.get(`/api/carreras/${carreraId}/planes`);
+      const nuevosPlanes = res.data.data || [];
+      setPlanes(nuevosPlanes);
+      actualizarPlanEnDialog(nuevosPlanes, planId);
+      setMateriasPlanPage(0);
+      setRefreshMateriasKey((k) => k + 1);
+      cargarCarreras();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al actualizar año');
     }
   };
 
@@ -246,182 +280,197 @@ function PlanesTab() {
         sx={{ mb: 3 }}
       />
 
-      {!carreraId ? (
-        <Typography color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-          Seleccioná una carrera para gestionar sus planes de estudio
-        </Typography>
-      ) : (
-        <>
-          <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={6}>
-                <TextField fullWidth size="small" label="Nombre del plan" value={planForm.nombre} onChange={(e) => setPlanForm({ ...planForm, nombre: e.target.value })} />
+      <>
+        <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={6}>
+              <TextField fullWidth size="small" label="Nombre del plan" value={planForm.nombre} onChange={(e) => setPlanForm({ ...planForm, nombre: e.target.value })} disabled={!carreraId} />
+            </Grid>
+            <Grid item xs={3}>
+              <FormControl fullWidth size="small" disabled={!carreraId}>
+                <InputLabel>Estado</InputLabel>
+                <Select value={planForm.estado} label="Estado" onChange={(e) => setPlanForm({ ...planForm, estado: e.target.value })}>
+                  <MenuItem value="vigente">Vigente</MenuItem>
+                  <MenuItem value="transición">En transición</MenuItem>
+                  <MenuItem value="discontinuado">Discontinuado</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={3}>
+              <Button variant="contained" startIcon={<Add />} onClick={handleCreatePlan} fullWidth disabled={!carreraId}>
+                Agregar Plan
+              </Button>
+            </Grid>
+          </Grid>
+        </Paper>
+
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Plan</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell align="center">Materias</TableCell>
+                <TableCell align="center">Acciones</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {planes.map((p) => (
+                <TableRow key={p.id} sx={{ transition: 'background-color 0.5s', backgroundColor: p.id === highlightPlanId ? 'action.selected' : 'inherit' }}>
+                  <TableCell sx={{ fontWeight: 'medium' }}>{p.nombre}</TableCell>
+                  <TableCell><Chip label={p.estado} size="small" color={p.estado === 'vigente' ? 'success' : p.estado === 'transición' ? 'warning' : 'default'} /></TableCell>
+                  <TableCell align="center">{p.totalMaterias}</TableCell>
+                  <TableCell align="center">
+                    <IconButton size="small" onClick={() => openPlanEdit(p)} title="Editar plan"><Edit fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => openMateriasEdit(p)} title="Gestionar materias"><MenuBook fontSize="small" /></IconButton>
+                    <IconButton size="small" onClick={() => openDeleteDialog(p)} color="error" title="Eliminar plan"><Delete fontSize="small" /></IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {!carreraId ? (
+                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}>Seleccioná una carrera arriba para ver sus planes</TableCell></TableRow>
+              ) : planes.length === 0 && (
+                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}>No hay planes de estudio para esta carrera</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+          <DialogTitle>Confirmar Eliminación</DialogTitle>
+          <DialogContent>
+            <Typography>¿Estás seguro de que deseas eliminar el plan <strong>{deleteDialog.plan?.nombre}</strong>?</Typography>
+            <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. También se eliminarán las materias asociadas al plan.</Alert>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
+            <Button variant="contained" color="error" onClick={handleDeletePlan}>Eliminar</Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog open={planEditDialog.open} onClose={() => setPlanEditDialog({ ...planEditDialog, open: false })} maxWidth="sm" fullWidth>
+          <DialogTitle>Editar Plan de Estudio</DialogTitle>
+          <DialogContent>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Nombre del plan" value={planEditForm.nombre} onChange={(e) => setPlanEditForm({ ...planEditForm, nombre: e.target.value })} />
               </Grid>
-              <Grid item xs={3}>
-                <FormControl fullWidth size="small">
+              <Grid item xs={12}>
+                <FormControl fullWidth>
                   <InputLabel>Estado</InputLabel>
-                  <Select value={planForm.estado} label="Estado" onChange={(e) => setPlanForm({ ...planForm, estado: e.target.value })}>
+                  <Select value={planEditForm.estado} label="Estado" onChange={(e) => setPlanEditForm({ ...planEditForm, estado: e.target.value })}>
                     <MenuItem value="vigente">Vigente</MenuItem>
                     <MenuItem value="transición">En transición</MenuItem>
                     <MenuItem value="discontinuado">Discontinuado</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={3}>
-                <Button variant="contained" startIcon={<Add />} onClick={handleCreatePlan} fullWidth>
-                  Agregar Plan
-                </Button>
-              </Grid>
             </Grid>
-          </Paper>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPlanEditDialog({ ...planEditDialog, open: false })}>Cancelar</Button>
+            <Button variant="contained" onClick={handleEditPlan}>Guardar</Button>
+          </DialogActions>
+        </Dialog>
 
-          <TableContainer component={Paper} variant="outlined">
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Plan</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell align="center">Materias</TableCell>
-                  <TableCell align="center">Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {planes.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell sx={{ fontWeight: 'medium' }}>{p.nombre}</TableCell>
-                    <TableCell><Chip label={p.estado} size="small" color={p.estado === 'vigente' ? 'success' : p.estado === 'transición' ? 'warning' : 'default'} /></TableCell>
-                    <TableCell align="center">{p.totalMaterias}</TableCell>
-                    <TableCell align="center">
-                      <IconButton size="small" onClick={() => openPlanEdit(p)} title="Editar plan"><Edit fontSize="small" /></IconButton>
-                      <IconButton size="small" onClick={() => openMateriasEdit(p)} title="Gestionar materias"><MenuBook fontSize="small" /></IconButton>
-                      <IconButton size="small" onClick={() => openDeleteDialog(p)} color="error" title="Eliminar plan"><Delete fontSize="small" /></IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {planes.length === 0 && (
-                  <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}>No hay planes de estudio para esta carrera</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
-            <DialogTitle>Confirmar Eliminación</DialogTitle>
-            <DialogContent>
-              <Typography>¿Estás seguro de que deseas eliminar el plan <strong>{deleteDialog.plan?.nombre}</strong>?</Typography>
-              <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. También se eliminarán las materias asociadas al plan.</Alert>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
-              <Button variant="contained" color="error" onClick={handleDeletePlan}>Eliminar</Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={planEditDialog.open} onClose={() => setPlanEditDialog({ ...planEditDialog, open: false })} maxWidth="sm" fullWidth>
-            <DialogTitle>Editar Plan de Estudio</DialogTitle>
-            <DialogContent>
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                <Grid item xs={12}>
-                  <TextField fullWidth label="Nombre del plan" value={planEditForm.nombre} onChange={(e) => setPlanEditForm({ ...planEditForm, nombre: e.target.value })} />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormControl fullWidth>
-                    <InputLabel>Estado</InputLabel>
-                    <Select value={planEditForm.estado} label="Estado" onChange={(e) => setPlanEditForm({ ...planEditForm, estado: e.target.value })}>
-                      <MenuItem value="vigente">Vigente</MenuItem>
-                      <MenuItem value="transición">En transición</MenuItem>
-                      <MenuItem value="discontinuado">Discontinuado</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setPlanEditDialog({ ...planEditDialog, open: false })}>Cancelar</Button>
-              <Button variant="contained" onClick={handleEditPlan}>Guardar</Button>
-            </DialogActions>
-          </Dialog>
-
-          <Dialog open={materiasEditDialog.open} onClose={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })} maxWidth="md" fullWidth>
-            <DialogTitle>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span>Materias — {materiasEditDialog.plan?.nombre}</span>
-                <Chip label={`${materiasEditDialog.plan?.totalMaterias || 0} materias`} color="primary" size="small" />
+        <Dialog open={materiasEditDialog.open} onClose={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })} maxWidth="md" fullWidth>
+          <DialogTitle>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>Materias — {materiasEditDialog.plan?.nombre}</span>
+              <Chip label={`${materiasEditDialog.plan?.totalMaterias || 0} materias`} color="primary" size="small" />
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
+              <Typography variant="subtitle2" gutterBottom>Asignar nueva materia al plan</Typography>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                <FormControl size="small" sx={{ minWidth: 100 }}>
+                  <InputLabel>Año</InputLabel>
+                  <Select value={selectedAnio} label="Año" onChange={(e) => setSelectedAnio(e.target.value)}>
+                    {[1, 2, 3, 4, 5].map((a) => (<MenuItem key={a} value={a}>{a}° Año</MenuItem>))}
+                  </Select>
+                </FormControl>
+                <Autocomplete
+                  fullWidth
+                  size="small"
+                  options={allMaterias.filter((m) => !materiasEditDialog.plan?.materias?.some((pm) => pm.id === m.id)).sort((a, b) => a.nombre.localeCompare(b.nombre))}
+                  getOptionLabel={(m) => `${m.nombre} (${m.tipo})`}
+                  value={materiaToAdd}
+                  onChange={(_, newValue) => setMateriaToAdd(newValue)}
+                  isOptionEqualToValue={(opt, val) => opt.id === val?.id}
+                  noOptionsText={allMaterias.filter((m) => !materiasEditDialog.plan?.materias?.some((pm) => pm.id === m.id)).length === 0 ? 'Todas las materias ya están asignadas' : 'Sin resultados'}
+                  renderInput={(params) => <TextField {...params} label="Buscar materia" placeholder="Escribí el nombre..." />}
+                />
+                <Button variant="contained" startIcon={<CheckCircle />} onClick={() => handleAddMateriaToPlan(materiasEditDialog.plan?.id)} disabled={!materiaToAdd} sx={{ minWidth: 130 }}>Asignar</Button>
               </Box>
-            </DialogTitle>
-            <DialogContent>
-              <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
-                <Typography variant="subtitle2" gutterBottom>Asignar nueva materia al plan</Typography>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <FormControl size="small" sx={{ minWidth: 100 }}>
-                    <InputLabel>Año</InputLabel>
-                    <Select value={selectedAnio} label="Año" onChange={(e) => setSelectedAnio(e.target.value)}>
-                      {[1, 2, 3, 4, 5].map((a) => (<MenuItem key={a} value={a}>{a}° Año</MenuItem>))}
-                    </Select>
-                  </FormControl>
-                  <Autocomplete
-                    fullWidth
-                    size="small"
-                    options={allMaterias.filter((m) => !materiasEditDialog.plan?.materias?.some((pm) => pm.id === m.id)).sort((a, b) => a.nombre.localeCompare(b.nombre))}
-                    getOptionLabel={(m) => `${m.nombre} (${m.tipo})`}
-                    value={materiaToAdd}
-                    onChange={(_, newValue) => setMateriaToAdd(newValue)}
-                    isOptionEqualToValue={(opt, val) => opt.id === val?.id}
-                    noOptionsText={allMaterias.filter((m) => !materiasEditDialog.plan?.materias?.some((pm) => pm.id === m.id)).length === 0 ? 'Todas las materias ya están asignadas' : 'Sin resultados'}
-                    renderInput={(params) => <TextField {...params} label="Buscar materia" placeholder="Escribí el nombre..." />}
+            </Paper>
+
+            <Typography variant="subtitle2" gutterBottom>Materias del plan</Typography>
+              <>
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead><TableRow><TableCell>Materia</TableCell><TableCell width={80}>Año</TableCell><TableCell width={110}>Tipo</TableCell><TableCell width={110} align="center">Acciones</TableCell></TableRow></TableHead>
+                    <TableBody>
+                      {!totalMateriasPlan ? (
+                        <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}><Typography color="text.secondary">Este plan no tiene materias asignadas</Typography></TableCell></TableRow>
+                      ) : (
+                        materiasPlan.map((m) => (
+                          <TableRow key={m.id} sx={{ transition: 'background-color 0.5s', backgroundColor: m.id === highlightMateriaId ? 'action.selected' : 'inherit' }}>
+                            <TableCell>{m.nombre}</TableCell>
+                            <TableCell>{m.anio}° año</TableCell>
+                            <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} sx={{ textTransform: 'capitalize' }} /></TableCell>
+                            <TableCell align="center">
+                              <IconButton size="small" onClick={() => openEditAnioDialog(materiasEditDialog.plan?.id, m)} title="Cambiar año"><EditNote fontSize="small" /></IconButton>
+                              <IconButton size="small" color="error" onClick={() => openRemoveMateriaDialog(materiasEditDialog.plan?.id, m)} title="Remover del plan"><Delete fontSize="small" /></IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                {totalMateriasPlan > 0 && (
+                  <TablePagination
+                    component="div"
+                    count={totalMateriasPlan}
+                    page={materiasPlanPage}
+                    onPageChange={(_, p) => setMateriasPlanPage(p)}
+                    rowsPerPage={materiasRowsPerPage}
+                    rowsPerPageOptions={[materiasRowsPerPage]}
                   />
-                  <Button variant="contained" startIcon={<Add />} onClick={() => handleAddMateriaToPlan(materiasEditDialog.plan?.id)} disabled={!materiaToAdd} sx={{ minWidth: 130 }}>Asignar</Button>
-                </Box>
-              </Paper>
+                )}
+              </>
+          </DialogContent>
+          <DialogActions><Button onClick={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })}>Cerrar</Button></DialogActions>
+        </Dialog>
 
-              <Typography variant="subtitle2" gutterBottom>Materias del plan</Typography>
-                <>
-                  <TableContainer component={Paper} variant="outlined">
-                    <Table size="small">
-                      <TableHead><TableRow><TableCell>Materia</TableCell><TableCell width={80}>Año</TableCell><TableCell width={130}>Tipo</TableCell><TableCell width={80} align="center">Acciones</TableCell></TableRow></TableHead>
-                      <TableBody>
-                        {!totalMateriasPlan ? (
-                          <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}><Typography color="text.secondary">Este plan no tiene materias asignadas</Typography></TableCell></TableRow>
-                        ) : (
-                          materiasPlan.map((m) => (
-                            <TableRow key={m.id} sx={{ transition: 'background-color 0.5s', backgroundColor: m.id === highlightMateriaId ? 'action.selected' : 'inherit' }}>
-                              <TableCell>{m.nombre}</TableCell>
-                              <TableCell>{m.anio}° año</TableCell>
-                              <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} sx={{ textTransform: 'capitalize' }} /></TableCell>
-                              <TableCell align="center"><IconButton size="small" color="error" onClick={() => openRemoveMateriaDialog(materiasEditDialog.plan?.id, m)} title="Remover del plan"><RemoveCircleOutline fontSize="small" /></IconButton></TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  {totalMateriasPlan > 0 && (
-                    <TablePagination
-                      component="div"
-                      count={totalMateriasPlan}
-                      page={materiasPlanPage}
-                      onPageChange={(_, p) => setMateriasPlanPage(p)}
-                      rowsPerPage={materiasRowsPerPage}
-                      rowsPerPageOptions={[materiasRowsPerPage]}
-                    />
-                  )}
-                </>
-            </DialogContent>
-            <DialogActions><Button onClick={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })}>Cerrar</Button></DialogActions>
-          </Dialog>
+        <Dialog open={removeMateriaDialog.open} onClose={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>
+          <DialogTitle>Remover materia del plan</DialogTitle>
+          <DialogContent>
+            <Typography>¿Estás seguro de que deseas remover <strong>{removeMateriaDialog.materia?.nombre}</strong> del plan?</Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>Cancelar</Button>
+            <Button variant="contained" color="error" onClick={handleRemoveMateriaFromPlan}>Remover</Button>
+          </DialogActions>
+        </Dialog>
 
-          <Dialog open={removeMateriaDialog.open} onClose={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>
-            <DialogTitle>Remover materia del plan</DialogTitle>
-            <DialogContent>
-              <Typography>¿Estás seguro de que deseas remover <strong>{removeMateriaDialog.materia?.nombre}</strong> del plan?</Typography>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>Cancelar</Button>
-              <Button variant="contained" color="error" onClick={handleRemoveMateriaFromPlan}>Remover</Button>
-            </DialogActions>
-          </Dialog>
-        </>
-      )}
+        <Dialog open={editAnioDialog.open} onClose={() => setEditAnioDialog({ ...editAnioDialog, open: false })}>
+          <DialogTitle>Cambiar año — {editAnioDialog.materia?.nombre}</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth sx={{ mt: 1, minWidth: 120 }}>
+              <InputLabel>Año</InputLabel>
+              <Select value={editAnioDialog.anio} label="Año" onChange={(e) => setEditAnioDialog({ ...editAnioDialog, anio: e.target.value })}>
+                {[1, 2, 3, 4, 5].map((a) => (<MenuItem key={a} value={a}>{a}° Año</MenuItem>))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditAnioDialog({ ...editAnioDialog, open: false })}>Cancelar</Button>
+            <Button variant="contained" onClick={handleEditAnio}>Guardar</Button>
+          </DialogActions>
+        </Dialog>
+      </>
 
       {snackbar && (
         <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={closeSnackbar} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
