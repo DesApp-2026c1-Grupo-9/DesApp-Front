@@ -210,6 +210,35 @@ class EstudianteService {
       throw new Error('Error al cargar estadísticas de estudiantes');
     }
   }
+
+  /**
+   * Importa estados de materias desde un JSON (parseado del Excel en el frontend)
+   */
+  static async importarMateriasDesdeExcel(estudianteId, materias) {
+    try {
+      const response = await api.post(
+        `/api/estudiantes/${estudianteId}/importar-materias`,
+        { materias }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error al importar materias:', error);
+      throw new Error(error.response?.data?.message || 'Error al importar materias desde Excel');
+    }
+  }
+
+  /**
+   * Obtiene el análisis del asistente académico para un estudiante
+   */
+  static async obtenerAsistenteAcademico(estudianteId) {
+    try {
+      const response = await api.get(`/api/estudiantes/${estudianteId}/asistente`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener asistente académico:', error);
+      throw new Error('Error al cargar el análisis académico');
+    }
+  }
 }
 
 export default EstudianteService;

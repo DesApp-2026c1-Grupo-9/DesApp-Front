@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import {
   Box, Typography, Card, CardContent, Button, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
   Alert, Tabs, Tab, Grid, Avatar, ButtonGroup,
   Select, MenuItem, FormControl, Dialog, DialogActions,
   DialogContent, DialogContentText, DialogTitle, List, ListItem,
-  ListItemText, ListItemIcon, Tooltip
+  ListItemText, ListItemIcon, Tooltip, CircularProgress
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
@@ -15,7 +16,9 @@ import {
   School as SchoolIcon,
   Person as PersonIcon,
   Warning as WarningIcon,
-  Book as BookIcon
+  Book as BookIcon,
+  AutoAwesome as AutoAwesomeIcon,
+  UploadFile as UploadFileIcon
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +34,12 @@ export const EstudianteMaterias = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Estados para importar Excel
+  const [dialogImport, setDialogImport] = useState(false);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResultado, setImportResultado] = useState(null);
+  const [importError, setImportError] = useState(null);
+
   // Estados para manejar conflictos de correlatividades
   const [dialogoConflicto, setDialogoConflicto] = useState({ 
     abierto: false, 
@@ -68,16 +77,7 @@ export const EstudianteMaterias = () => {
 
   const ordenarMateriasParaVista = (materias) => {
     return [...materias].sort((a, b) => {
-      if (a.anio !== b.anio) {
-        return a.anio - b.anio;
-      }
-
-      const correlativasA = a.prerrequisitos?.length || 0;
-      const correlativasB = b.prerrequisitos?.length || 0;
-      if (correlativasA !== correlativasB) {
-        return correlativasA - correlativasB;
-      }
-
+      if (a.anio !== b.anio) return a.anio - b.anio;
       return a.nombre.localeCompare(b.nombre);
     });
   };
@@ -126,8 +126,12 @@ export const EstudianteMaterias = () => {
         return 'Materia actualmente en curso.';
       case 'Disponible':
         return 'Cumple correlativas y puede marcarse como cursando.';
-      case 'No Disponible':
-        return 'Todavía no cumple las correlativas necesarias.';
+      case 'No Disponible': {
+        const reqs = (materia.prerrequisitos || []).map((p) => p.nombre);
+        return reqs.length > 0
+          ? `Necesitás aprobar o regularizar: ${reqs.join(', ')}.`
+          : 'No cumple las correlativas necesarias.';
+      }
       default:
         return 'Estado académico de la materia.';
     }
@@ -371,6 +375,54 @@ export const EstudianteMaterias = () => {
       accion: ''
     });
   };
+
+  // --- Excel import ---
+  const handleArchivoExcel = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImportLoading(true);
+    setImportError(null);
+    setImportResultado(null);
+
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      const materias = rows
+        .map((row) => {
+          const nombre = row['nombre'] || row['Nombre'] || row['NOMBRE'] || '';
+          const estado = row['estado'] || row['Estado'] || row['ESTADO'] || '';
+          return { nombre: String(nombre).trim(), estado: String(estado).trim().toLowerCase() };
+        })
+        .filter((r) => r.nombre);
+
+      if (materias.length === 0) {
+        setImportError('El archivo no tiene filas válidas. Asegurate de que tenga columnas "nombre" y "estado".');
+        setImportLoading(false);
+        return;
+      }
+
+      const result = await EstudianteService.importarMateriasDesdeExcel(
+        estudianteActual.id,
+        materias
+      );
+      setImportResultado(result);
+
+      // Recargar datos
+      const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
+      if (response.data) {
+        setEstudiante(response.data.estudiante);
+        setSituacionAcademica(reconstruirSituacionAcademica(response.data));
+      }
+    } catch (err) {
+      setImportError(err.message);
+    } finally {
+      setImportLoading(false);
+      e.target.value = '';
+    }
+  };
   // Mapear estados de UI a estados de base de datos
   const mapearEstadoUIaDB = (estadoUI) => {
     const mapeo = {
@@ -453,6 +505,24 @@ export const EstudianteMaterias = () => {
           <Typography variant="subtitle1" color="textSecondary">
             {situacionAcademica?.carrera?.nombre || 'Sin carrera asignada'}
           </Typography>
+        </Box>
+        <Box display="flex" gap={1}>
+          <Button
+            variant="outlined"
+            startIcon={importLoading ? <CircularProgress size={16} /> : <UploadFileIcon />}
+            onClick={() => setDialogImport(true)}
+            disabled={importLoading}
+          >
+            Importar Excel
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AutoAwesomeIcon />}
+            onClick={() => navigate('/asistente')}
+            color="secondary"
+          >
+            Asistente Académico
+          </Button>
         </Box>
       </Box>
 
@@ -543,6 +613,49 @@ export const EstudianteMaterias = () => {
 
         </CardContent>
       </Card>
+
+      {/* Diálogo de importación desde Excel */}
+      <Dialog open={dialogImport} onClose={() => { setDialogImport(false); setImportResultado(null); setImportError(null); }} maxWidth="sm" fullWidth>
+        <DialogTitle display="flex" alignItems="center" gap={1}>
+          <UploadFileIcon /> Importar materias desde Excel
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            El archivo debe tener columnas <strong>nombre</strong> (nombre exacto de la materia) y <strong>estado</strong> (aprobada, regularizada o cursando).
+          </Alert>
+          <Button variant="outlined" component="label" startIcon={importLoading ? <CircularProgress size={16} /> : <UploadFileIcon />} disabled={importLoading} fullWidth>
+            {importLoading ? 'Importando...' : 'Seleccionar archivo .xlsx'}
+            <input type="file" hidden accept=".xlsx,.xls,.csv" onChange={handleArchivoExcel} />
+          </Button>
+          {importError && <Alert severity="error" sx={{ mt: 2 }}>{importError}</Alert>}
+          {importResultado && (
+            <Box mt={2}>
+              <Alert severity="success" sx={{ mb: 1 }}>{importResultado.message}</Alert>
+              {importResultado.data?.ignoradas?.length > 0 && (
+                <Alert severity="warning" sx={{ mb: 1 }}>
+                  {importResultado.data.ignoradas.length} filas ignoradas (estado inválido o nombre vacío)
+                </Alert>
+              )}
+              {importResultado.data?.errores?.length > 0 && (
+                <Alert severity="error">
+                  {importResultado.data.errores.length} materias no encontradas:
+                  <List dense>
+                    {importResultado.data.errores.map((e, i) => (
+                      <ListItem key={i} disablePadding>
+                        <ListItemIcon><BookIcon fontSize="small" /></ListItemIcon>
+                        <ListItemText primary={`"${e.fila.nombre}" — ${e.razon}`} />
+                      </ListItem>
+                    ))}
+                  </List>
+                </Alert>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setDialogImport(false); setImportResultado(null); setImportError(null); }}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Diálogo de confirmación para conflictos de correlatividades */}
       <Dialog 

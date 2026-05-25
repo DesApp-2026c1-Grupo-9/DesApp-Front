@@ -14,6 +14,7 @@ import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
 import AdminAcademicoPage from '../pages/AdminAcademicoPage';
 import AppErrorPage from '../pages/AppErrorPage';
+import AsistenteAcademico from '../pages/AsistenteAcademico';
 import AuthProvider from '../context/AuthContext';
 import PublicLayout from '../layouts/PublicLayout';
 import AdminLayout from '../layouts/AdminLayout';
@@ -33,6 +34,7 @@ const AppRouter = () => {
             <Route path="/conexiones" element={<Conexiones />} />
             <Route path="/mi-perfil" element={<EstudianteDashboard />} />
             <Route path="/mis-materias" element={<EstudianteMaterias />} />
+            <Route path="/asistente" element={<AsistenteAcademico />} />
             <Route path="/carreras" element={<CareerManagementPage />} />
             <Route path="/materias" element={<SubjectManagementPage />} />
             <Route path="/demo-selector" element={<SelectorEstudiante />} />

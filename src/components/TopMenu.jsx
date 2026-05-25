@@ -14,7 +14,7 @@ import {
   AlertTitle,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks, AdminPanelSettings, Block } from '@mui/icons-material';
+import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks, AdminPanelSettings } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import { fetchStudents, switchStudent } from '../features/auth/slice';
