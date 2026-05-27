@@ -141,7 +141,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
                   {isThisOperationLoading && operationLoading.action === 'joining' ? (
                     <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
                   ) : null}
-                  Inscribirse
+                  {sesion.necesidadAprobacion ? 'Solicitar inscribirse' : 'Inscribirse'}
                 </Button>
               )}
               {isPending && (
