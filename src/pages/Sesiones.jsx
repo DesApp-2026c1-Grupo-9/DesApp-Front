@@ -96,7 +96,8 @@ const Sesiones = () => {
     }
 
     return true;
-  });
+  })
+  .sort((a, b) => new Date(a.fechaHora) - new Date(b.fechaHora));
 
   // Handler: Create new sesion - open modal
   const handleCreate = () => {

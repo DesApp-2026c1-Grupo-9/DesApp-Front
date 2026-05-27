@@ -66,9 +66,6 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
                 variant="outlined"
                 color={sesion.cupos && approvedCount >= sesion.cupos ? 'error' : 'default'}
               />
-              {sesion.necesidadAprobacion && (
-                <Chip label="Requiere aprobación" size="small" color="warning" variant="outlined" />
-              )}
               {visibilidad === 'publico' && (
                 <Chip icon={<Public />} label="Público" size="small" color="success" variant="outlined" />
               )}
@@ -141,7 +138,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
                   {isThisOperationLoading && operationLoading.action === 'joining' ? (
                     <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
                   ) : null}
-                  Inscribirse
+                  {sesion.necesidadAprobacion ? 'Solicitar inscribirse' : 'Inscribirse'}
                 </Button>
               )}
               {isPending && (
