@@ -28,7 +28,7 @@ export function AdminAppBar() {
         >
           <AdminPanelSettings sx={{ mr: 1 }} />
           <Typography variant="h6">
-            Panel de Administración
+            Sistema Académico UNAHUR
           </Typography>
         </Box>
         <Box sx={{ flexGrow: 1 }} />

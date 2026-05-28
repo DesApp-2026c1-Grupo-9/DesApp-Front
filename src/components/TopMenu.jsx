@@ -3,13 +3,14 @@ import {
   AppBar,
   Toolbar,
   Typography,
-  Button,
   Box,
+  Tabs,
+  Tab,
   Alert,
   AlertTitle,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, DynamicFeed, LibraryBooks, AdminPanelSettings, Block } from '@mui/icons-material';
+import { School, Person, Book, Home, People, Groups, DynamicFeed, LibraryBooks, AdminPanelSettings, Block, MenuBook } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import { UserSelector } from './UserSelector';
@@ -34,55 +35,46 @@ export function TopMenu() {
     ...(showAdmin ? [{ label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> }] : []),
   ];
 
+  const visibleItems = menuItems.filter(item => item.label !== 'Inicio');
+  const tabIndex = visibleItems.findIndex(
+    item => location.pathname === item.path || (item.label === 'Materias' && location.pathname.includes('/materias'))
+  );
+
   return (
     <AppBar position="static" sx={{ mb: 3, borderRadius: 0 }}>
       <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          <Box
-            component="a"
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/');
-            }}
-            sx={{
-              fontWeight: 'bold',
-              color: 'inherit',
-              textDecoration: 'none',
-              cursor: 'pointer',
-              '&:hover': {
-                color: 'inherit'
-              }
-            }}
-          >
+        <Box
+          component="a"
+          href="/"
+          onClick={(e) => { e.preventDefault(); navigate('/'); }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            color: 'inherit',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            '&:hover': { color: 'inherit' },
+            mr: 3,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <MenuBook sx={{ mr: 1 }} />
+          <Typography variant="h6">
             Sistema Académico UNAHUR
-          </Box>
-        </Typography>
-
-        <Box sx={{ display: 'flex', gap: 1, mr: 2 }}>
-          {menuItems.filter(item => item.label !== 'Inicio').map((item) => (
-            <Button
-              key={item.label}
-              variant="text"
-              color="inherit"
-              onClick={() => {
-                navigate(item.path);
-              }}
-              startIcon={item.icon}
-              sx={{ 
-                backgroundColor: (
-                  location.pathname === item.path || 
-                  (item.label === 'Materias' && location.pathname.includes('/materias'))
-                ) ? 'rgba(255,255,255,0.2)' : 'transparent',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              {item.label}
-            </Button>
-          ))}
+          </Typography>
         </Box>
+        <Box sx={{ flexGrow: 1 }} />
+
+        <Tabs
+          value={tabIndex === -1 ? false : tabIndex}
+          onChange={(_, i) => navigate(visibleItems[i].path)}
+          textColor="inherit"
+          sx={{ mr: 2, '& .MuiTabs-indicator': { backgroundColor: 'white' } }}
+        >
+          {visibleItems.map((item) => (
+            <Tab key={item.label} icon={item.icon} label={item.label} iconPosition="start" />
+          ))}
+        </Tabs>
 
         <UserSelector />
       </Toolbar>
