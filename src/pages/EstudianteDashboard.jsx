@@ -28,8 +28,6 @@ import {
   Public,
   Lock,
   AdminPanelSettings as AdminPanelSettingsIcon,
-  Group as GroupIcon,
-  DynamicFeed as DynamicFeedIcon
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
@@ -247,9 +245,6 @@ export const EstudianteDashboard = () => {
                   Este perfil no tiene situacion academica asociada; muestra accesos y control operativo.
                 </Typography>
 
-                <Button fullWidth variant="contained" onClick={() => navigate('/admin')}>
-                  Abrir panel admin
-                </Button>
               </CardContent>
             </Card>
           </Grid>
@@ -282,31 +277,7 @@ export const EstudianteDashboard = () => {
               </Grid>
             </Grid>
 
-            <Card sx={{ mt: 2 }}>
-              <CardContent>
-                <Box display="flex" alignItems="center" gap={1} mb={1}>
-                  <AdminPanelSettingsIcon color="primary" />
-                  <Typography variant="h6">Accesos rapidos</Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Gestiona carreras, materias y actividad general desde un solo lugar.
-                </Typography>
-                <Box display="flex" gap={1} flexWrap="wrap">
-                  <Button variant="contained" onClick={() => navigate('/carreras')}>
-                    Carreras
-                  </Button>
-                  <Button variant="outlined" onClick={() => navigate('/sesiones')}>
-                    Sesiones
-                  </Button>
-                  <Button variant="outlined" startIcon={<DynamicFeedIcon />} onClick={() => navigate('/feed')}>
-                    Feed
-                  </Button>
-                  <Button variant="outlined" startIcon={<GroupIcon />} onClick={() => navigate('/conexiones')}>
-                    Conexiones
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
+
           </Grid>
         </Grid>
       </PageContainer>
