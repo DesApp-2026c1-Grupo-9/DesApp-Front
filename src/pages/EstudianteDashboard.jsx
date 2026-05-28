@@ -19,6 +19,7 @@ import {
   Snackbar
 } from '@mui/material';
 import { PageContainer } from '../components/ui';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { calcularEdad } from '../utils';
 import {
   Person as PersonIcon,
@@ -35,15 +36,18 @@ import { useAuth } from '../context/AuthContext';
 import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 import { useSnackbar } from '../hooks';
 
+const adminTheme = createTheme({
+  palette: {
+    primary: { main: '#ed6c02' },
+  },
+});
+
 export const EstudianteDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { estudianteActual, loading: authLoading } = useAuth();
   const { user, students, preferencias, loadingPreferencias, errorPreferencias } = useSelector(state => state.auth);
-  const esAdmin =
-    user?.rol === 'administrador' ||
-    String(user?.nombre || '').toLowerCase().includes('admin') ||
-    String(user?.apellido || '').toLowerCase().includes('admin');
+  const esAdmin = user?.rol === 'administrador';
   const totalUsuarios = students?.length || 0;
   const totalEstudiantes = students?.filter((item) => item.rol !== 'administrador').length || 0;
   const totalAdministradores = students?.filter((item) => item.rol === 'administrador').length || 0;
@@ -200,6 +204,7 @@ export const EstudianteDashboard = () => {
 
   if (esAdmin) {
     return (
+      <ThemeProvider theme={adminTheme}>
       <PageContainer maxWidth={800}>
 
         <Grid container spacing={3}>
@@ -305,6 +310,7 @@ export const EstudianteDashboard = () => {
           </Grid>
         </Grid>
       </PageContainer>
+      </ThemeProvider>
     );
   }
 
