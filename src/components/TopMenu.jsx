@@ -1,48 +1,25 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
   AppBar,
   Toolbar,
   Typography,
-  Button,
   Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Avatar,
+  Tabs,
+  Tab,
   Alert,
   AlertTitle,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, DynamicFeed, SwapHoriz, LibraryBooks, AdminPanelSettings } from '@mui/icons-material';
-import { useDispatch, useSelector } from 'react-redux';
+import { School, Person, Book, Home, People, Groups, DynamicFeed, LibraryBooks, AdminPanelSettings, Block, MenuBook } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
-import { fetchStudents, switchStudent } from '../features/auth/slice';
+import { UserSelector } from './UserSelector';
 
 export function TopMenu() {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useDispatch();
-  const { user, students, loadingStudents } = useSelector((state) => state.auth);
-  const { cambiarEstudiantePorUsuarioId, estudianteActual } = useAuth();
-
-  useEffect(() => {
-    if (!students?.length) {
-      dispatch(fetchStudents());
-    }
-  }, [dispatch, students?.length]);
-
-  useEffect(() => {
-    if (user?.id) {
-      cambiarEstudiantePorUsuarioId(user.id);
-    }
-  }, [user?.id, cambiarEstudiantePorUsuarioId]);
-
-  const handleSwitchUsuarioGlobal = async (usuarioId) => {
-    const usuarioIdNumero = Number(usuarioId);
-    dispatch(switchStudent(usuarioIdNumero));
-    await cambiarEstudiantePorUsuarioId(usuarioIdNumero);
-  };
+  const { user } = useSelector((state) => state.auth);
+  const { estudianteActual } = useAuth();
 
   const showAdmin = user?.rol === 'administrador';
 
@@ -58,106 +35,48 @@ export function TopMenu() {
     ...(showAdmin ? [{ label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> }] : []),
   ];
 
+  const visibleItems = menuItems.filter(item => item.label !== 'Inicio');
+  const tabIndex = visibleItems.findIndex(
+    item => location.pathname === item.path || (item.label === 'Materias' && location.pathname.includes('/materias'))
+  );
+
   return (
     <AppBar position="static" sx={{ mb: 3, borderRadius: 0 }}>
       <Toolbar>
-        <Typography variant="h6" sx={{ flexGrow: 1 }}>
-          <Box
-            component="a"
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate('/');
-            }}
-            sx={{
-              fontWeight: 'bold',
-              color: 'inherit',
-              textDecoration: 'none',
-              cursor: 'pointer',
-              '&:hover': {
-                color: 'inherit'
-              }
-            }}
-          >
+        <Box
+          component="a"
+          href="/"
+          onClick={(e) => { e.preventDefault(); navigate('/'); }}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            color: 'inherit',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            '&:hover': { color: 'inherit' },
+            mr: 3,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <MenuBook sx={{ mr: 1 }} />
+          <Typography variant="h6">
             Sistema Académico UNAHUR
-          </Box>
-        </Typography>
-
-        <Box sx={{ display: 'flex', gap: 1, mr: 2 }}>
-          {menuItems.filter(item => item.label !== 'Inicio').map((item) => (
-            <Button
-              key={item.label}
-              variant="text"
-              color="inherit"
-              onClick={() => {
-                if (item.label === 'Materias') {
-                  navigate(getMateriasPath());
-                } else {
-                  navigate(item.path);
-                }
-              }}
-              startIcon={item.icon}
-              sx={{ 
-                backgroundColor: (
-                  location.pathname === item.path || 
-                  (item.label === 'Materias' && location.pathname.includes('/materias'))
-                ) ? 'rgba(255,255,255,0.2)' : 'transparent',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)'
-                }
-              }}
-            >
-              {item.label}
-            </Button>
-          ))}
+          </Typography>
         </Box>
+        <Box sx={{ flexGrow: 1 }} />
 
-        <FormControl size="small" sx={{ minWidth: 240, bgcolor: 'background.paper', borderRadius: 1 }} disabled={loadingStudents || !students?.length}>
-          
-          <Select
-            value={user?.id || ''}
-            label="Simular Usuario"
-            onChange={(e) => handleSwitchUsuarioGlobal(e.target.value)}
-            sx={{ 
-              borderRadius: 0,
-              '& .MuiOutlinedInput-notchedOutline': { border: 'none' }
-            }}
-            renderValue={(selected) => {
-              const student = students.find((s) => s.id === selected);
-              return (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Avatar src={student?.avatarUrl || student?.avatar} sx={{ width: 24, height: 24 }}>
-                    {student?.nombre?.charAt(0)}
-                  </Avatar>
-                  <Typography variant="body2" fontWeight="500">
-                    {student?.nombre} {student?.apellido}
-                  </Typography>
-                </Box>
-              );
-            }}
-          >
-            { /* DROPDOWN DE USUARIOS */ } 
-            {students.map((s) => (
-              <MenuItem key={s.id} value={s.id} sx={s.activo === false ? { opacity: 0.5 } : undefined}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Avatar src={s.avatarUrl || s.avatar} sx={{ width: 28, height: 28 }}>
-                    {s.nombre?.charAt(0)}
-                  </Avatar>
-                  <Box>
-                    <Typography>
-                      {s.nombre} {s.apellido} {s.activo === false ? '(inactivo)' : ''}
-                    </Typography>
-                    {s.rol === 'administrador' && (
-                      <Typography variant="caption" color="warning.main" sx={{ fontWeight: 'bold' }}>
-                        Administrador
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <Tabs
+          value={tabIndex === -1 ? false : tabIndex}
+          onChange={(_, i) => navigate(visibleItems[i].path)}
+          textColor="inherit"
+          sx={{ mr: 2, '& .MuiTabs-indicator': { backgroundColor: 'white' } }}
+        >
+          {visibleItems.map((item) => (
+            <Tab key={item.label} icon={item.icon} label={item.label} iconPosition="start" />
+          ))}
+        </Tabs>
+
+        <UserSelector />
       </Toolbar>
       {estudianteActual?.usuario?.activo === false && (
         <Alert severity="warning" sx={{ borderRadius: 0, justifyContent: 'center', '& .MuiAlert-message': { textAlign: 'center', width: '100%' } }} icon={false}>
