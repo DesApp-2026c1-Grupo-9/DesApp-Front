@@ -1,12 +1,12 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button, Box, Tabs, Tab } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, Tabs, Tab } from '@mui/material';
 import { Person, AdminPanelSettings, PersonAdd, School, Gavel } from '@mui/icons-material';
 import { UserSelector } from './UserSelector';
 
 export function AdminAppBar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const tab = location.pathname.includes('/academico') ? 1 : location.pathname.includes('/moderacion') ? 2 : 0;
+  const tab = location.pathname.includes('/academico') ? 1 : location.pathname.includes('/moderacion') ? 2 : location.pathname === '/mi-perfil' ? 3 : 0;
 
   return (
     <AppBar position="static" sx={{ mb: 3, bgcolor: 'warning.dark', borderRadius: 0 }}>
@@ -34,25 +34,18 @@ export function AdminAppBar() {
         <Box sx={{ flexGrow: 1 }} />
         <Tabs
           value={tab}
-          onChange={(_, v) => navigate(v === 0 ? '/admin/usuarios' : v === 1 ? '/admin/academico' : '/admin/moderacion')}
+          onChange={(_, v) => navigate(v === 0 ? '/admin/usuarios' : v === 1 ? '/admin/academico' : v === 2 ? '/admin/moderacion' : '/mi-perfil')}
           textColor="inherit"
           indicatorColor="secondary"
         >
           <Tab icon={<PersonAdd />} label="Usuarios" iconPosition="start" />
           <Tab icon={<School />} label="Académico" iconPosition="start" />
           <Tab icon={<Gavel />} label="Moderación" iconPosition="start" />
+          <Tab icon={<Person />} label="Mi Perfil" iconPosition="start" />
         </Tabs>
         <Box sx={{ ml: 2 }}>
           <UserSelector />
         </Box>
-        <Button
-          variant="outlined"
-          sx={{ borderColor: 'rgba(255,255,255,0.5)', color: 'white', ml: 2, whiteSpace: 'nowrap' }}
-          startIcon={<Person />}
-          onClick={() => navigate('/mi-perfil')}
-        >
-          Mi Perfil
-        </Button>
       </Toolbar>
     </AppBar>
   );
