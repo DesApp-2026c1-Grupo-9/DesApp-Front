@@ -13,6 +13,7 @@ import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
 import AdminAcademicoPage from '../pages/AdminAcademicoPage';
+import AdminModeracionPage from '../pages/AdminModeracionPage';
 import AppErrorPage from '../pages/AppErrorPage';
 import AsistenteAcademico from '../pages/AsistenteAcademico';
 import AuthProvider from '../context/AuthContext';
@@ -42,6 +43,7 @@ const AppRouter = () => {
           <Route element={<AdminLayout />}>
             <Route path="/admin/usuarios" element={<AdminPage />} />
             <Route path="/admin/academico" element={<AdminAcademicoPage />} />
+            <Route path="/admin/moderacion" element={<AdminModeracionPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>
           <Route path="*" element={<AppErrorPage />} />
