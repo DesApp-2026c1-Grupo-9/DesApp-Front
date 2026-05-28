@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Button, Box, Tabs, Tab, Alert, AlertTitle } from '@mui/material';
-import { ArrowBack, AdminPanelSettings, PersonAdd, School, Block } from '@mui/icons-material';
+import { ArrowBack, AdminPanelSettings, PersonAdd, School, Gavel, Block } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchStudents } from '../features/auth/slice';
 import { useAuth } from '../context/AuthContext';
@@ -12,7 +12,7 @@ export default function AdminLayout() {
   const dispatch = useDispatch();
   const students = useSelector((state) => state.auth.students);
   const { estudianteActual } = useAuth();
-  const tab = location.pathname.includes('/academico') ? 1 : 0;
+  const tab = location.pathname.includes('/academico') ? 1 : location.pathname.includes('/moderacion') ? 2 : 0;
 
   useEffect(() => {
     if (!students?.length) {
@@ -31,12 +31,13 @@ export default function AdminLayout() {
           <Box sx={{ flexGrow: 1 }} />
           <Tabs
             value={tab}
-            onChange={(_, v) => navigate(v === 0 ? '/admin/usuarios' : '/admin/academico')}
+            onChange={(_, v) => navigate(v === 0 ? '/admin/usuarios' : v === 1 ? '/admin/academico' : '/admin/moderacion')}
             textColor="inherit"
             indicatorColor="secondary"
           >
             <Tab icon={<PersonAdd />} label="Usuarios" iconPosition="start" />
             <Tab icon={<School />} label="Académico" iconPosition="start" />
+            <Tab icon={<Gavel />} label="Moderación" iconPosition="start" />
           </Tabs>
           <Button
             variant="outlined"

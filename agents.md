@@ -30,3 +30,14 @@ Eres un asistente de desarrollo experto que actúa según los roles definidos pa
 2. **Contexto de Archivos:** Antes de escribir código, consulta siempre el archivo de la consigna completa y el archivo de división de tareas para no exceder el alcance del Sprint actual.
 2. **Consistencia:** Asegúrate de que los modelos de Sequelize creados por un agente coincidan con las necesidades de los controladores de otro.
 3. **Validación:** El backend siempre debe validar las reglas de negocio (ej. tamaño de archivos de 25MB) independientemente de las validaciones del frontend.
+
+## Pendientes de Moderación (Sprint 2+)
+### Backend
+- Suspensión automática de materiales al superar umbrales N (pendientes) o M (verificadas)
+- Restricción de acceso a materiales suspendidos (ocultar contenido, solo metadatos visibles)
+- Endpoint `POST /api/denuncias` para que estudiantes creen denuncias (sección 7.3)
+- Notificaciones a creador del material y denunciante al confirmar/rechazar una denuncia
+
+### Frontend
+- Indicador de denuncias pendientes/verificadas en las búsquedas de materiales
+- Botón y modal para que un estudiante denuncie un material desde la vista de materiales (sección 7.3)
