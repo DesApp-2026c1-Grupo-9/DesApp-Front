@@ -27,7 +27,6 @@ import {
   HourglassEmpty,
   Search,
 } from '@mui/icons-material';
-import { fetchStudents } from '../features/auth/slice';
 import {
   fetchConexiones,
   fetchPendientes,
@@ -46,7 +45,7 @@ import { TabPanel, PageContainer, LoadingSpinner, EmptyState } from '../componen
 export default function Conexiones() {
   const dispatch = useDispatch();
   const { list, requests, loading, error } = useSelector((state) => state.conexiones);
-  const { user, students, loadingStudents } = useSelector((state) => state.auth);
+  const { user, students } = useSelector((state) => state.auth);
 
   const { showSuccess, showError, showWarning, showInfo, snackbar, closeSnackbar } = useSnackbar();
 
@@ -60,10 +59,6 @@ export default function Conexiones() {
   const [invitingUserId, setInvitingUserId] = useState(null);
   const [invitedUserIds, setInvitedUserIds] = useState(new Set());
   const [confirmDelete, setConfirmDelete] = useState({ open: false, conexionId: null, contacto: null });
-
-  useEffect(() => {
-    dispatch(fetchStudents());
-  }, [dispatch]);
 
   useEffect(() => {
     if (user?.id) {
@@ -158,14 +153,6 @@ export default function Conexiones() {
       setInvitingUserId(null);
     }
   };
-
-  if (loadingStudents || !user) {
-    return (
-      <PageContainer centered padding={3}>
-        <LoadingSpinner message="Cargando usuarios..." />
-      </PageContainer>
-    );
-  }
 
   return (
     <PageContainer maxWidth={800}>

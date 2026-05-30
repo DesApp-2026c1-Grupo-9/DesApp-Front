@@ -39,7 +39,7 @@ import { PageContainer, LoadingSpinner } from '../components/ui';
 
 const Home = () => {
   const navigate = useNavigate();
-  const { estudianteActual, loading: authLoading } = useAuth();
+  const { estudianteActual } = useAuth();
   const { user } = useSelector((state) => state.auth);
   const [estudianteInfo, setEstudianteInfo] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
@@ -119,7 +119,7 @@ const Home = () => {
   }
 
   // Loading state
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <PageContainer centered padding={3}>
         <LoadingSpinner message="Cargando datos del estudiante..." />

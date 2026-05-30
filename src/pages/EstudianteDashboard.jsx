@@ -11,14 +11,13 @@ import {
   Chip,
   Grid,
   Alert,
-  CircularProgress,
   Paper,
   Switch,
   FormControlLabel,
   Divider,
   Snackbar
 } from '@mui/material';
-import { PageContainer } from '../components/ui';
+import { PageContainer, LoadingSpinner } from '../components/ui';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { calcularEdad } from '../utils';
 import {
@@ -43,7 +42,7 @@ const adminTheme = createTheme({
 export const EstudianteDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { estudianteActual, loading: authLoading } = useAuth();
+  const { estudianteActual } = useAuth();
   const { user, students, preferencias, loadingPreferencias, errorPreferencias } = useSelector(state => state.auth);
   const esAdmin = user?.rol === 'administrador';
   const totalUsuarios = students?.length || 0;
@@ -285,11 +284,11 @@ export const EstudianteDashboard = () => {
     );
   }
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-        <CircularProgress />
-      </Box>
+      <PageContainer centered padding={3}>
+        <LoadingSpinner message="Cargando perfil..." />
+      </PageContainer>
     );
   }
 

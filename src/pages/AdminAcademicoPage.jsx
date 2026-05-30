@@ -7,7 +7,6 @@ import {
   Button,
   Tabs,
   Tab,
-  CircularProgress,
 } from '@mui/material';
 import {
   School,
@@ -18,7 +17,7 @@ import {
 
 import { CarrerasTab, MateriasTab, PlanesTab } from '../components/admin';
 import { TabPanel } from '../components/ui';
-import { PageContainer } from '../components/ui';
+import { PageContainer, LoadingSpinner } from '../components/ui';
 
 export default function AdminAcademicoPage() {
   const [subTab, setSubTab] = useState(0);
@@ -28,13 +27,8 @@ export default function AdminAcademicoPage() {
 
   if (loadingStudents) {
     return (
-      <PageContainer maxWidth={600} centered>
-        <Box sx={{ p: 6, textAlign: 'center' }}>
-          <CircularProgress />
-          <Typography color="text.secondary" sx={{ mt: 2 }}>
-            Cargando...
-          </Typography>
-        </Box>
+      <PageContainer centered padding={3}>
+        <LoadingSpinner message="Cargando panel de administración..." />
       </PageContainer>
     );
   }
