@@ -53,12 +53,14 @@ const ESTADO_COLORS = {
   pendiente: 'warning',
   confirmada: 'error',
   rechazada: 'default',
+  revocada: 'info',
 };
 
 const ESTADO_LABELS = {
   pendiente: 'Pendiente',
   confirmada: 'Confirmada',
   rechazada: 'Rechazada',
+  revocada: 'Revocada',
 };
 
 function ListaDenuncias({ showSuccess, showError }) {
@@ -109,8 +111,8 @@ function ListaDenuncias({ showSuccess, showError }) {
   const handleConfirmar = async () => {
     if (!selectedDenuncia) return;
     try {
-      await api.put(`/api/admin/denuncias/${selectedDenuncia.id}/confirmar`);
-      showSuccess('Denuncia confirmada. Material suspendido.');
+      const res = await api.put(`/api/admin/denuncias/${selectedDenuncia.id}/confirmar`);
+      showSuccess(res.data.message);
       setDetailOpen(false);
       setSelectedDenuncia(null);
       cargarDenuncias();
@@ -132,6 +134,19 @@ function ListaDenuncias({ showSuccess, showError }) {
     }
   };
 
+  const handleRestaurar = async () => {
+    if (!selectedDenuncia?.material?.id) return;
+    try {
+      const res = await api.put(`/api/admin/materiales/${selectedDenuncia.material.id}/restaurar`);
+      showSuccess(res.data.message);
+      setDetailOpen(false);
+      setSelectedDenuncia(null);
+      cargarDenuncias();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al restaurar material');
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -146,6 +161,7 @@ function ListaDenuncias({ showSuccess, showError }) {
             <MenuItem value="pendiente">Pendientes</MenuItem>
             <MenuItem value="confirmada">Confirmadas</MenuItem>
             <MenuItem value="rechazada">Rechazadas</MenuItem>
+            <MenuItem value="revocada">Revocadas</MenuItem>
           </Select>
         </FormControl>
       </Box>
@@ -304,6 +320,15 @@ function ListaDenuncias({ showSuccess, showError }) {
                     Rechazar Denuncia
                   </Button>
                 </>
+              )}
+              {selectedDenuncia.material?.suspendido && (
+                <Button
+                  variant="outlined"
+                  color="success"
+                  onClick={handleRestaurar}
+                >
+                  Restaurar Material
+                </Button>
               )}
             </DialogActions>
           </>

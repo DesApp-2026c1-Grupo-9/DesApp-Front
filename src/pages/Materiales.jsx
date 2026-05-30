@@ -27,6 +27,7 @@ import { useFilter } from '../hooks';
 
 import MaterialCard from '../components/MaterialCard';
 import MaterialUploadDialog from '../components/MaterialUploadDialog';
+import DenunciaDialog from '../components/DenunciaDialog';
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 const Materiales = () => {
@@ -49,6 +50,8 @@ const Materiales = () => {
   const [sortBy, setSortBy] = useState(SORT_OPTIONS.FECHA_DESC);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState(null);
+  const [denunciaMaterial, setDenunciaMaterial] = useState(null);
+  const [denunciaDialogOpen, setDenunciaDialogOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchMaterias());
@@ -109,6 +112,19 @@ const Materiales = () => {
   const handleEditMaterial = (material) => {
     setEditingMaterial(material);
     setDialogOpen(true);
+  };
+
+  const handleDenunciar = (material) => {
+    setDenunciaMaterial(material);
+    setDenunciaDialogOpen(true);
+  };
+
+  const handleDenunciaClose = (created) => {
+    setDenunciaDialogOpen(false);
+    setDenunciaMaterial(null);
+    if (created) {
+      dispatch(fetchMateriales({ ...filter, search: filters.search || '', sortBy, usuarioId: currentUserId }));
+    }
   };
 
   const handleClearFilters = () => {
@@ -209,6 +225,7 @@ const Materiales = () => {
             onRate={handleRate}
             onEdit={handleEditMaterial}
             onDelete={handleDeleteMaterial}
+            onDenunciar={handleDenunciar}
           />
         ))
       )}
@@ -224,6 +241,15 @@ const Materiales = () => {
         defaultMateriaId={filters.materiaId || null}
         material={editingMaterial}
       />
+
+      {denunciaMaterial && (
+        <DenunciaDialog
+          open={denunciaDialogOpen}
+          onClose={handleDenunciaClose}
+          material={denunciaMaterial}
+          usuarioId={currentUserId}
+        />
+      )}
     </PageContainer>
   );
 };
