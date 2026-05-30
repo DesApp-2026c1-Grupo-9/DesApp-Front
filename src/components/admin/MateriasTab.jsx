@@ -40,7 +40,7 @@ function MateriasTab() {
   const [filtroCarrera, setFiltroCarrera] = useState('todos');
   const [open, setOpen] = useState(false);
   const [editMateria, setEditMateria] = useState(null);
-  const [form, setForm] = useState({ nombre: '', tipo: 'cuatrimestral' });
+  const [form, setForm] = useState({ nombre: '', tipo: 'cuatrimestral', cargaHoraria: '' });
   const [deleteDialog, setDeleteDialog] = useState({ open: false, materia: null });
   const [sortField, setSortField] = useState('nombre');
   const [sortDir, setSortDir] = useState('asc');
@@ -101,13 +101,13 @@ function MateriasTab() {
 
   const openEdit = (materia) => {
     setEditMateria(materia);
-    setForm({ nombre: materia.nombre, tipo: materia.tipo || 'cuatrimestral' });
+    setForm({ nombre: materia.nombre, tipo: materia.tipo || 'cuatrimestral', cargaHoraria: materia.cargaHoraria?.toString() || '' });
     setOpen(true);
   };
 
   const openCreate = () => {
     setEditMateria(null);
-    setForm({ nombre: '', tipo: 'cuatrimestral' });
+    setForm({ nombre: '', tipo: 'cuatrimestral', cargaHoraria: '' });
     setOpen(true);
   };
 
@@ -206,6 +206,7 @@ function MateriasTab() {
               <TableCell>
                 <TableSortLabel active={sortField === 'tipo'} direction={sortField === 'tipo' ? sortDir : 'asc'} onClick={() => handleSort('tipo')}>Tipo</TableSortLabel>
               </TableCell>
+              <TableCell align="center">Carga Horaria</TableCell>
               <TableCell>
                 <TableSortLabel active={sortField === 'carreras'} direction={sortField === 'carreras' ? sortDir : 'asc'} onClick={() => handleSort('carreras')}>Carreras</TableSortLabel>
               </TableCell>
@@ -215,13 +216,14 @@ function MateriasTab() {
           <TableBody>
             {materias.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>No hay materias registradas</TableCell>
+                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>No hay materias registradas</TableCell>
               </TableRow>
             ) : (
               materias.map((m) => (
                 <TableRow key={m.id} sx={{ transition: 'background-color 0.5s', backgroundColor: m.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontWeight: 'medium' }}>{m.nombre}</TableCell>
                   <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} /></TableCell>
+                  <TableCell align="center">{m.cargaHoraria ?? '-'}</TableCell>
                   <TableCell>{getCarrerasForMateria(m)}</TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => openEdit(m)} title="Editar"><Edit fontSize="small" /></IconButton>
@@ -260,6 +262,9 @@ function MateriasTab() {
                   <MenuItem value="anual">Anual</MenuItem>
                 </Select>
               </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <TextField fullWidth label="Carga Horaria" type="number" required value={form.cargaHoraria} onChange={(e) => setForm({ ...form, cargaHoraria: e.target.value })} inputProps={{ min: 1 }} />
             </Grid>
           </Grid>
         </DialogContent>

@@ -305,9 +305,7 @@ function CarrerasTab() {
               <TableCell>
                 <TableSortLabel active={sortField === 'duracion'} direction={sortField === 'duracion' ? sortDir : 'asc'} onClick={() => handleSort('duracion')}>Duración</TableSortLabel>
               </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'totalPlanes'} direction={sortField === 'totalPlanes' ? sortDir : 'asc'} onClick={() => handleSort('totalPlanes')}>Planes</TableSortLabel>
-              </TableCell>
+              <TableCell>Planes</TableCell>
               <TableCell align="center">Materias</TableCell>
               <TableCell align="center">Acciones</TableCell>
             </TableRow>
@@ -324,8 +322,8 @@ function CarrerasTab() {
                   <TableCell>{c.titulo}</TableCell>
                   <TableCell>{c.instituto}</TableCell>
                   <TableCell>{c.duracion} años</TableCell>
-                  <TableCell>{c.totalPlanes}</TableCell>
-                  <TableCell align="center">{c.totalMaterias}</TableCell>
+                  <TableCell>{c.planesEstudio?.length || 0}</TableCell>
+                  <TableCell align="center">{c.planesEstudio?.reduce((sum, p) => sum + (p.totalMaterias || 0), 0) || 0}</TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => openDetalleDialog(c)} title="Ver detalle"><Visibility fontSize="small" /></IconButton>
                     <IconButton size="small" onClick={() => openEdit(c)} title="Editar"><Edit fontSize="small" /></IconButton>
