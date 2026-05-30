@@ -33,12 +33,6 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
   const isOwner = currentUserId === material.creadorId;
   const isDiscord = material.tipoLink === LINK_TIPO.DISCORD;
 
-  const totalRatings = material.ratings.upvotes + material.ratings.downvotes;
-  const ratio =
-    totalRatings > 0
-      ? Math.round((material.ratings.upvotes / totalRatings) * 100)
-      : null;
-
   const handleRate = (value) => {
     onRate(material.id, value);
   };
@@ -205,7 +199,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
               <Button
                 size="small"
                 variant="contained"
-                sx={{ backgroundColor: '#5865F2', '&:hover': { backgroundColor: '#4752C4' } }}
+                sx={{ backgroundColor: '#5865F2', '&:hover': { backgroundColor: '#4752C4' }, minWidth: 110 }}
                 href={material.url || '#'}
                 target="_blank"
                 rel="noopener"
@@ -217,6 +211,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
               <Button
                 size="small"
                 startIcon={<OpenInNew />}
+                sx={{ minWidth: 110 }}
                 href={material.url || '#'}
                 target="_blank"
                 rel="noopener"
@@ -276,14 +271,6 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
             <Typography variant="body2" sx={{ minWidth: 30, textAlign: 'center' }}>
               {material.ratings.downvotes}
             </Typography>
-            {ratio !== null && (
-              <Chip
-                label={`${ratio}%`}
-                size="small"
-                color={ratio >= 70 ? 'success' : ratio >= 50 ? 'warning' : 'error'}
-                sx={{ ml: 1 }}
-              />
-            )}
           </Box>
         </Box>
       </Box>
