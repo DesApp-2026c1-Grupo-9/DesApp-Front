@@ -53,3 +53,24 @@ export const rateMaterial = async (id, value, usuarioId) => {
   const response = await api.post(`/api/materiales/${id}/rate?usuarioId=${usuarioId}`, { value });
   return response.data.data;
 };
+
+export const getMotivosDenuncia = async () => {
+  const response = await api.get('/api/denuncias/motivos');
+  return response.data.data;
+};
+
+export const verificarDenunciaExistente = async (materialId, usuarioId) => {
+  const response = await api.get('/api/denuncias/verificar', {
+    params: { materialId, usuarioId },
+  });
+  return response.data.yaDenuncio;
+};
+
+export const createDenuncia = async ({ materialId, motivoId, detalle, usuarioId }) => {
+  const response = await api.post(`/api/denuncias?usuarioId=${usuarioId}`, {
+    materialId,
+    motivoId,
+    detalle
+  });
+  return response.data;
+};

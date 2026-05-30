@@ -9,6 +9,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Menu,
+  MenuItem,
+  ListItemIcon,
 } from '@mui/material';
 import {
   PictureAsPdf,
@@ -18,11 +21,15 @@ import {
   Edit,
   Download,
   OpenInNew,
+  Flag,
+  Warning,
+  MoreVert,
 } from '@mui/icons-material';
 import { getLinkIcon, formatFileSize, DiscordIcon, LINK_TIPO } from '../utils';
 
-const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => {
+const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDenunciar }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState(null);
   const isOwner = currentUserId === material.creadorId;
   const isDiscord = material.tipoLink === LINK_TIPO.DISCORD;
 
@@ -103,7 +110,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
             ))}
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
             <Chip
               label={material.materia?.nombre || material.materia}
               size="small"
@@ -124,6 +131,38 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
               >
                 📍 {material.discordInfo.servidor} → {material.discordInfo.canal}
               </Typography>
+            )}
+            {material.suspendido && (
+              <Chip
+                icon={<Warning fontSize="small" />}
+                label="Suspendido"
+                size="small"
+                color="error"
+              />
+            )}
+            {material.revocado && !material.suspendido && (
+              <Chip
+                label="Revocado"
+                size="small"
+                color="info"
+                variant="outlined"
+              />
+            )}
+            {material.denunciasPendientes > 0 && (
+              <Chip
+                label={`${material.denunciasPendientes} pendiente${material.denunciasPendientes !== 1 ? 's' : ''}`}
+                size="small"
+                color="warning"
+                variant="outlined"
+              />
+            )}
+            {material.denunciasConfirmadas > 0 && (
+              <Chip
+                label={`${material.denunciasConfirmadas} verificada${material.denunciasConfirmadas !== 1 ? 's' : ''}`}
+                size="small"
+                color="error"
+                variant="outlined"
+              />
             )}
           </Box>
         </Box>
@@ -158,6 +197,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
                 startIcon={<Download />}
                 href={`http://localhost:3001/api/materiales/${material.id}/descargar`}
                 target="_blank"
+                disabled={material.suspendido}
               >
                 Descargar
               </Button>
@@ -166,9 +206,10 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
                 size="small"
                 variant="contained"
                 sx={{ backgroundColor: '#5865F2', '&:hover': { backgroundColor: '#4752C4' } }}
-                href={material.url}
+                href={material.url || '#'}
                 target="_blank"
                 rel="noopener"
+                disabled={material.suspendido || !material.url}
               >
                 Unirse
               </Button>
@@ -176,12 +217,41 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete }) => 
               <Button
                 size="small"
                 startIcon={<OpenInNew />}
-                href={material.url}
+                href={material.url || '#'}
                 target="_blank"
                 rel="noopener"
+                disabled={material.suspendido || !material.url}
               >
                 Abrir
               </Button>
+            )}
+
+            {!isOwner && onDenunciar && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setMenuAnchor(e.currentTarget)}
+                >
+                  <MoreVert fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={menuAnchor}
+                  open={Boolean(menuAnchor)}
+                  onClose={() => setMenuAnchor(null)}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      setMenuAnchor(null);
+                      onDenunciar(material);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Flag fontSize="small" color="warning" />
+                    </ListItemIcon>
+                    Reportar
+                  </MenuItem>
+                </Menu>
+              </>
             )}
           </Box>
 
