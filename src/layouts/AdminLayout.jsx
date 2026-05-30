@@ -1,11 +1,17 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Box, Alert, AlertTitle } from '@mui/material';
 import { Block } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { AdminAppBar } from '../components/AdminAppBar';
+import { PageTransition, LoadingSpinner } from '../components/ui';
 
 export default function AdminLayout() {
-  const { estudianteActual } = useAuth();
+  const { estudianteActual, loading: authLoading } = useAuth();
+  const location = useLocation();
+
+  if (authLoading) {
+    return <LoadingSpinner fullScreen message="Inicializando sesión..." />;
+  }
 
   return (
     <>
@@ -19,7 +25,9 @@ export default function AdminLayout() {
         </Alert>
       )}
       <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
-        <Outlet />
+        <PageTransition key={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </Box>
     </>
   );

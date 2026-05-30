@@ -27,7 +27,7 @@ import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 export const EstudianteMaterias = () => {
   const navigate = useNavigate();
-  const { estudianteActual, loading: authLoading } = useAuth();
+  const { estudianteActual } = useAuth();
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [tabValue, setTabValue] = useState(0);
@@ -453,7 +453,7 @@ export const EstudianteMaterias = () => {
     setTabValue(newValue);
   };
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <PageContainer centered padding={3}>
         <LoadingSpinner message="Cargando información académica..." />

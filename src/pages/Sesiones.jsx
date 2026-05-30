@@ -14,14 +14,14 @@ import api from '../api/axiosConfig';
 
 import { fetchSesiones, addSesion, editSesion, removeSesion, joinToSesion,
   approveParticipanteThunk, rejectParticipanteThunk, leaveSesionThunk } from '../features/sesiones/slice';
-import { fetchStudents, fetchConexiones } from '../features/auth/slice';
+import { fetchConexiones } from '../features/auth/slice';
 
 import { useFetchData, useFilter } from '../hooks';
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 const Sesiones = () => {
   const dispatch = useDispatch();
-  const { user, students, conexiones, loading: loadingStudents } = useSelector(state => state.auth);
+  const { user, students, conexiones } = useSelector(state => state.auth);
   const { list: sesiones, loading, error, operationLoading } = useSelector(state => state.sesiones);
 
   const { filters, setFilter, clearFilters, hasActiveFilters } = useFilter({
@@ -58,10 +58,6 @@ const Sesiones = () => {
     immediate: activeTab === 'misMaterias' && !!user?.id,
     timeout: 10000,
   });
-
-  useEffect(() => {
-    dispatch(fetchStudents());
-  }, [dispatch]);
 
   useEffect(() => {
     if (user?.id) {
@@ -219,14 +215,6 @@ const Sesiones = () => {
     setAprobacionModalOpen(false);
     setSelectedSesion(null);
   };
-
-  if (loadingStudents || !user) {
-    return (
-      <PageContainer centered padding={3}>
-        <LoadingSpinner message="Cargando usuarios..." />
-      </PageContainer>
-    );
-  }
 
   const showLoading = loading || loadingMaterias || (activeTab === 'misMaterias' && loadingMisMaterias);
 

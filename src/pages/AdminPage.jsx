@@ -4,14 +4,13 @@ import {
   Box,
   Typography,
   Button,
-  CircularProgress,
 } from '@mui/material';
 import {
   AdminPanelSettings,
 } from '@mui/icons-material';
 
 import { PersonasTab } from '../components/admin';
-import { PageContainer } from '../components/ui';
+import { PageContainer, LoadingSpinner } from '../components/ui';
 
 export default function AdminPage() {
   const user = useSelector((state) => state.auth.user);
@@ -20,13 +19,8 @@ export default function AdminPage() {
 
   if (loadingStudents) {
     return (
-      <PageContainer maxWidth={600} centered>
-        <Box sx={{ p: 6, textAlign: 'center' }}>
-          <CircularProgress />
-          <Typography color="text.secondary" sx={{ mt: 2 }}>
-            Cargando...
-          </Typography>
-        </Box>
+      <PageContainer centered padding={3}>
+        <LoadingSpinner message="Cargando panel de administración..." />
       </PageContainer>
     );
   }

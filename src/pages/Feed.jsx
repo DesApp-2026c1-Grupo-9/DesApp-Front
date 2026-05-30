@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { Typography, Box } from '@mui/material';
 import { fetchFeed, addPost, removePost, toggleLike, editPost } from '../features/feed/slice';
-import { fetchStudents } from '../features/auth/slice';
 
 import PostCard from '../components/PostCard';
 import CreatePostForm from '../components/CreatePostForm';
@@ -14,25 +13,13 @@ export { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
 function Feed() {
   const dispatch = useDispatch();
   const { posts, loading } = useSelector((state) => state.feed);
-  const { user, loadingStudents } = useSelector((state) => state.auth);
-
-  useEffect(() => {
-    dispatch(fetchStudents());
-  }, [dispatch]);
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     if (user?.id) {
       dispatch(fetchFeed(user.id));
     }
   }, [user, dispatch]);
-
-  if (loadingStudents || !user) {
-    return (
-      <PageContainer centered padding={3}>
-        <Typography>Cargando usuarios...</Typography>
-      </PageContainer>
-    );
-  }
 
   return (
     <PageContainer maxWidth={800}>
