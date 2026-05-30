@@ -1,80 +1,63 @@
-import React, { useState } from 'react';
-import { Box, Card, CardContent, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Accordion, AccordionSummary,  AccordionDetails, List, ListItem, ListItemText, Divider} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { Box, Card, CardContent, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Accordion, AccordionSummary, AccordionDetails, List, ListItem, ListItemText, CircularProgress, Alert } from '@mui/material';
 import { School, ExpandMore, Business, Schedule, Assignment } from '@mui/icons-material';
 import { PageContainer } from '../components/ui';
+import api from '../api/axiosConfig';
 
 export function CareerManagementPage() {
-  // Mock data de carreras y planes de estudio
-  const carreras = [
-    {
-      id: 1,
-      nombre: 'Licenciatura en Informática',
-      titulo: 'Licenciado/a en Informática',
-      instituto: 'Instituto de Tecnología',
-      duracionEstimada: 5,
-      cargaHorariaTotal: 3520,
-      planesEstudio: [
-        {
-          id: 1,
-          nombre: 'Plan 2026',
-          estado: 'Vigente',
-          materias: 45,
-          cargaHoraria: 3520
-        }
-      ]
-    },
-    {
-      id: 2,
-      nombre: 'Tecnicatura en Programación',
-      titulo: 'Técnico/a Superior en Programación',
-      instituto: 'Instituto de Tecnología',
-      duracionEstimada: 2.5,
-      creditosRequeridos: 35,
-      cargaHorariaTotal: 1408,
-      planesEstudio: [
-        {
-          id: 2,
-          nombre: 'Plan 2026',
-          estado: 'Vigente',
-          materias: 19,
-          cargaHoraria: 1408
-        }
-      ]
-    },
-    {
-      id: 3,
-      nombre: 'Tecnicatura en Inteligencia Artificial',
-      titulo: 'Técnico/a Superior en Inteligencia Artificial',
-      instituto: 'Instituto de Tecnología',
-      duracionEstimada: 2.5,
-      creditosRequeridos: 80,
-      cargaHorariaTotal: 1472,
-      planesEstudio: [
-        {
-          id: 3,
-          nombre: 'Plan 2026',
-          estado: 'Vigente',
-          materias: 22,
-          cargaHoraria: 1472
-        }
-      ]
-    }
-  ];
+  const [carreras, setCarreras] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCarreras = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await api.get('/api/carreras', { params: { limit: 100 } });
+        setCarreras(res.data.data || []);
+      } catch (err) {
+        console.error('Error al cargar carreras:', err);
+        setError('No se pudieron cargar las carreras. Verifique la conexión con el servidor.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCarreras();
+  }, []);
 
   const getEstadoPlanColor = (estado) => {
     switch (estado) {
-      case 'Vigente': return 'success';
-      case 'En transición': return 'warning';
-      case 'Discontinuado': return 'error';
+      case 'vigente': return 'success';
+      case 'transición': return 'warning';
+      case 'discontinuado': return 'error';
       default: return 'default';
     }
   };
 
   const totalCarreras = carreras.length;
-  const totalPlanes = carreras.reduce((total, carrera) => total + carrera.planesEstudio.length, 0);
-  const planesVigentes = carreras.reduce((total, carrera) => 
-    total + carrera.planesEstudio.filter(plan => plan.estado === 'Vigente').length, 0
+  const totalPlanes = carreras.reduce((total, carrera) => total + (carrera.planesEstudio?.length || 0), 0);
+  const planesVigentes = carreras.reduce((total, carrera) =>
+    total + (carrera.planesEstudio?.filter(plan => plan.estado === 'vigente').length || 0), 0
   );
+
+  if (loading) {
+    return (
+      <PageContainer maxWidth={1200}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+          <CircularProgress />
+        </Box>
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer maxWidth={1200}>
+        <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer maxWidth={1200}>
@@ -95,7 +78,7 @@ export function CareerManagementPage() {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={4}>
           <Card sx={{ bgcolor: 'secondary.light', color: 'secondary.contrastText', '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
@@ -105,7 +88,7 @@ export function CareerManagementPage() {
             </CardContent>
           </Card>
         </Grid>
-        
+
         <Grid item xs={12} sm={4}>
           <Card sx={{ bgcolor: 'success.light', color: 'success.contrastText', '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent sx={{ textAlign: 'center' }}>
@@ -123,7 +106,7 @@ export function CareerManagementPage() {
           <Typography variant="h6" gutterBottom>
             Carreras Disponibles
           </Typography>
-          
+
           {carreras.map((carrera) => (
             <Accordion key={carrera.id} sx={{ mb: 2 }}>
               <AccordionSummary
@@ -137,11 +120,11 @@ export function CareerManagementPage() {
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     <Business sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
-                    {carrera.instituto} • Duración: {carrera.duracionEstimada} años
+                    {carrera.instituto} • Duración: {carrera.duracion} años
                   </Typography>
-    </Box>
+                </Box>
               </AccordionSummary>
-              
+
               <AccordionDetails>
                 <Grid container spacing={3}>
                   {/* Información General */}
@@ -149,7 +132,7 @@ export function CareerManagementPage() {
                     <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
                       Información General
                     </Typography>
-                    
+
                     <List dense>
                       <ListItem>
                         <ListItemText
@@ -166,7 +149,7 @@ export function CareerManagementPage() {
                       <ListItem>
                         <ListItemText
                           primary="Duración estimada"
-                          secondary={`${carrera.duracionEstimada} años`}
+                          secondary={`${carrera.duracion} años`}
                         />
                       </ListItem>
                     </List>
@@ -177,7 +160,7 @@ export function CareerManagementPage() {
                     <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 'bold' }}>
                       Planes de Estudio
                     </Typography>
-                    
+
                     <TableContainer component={Paper} variant="outlined">
                       <Table size="small">
                         <TableHead>
@@ -189,7 +172,7 @@ export function CareerManagementPage() {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {carrera.planesEstudio.map((plan) => (
+                          {(carrera.planesEstudio || []).map((plan) => (
                             <TableRow key={plan.id}>
                               <TableCell component="th" scope="row">
                                 <Typography variant="body2" sx={{ fontWeight: 'medium' }}>
@@ -203,7 +186,7 @@ export function CareerManagementPage() {
                                   size="small"
                                 />
                               </TableCell>
-                              <TableCell align="center">{plan.materias}</TableCell>
+                              <TableCell align="center">{plan.totalMaterias}</TableCell>
                               <TableCell align="center">{plan.cargaHoraria}</TableCell>
                             </TableRow>
                           ))}

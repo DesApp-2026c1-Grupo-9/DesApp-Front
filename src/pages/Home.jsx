@@ -143,7 +143,7 @@ const Home = () => {
   const materiasAprobadas = situacionAcademica?.resumen?.aprobadas || 0;
   const materiasRegularizadas = situacionAcademica?.resumen?.regularizadas || 0;
   const totalMaterias = situacionAcademica?.resumen?.total || 0;
-  const progresoCarrera = totalMaterias > 0 ? ((materiasAprobadas + materiasRegularizadas + (situacionAcademica?.resumen?.cursando || 0)) / totalMaterias) * 100 : 0;
+  const progresoCarrera = totalMaterias > 0 ? (materiasAprobadas / totalMaterias) * 100 : 0;
   const materiasCursandoList = situacionAcademica?.situacionAcademica?.filter(m => m.estado === 'cursando') || [];
   const materiasRegularizadasList = situacionAcademica?.situacionAcademica?.filter(m => m.estado === 'regularizada') || [];
 
