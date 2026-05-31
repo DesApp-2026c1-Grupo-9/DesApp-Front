@@ -29,7 +29,9 @@ export const FILEtiposPERMITIDOS = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'image/jpeg',
   'image/png',
-  'application/zip'
+  'application/zip',
+  'application/x-zip-compressed',
+  'application/zip-compressed',
 ];
 
 export const FILE_EXTENSIONES_PERMITIDAS = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'zip'];
