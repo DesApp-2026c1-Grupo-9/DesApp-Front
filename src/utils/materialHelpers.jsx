@@ -1,4 +1,16 @@
-import { VideoLibrary, Cloud, GitHub, OpenInNew } from '@mui/icons-material';
+import {
+  VideoLibrary,
+  Cloud,
+  GitHub,
+  OpenInNew,
+  PictureAsPdf,
+  Description,
+  Slideshow,
+  TableChart,
+  Image,
+  FolderZip,
+  InsertDriveFile,
+} from '@mui/icons-material';
 import { DiscordIcon } from './dateHelpers';
 
 export const LINK_TIPO = {
@@ -7,6 +19,32 @@ export const LINK_TIPO = {
   GITHUB: 'github',
   DISCORD: 'discord',
   DROPBOX: 'dropbox',
+};
+
+export const getFileIcon = (nombreArchivo) => {
+  if (!nombreArchivo) return <InsertDriveFile color="disabled" />;
+  const ext = nombreArchivo.split('.').pop().toLowerCase();
+  switch (ext) {
+    case 'pdf':
+      return <PictureAsPdf color="error" />;
+    case 'doc':
+    case 'docx':
+      return <Description color="primary" />;
+    case 'ppt':
+    case 'pptx':
+      return <Slideshow color="warning" />;
+    case 'xls':
+    case 'xlsx':
+      return <TableChart color="success" />;
+    case 'jpg':
+    case 'jpeg':
+    case 'png':
+      return <Image color="success" />;
+    case 'zip':
+      return <FolderZip color="disabled" />;
+    default:
+      return <InsertDriveFile color="disabled" />;
+  }
 };
 
 export const formatFileSize = (bytes) => {

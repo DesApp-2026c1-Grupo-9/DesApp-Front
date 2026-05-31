@@ -14,7 +14,6 @@ import {
   ListItemIcon,
 } from '@mui/material';
 import {
-  PictureAsPdf,
   ThumbUp,
   ThumbDown,
   Delete,
@@ -25,7 +24,7 @@ import {
   Warning,
   MoreVert,
 } from '@mui/icons-material';
-import { getLinkIcon, formatFileSize, DiscordIcon, LINK_TIPO } from '../utils';
+import { getLinkIcon, getFileIcon, formatFileSize, DiscordIcon, LINK_TIPO } from '../utils';
 
 const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDenunciar }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -65,7 +64,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
           }}
         >
           {material.tipo === 'file' ? (
-            <PictureAsPdf color="error" />
+            getFileIcon(material.nombreArchivo)
           ) : (
             getLinkIcon(material.tipoLink)
           )}
