@@ -26,7 +26,7 @@ import {
 } from '@mui/icons-material';
 import { getLinkIcon, getFileIcon, formatFileSize, DiscordIcon, LINK_TIPO } from '../utils';
 
-const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDenunciar }) => {
+const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit, onDelete, onDenunciar }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const isOwner = currentUserId === material.creadorId;
@@ -190,7 +190,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
                 startIcon={<Download />}
                 href={`http://localhost:3001/api/materiales/${material.id}/descargar`}
                 target="_blank"
-                disabled={material.suspendido}
+                disabled={material.suspendido || !isActive}
               >
                 Descargar
               </Button>
@@ -202,7 +202,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
                 href={material.url || '#'}
                 target="_blank"
                 rel="noopener"
-                disabled={material.suspendido || !material.url}
+                disabled={material.suspendido || !material.url || !isActive}
               >
                 Unirse
               </Button>
@@ -214,7 +214,7 @@ const MaterialCard = ({ material, currentUserId, onRate, onEdit, onDelete, onDen
                 href={material.url || '#'}
                 target="_blank"
                 rel="noopener"
-                disabled={material.suspendido || !material.url}
+                disabled={material.suspendido || !material.url || !isActive}
               >
                 Abrir
               </Button>

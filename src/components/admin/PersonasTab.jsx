@@ -182,11 +182,9 @@ function PersonasTab() {
       const res = await api.put(`/api/usuarios/${userToToggle.id}`, { activo: !userToToggle.activo });
       showSuccess(`Usuario ${userToToggle.activo ? 'desactivado' : 'activado'} exitosamente`);
       setUserToToggle(null);
+      dispatch(fetchStudents());
       cargarUsuarios();
-      if (res.data.data?.id?.toString() === currentUserId?.toString()) {
-        dispatch(updateStudentActiveStatus(res.data.data.activo));
-        window.dispatchEvent(new CustomEvent('activo-changed', { detail: { activo: res.data.data.activo } }));
-      }
+      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: userToToggle.id, activo: res.data.data?.activo ?? !userToToggle.activo } }));
     } catch (err) {
       showError(err.response?.data?.message || 'Error al cambiar estado');
     }
