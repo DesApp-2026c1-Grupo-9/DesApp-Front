@@ -38,6 +38,7 @@ const Materiales = () => {
 
   const currentUserId = user?.id || 1;
   const currentUserName = user?.nombre || user?.name || 'Usuario';
+  const isActive = user?.activo !== false;
 
   const { filters, setFilter: setFilterValue, clearFilters, hasActiveFilters } = useFilter({
     initialFilters: {
@@ -225,6 +226,7 @@ const Materiales = () => {
             key={material.id}
             material={material}
             currentUserId={currentUserId}
+            isActive={isActive}
             onRate={handleRate}
             onEdit={handleEditMaterial}
             onDelete={handleDeleteMaterial}

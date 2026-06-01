@@ -53,6 +53,7 @@ function PlanesTab() {
   const [refreshMateriasKey, setRefreshMateriasKey] = useState(0);
   const materiasRowsPerPage = 10;
   const [editAnioDialog, setEditAnioDialog] = useState({ open: false, planId: null, materia: null, anio: 1 });
+  const [estadoDialog, setEstadoDialog] = useState({ open: false, plan: null, estado: '' });
 
   useEffect(() => {
     if (!materiasEditDialog.open) return;
@@ -246,6 +247,25 @@ function PlanesTab() {
     setPlanEditForm({ nombre: plan.nombre, estado: plan.estado });
   };
 
+  const handleToggleEstadoClick = (plan) => {
+    setEstadoDialog({ open: true, plan, estado: plan.estado });
+  };
+
+  const handleToggleEstadoConfirm = async () => {
+    const { plan, estado } = estadoDialog;
+    if (!plan) return;
+    try {
+      await api.put(`/api/carreras/${carreraId}/planes/${plan.id}`, { nombre: plan.nombre, estado });
+      showSuccess('Estado del plan actualizado');
+      setEstadoDialog({ open: false, plan: null, estado: '' });
+      const res = await api.get(`/api/carreras/${carreraId}/planes`);
+      setPlanes(res.data.data || []);
+      cargarCarreras();
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al cambiar estado');
+    }
+  };
+
   const handleEditPlan = async () => {
     const plan = planEditDialog.plan;
     if (!plan) return;
@@ -318,7 +338,7 @@ function PlanesTab() {
               {planes.map((p) => (
                 <TableRow key={p.id} sx={{ transition: 'background-color 0.5s', backgroundColor: p.id === highlightPlanId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontWeight: 'medium' }}>{p.nombre}</TableCell>
-                  <TableCell><Chip label={p.estado} size="small" color={p.estado === 'vigente' ? 'success' : p.estado === 'transición' ? 'warning' : 'default'} /></TableCell>
+                  <TableCell><Chip label={p.estado} size="small" color={p.estado === 'vigente' ? 'success' : p.estado === 'transición' ? 'warning' : 'default'} onClick={() => handleToggleEstadoClick(p)} clickable /></TableCell>
                   <TableCell align="center">{p.totalMaterias}</TableCell>
                   <TableCell align="center">
                     <IconButton size="small" onClick={() => openPlanEdit(p)} title="Editar plan"><Edit fontSize="small" /></IconButton>
@@ -348,24 +368,29 @@ function PlanesTab() {
           </DialogActions>
         </Dialog>
 
+        <Dialog open={estadoDialog.open} onClose={() => setEstadoDialog({ ...estadoDialog, open: false })}>
+          <DialogTitle>Cambiar Estado del Plan</DialogTitle>
+          <DialogContent>
+            <Typography sx={{ mb: 2 }}>Seleccioná el nuevo estado para <strong>{estadoDialog.plan?.nombre}</strong>:</Typography>
+            <FormControl fullWidth>
+              <InputLabel>Estado</InputLabel>
+              <Select value={estadoDialog.estado} label="Estado" onChange={(e) => setEstadoDialog({ ...estadoDialog, estado: e.target.value })}>
+                <MenuItem value="vigente">Vigente</MenuItem>
+                <MenuItem value="transición">En transición</MenuItem>
+                <MenuItem value="discontinuado">Discontinuado</MenuItem>
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEstadoDialog({ ...estadoDialog, open: false })}>Cancelar</Button>
+            <Button variant="contained" onClick={handleToggleEstadoConfirm}>Guardar</Button>
+          </DialogActions>
+        </Dialog>
+
         <Dialog open={planEditDialog.open} onClose={() => setPlanEditDialog({ ...planEditDialog, open: false })} maxWidth="sm" fullWidth>
           <DialogTitle>Editar Plan de Estudio</DialogTitle>
           <DialogContent>
-            <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12}>
-                <TextField fullWidth label="Nombre del plan" value={planEditForm.nombre} onChange={(e) => setPlanEditForm({ ...planEditForm, nombre: e.target.value })} />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
-                  <InputLabel>Estado</InputLabel>
-                  <Select value={planEditForm.estado} label="Estado" onChange={(e) => setPlanEditForm({ ...planEditForm, estado: e.target.value })}>
-                    <MenuItem value="vigente">Vigente</MenuItem>
-                    <MenuItem value="transición">En transición</MenuItem>
-                    <MenuItem value="discontinuado">Discontinuado</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+            <TextField fullWidth label="Nombre del plan" value={planEditForm.nombre} onChange={(e) => setPlanEditForm({ ...planEditForm, nombre: e.target.value })} sx={{ mt: 2 }} />
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setPlanEditDialog({ ...planEditDialog, open: false })}>Cancelar</Button>

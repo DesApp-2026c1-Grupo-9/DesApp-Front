@@ -161,18 +161,12 @@ function PersonasTab() {
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
-      const wasCurrentUser = userToDelete.id?.toString() === currentUserId?.toString();
       await api.delete(`/api/usuarios/${userToDelete.id}`);
       showSuccess('Usuario eliminado exitosamente');
       setDeleteDialogOpen(false);
       setUserToDelete(null);
-      if (wasCurrentUser) {
-        localStorage.removeItem('mockStudentId');
-      }
+      dispatch(fetchStudents());
       cargarUsuarios();
-      if (wasCurrentUser) {
-        window.location.reload();
-      }
     } catch (err) {
       showError(err.response?.data?.message || 'Error al eliminar usuario');
     }
@@ -188,11 +182,9 @@ function PersonasTab() {
       const res = await api.put(`/api/usuarios/${userToToggle.id}`, { activo: !userToToggle.activo });
       showSuccess(`Usuario ${userToToggle.activo ? 'desactivado' : 'activado'} exitosamente`);
       setUserToToggle(null);
+      dispatch(fetchStudents());
       cargarUsuarios();
-      if (res.data.data?.id?.toString() === currentUserId?.toString()) {
-        dispatch(updateStudentActiveStatus(res.data.data.activo));
-        window.dispatchEvent(new CustomEvent('activo-changed', { detail: { activo: res.data.data.activo } }));
-      }
+      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: userToToggle.id, activo: res.data.data?.activo ?? !userToToggle.activo } }));
     } catch (err) {
       showError(err.response?.data?.message || 'Error al cambiar estado');
     }
