@@ -79,7 +79,10 @@ const Materiales = () => {
 
   const handleRate = (id, value) => {
     if (currentUserId) {
-      dispatch(rateMaterialThunk({ id, value, usuarioId: currentUserId }));
+      dispatch(rateMaterialThunk({ id, value, usuarioId: currentUserId }))
+        .then(() => dispatch(
+          fetchMateriales({ ...filter, search: filters.search || '', sortBy, usuarioId: currentUserId })
+        ));
     }
   };
 
@@ -198,7 +201,7 @@ const Materiales = () => {
         </FormControl>
       </Box>
 
-      {loading ? (
+      {loading && materiales.length === 0 ? (
         <LoadingSpinner message="Cargando materiales..." />
       ) : error ? (
         <EmptyState
