@@ -28,7 +28,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
   const creador = sesion.creador;
   const creadorNombre = creador 
     ? `${creador.nombre} ${creador.apellido}`
-    : (sesion.creadorId ? `Usuario ${sesion.creadorId}` : 'Usuario');
+    : (sesion.creadorId ? `Usuario ${sesion.creadorId}` : 'Usuario eliminado');
 
   const fecha = new Date(sesion.fechaHora).toLocaleString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',

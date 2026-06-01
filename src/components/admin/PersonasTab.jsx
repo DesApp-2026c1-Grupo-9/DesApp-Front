@@ -161,18 +161,12 @@ function PersonasTab() {
   const handleDelete = async () => {
     if (!userToDelete) return;
     try {
-      const wasCurrentUser = userToDelete.id?.toString() === currentUserId?.toString();
       await api.delete(`/api/usuarios/${userToDelete.id}`);
       showSuccess('Usuario eliminado exitosamente');
       setDeleteDialogOpen(false);
       setUserToDelete(null);
-      if (wasCurrentUser) {
-        localStorage.removeItem('mockStudentId');
-      }
+      dispatch(fetchStudents());
       cargarUsuarios();
-      if (wasCurrentUser) {
-        window.location.reload();
-      }
     } catch (err) {
       showError(err.response?.data?.message || 'Error al eliminar usuario');
     }
