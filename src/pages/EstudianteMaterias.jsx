@@ -27,7 +27,7 @@ import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 export const EstudianteMaterias = () => {
   const navigate = useNavigate();
-  const { estudianteActual } = useAuth();
+  const { estudianteActual, loading: authLoading } = useAuth();
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [tabValue, setTabValue] = useState(0);
@@ -78,6 +78,12 @@ export const EstudianteMaterias = () => {
   const ordenarMateriasParaVista = (materias) => {
     return [...materias].sort((a, b) => {
       if (a.anio !== b.anio) return a.anio - b.anio;
+
+      const profundidadA = Number.isFinite(a.profundidad) ? a.profundidad : 0;
+      const profundidadB = Number.isFinite(b.profundidad) ? b.profundidad : 0;
+
+      if (profundidadA !== profundidadB) return profundidadA - profundidadB;
+
       return a.nombre.localeCompare(b.nombre);
     });
   };
@@ -453,7 +459,7 @@ export const EstudianteMaterias = () => {
     setTabValue(newValue);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <PageContainer centered padding={3}>
         <LoadingSpinner message="Cargando información académica..." />
