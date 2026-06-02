@@ -16,6 +16,7 @@ import {
   Chip,
   CircularProgress,
   Collapse,
+  Tooltip,
   List,
   ListItem,
   ListItemAvatar,
@@ -317,12 +318,16 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
 
       <Divider />
       <Box sx={{ display: 'flex', alignItems: 'center', p: 1.5 }}>
-        <IconButton
-          onClick={() => onToggleLike(post.id, post.liked)}
-          color={post.liked ? 'primary' : 'default'}
-        >
-          <ThumbUp fontSize="small" />
-        </IconButton>
+        <Tooltip title={isOwner ? 'No puedes dar like a tu propia publicación' : ''}>
+          <IconButton
+            onClick={() => !isOwner && onToggleLike(post.id, post.liked)}
+            color={post.liked ? 'primary' : 'default'}
+            disabled={isOwner}
+            sx={isOwner ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+          >
+            <ThumbUp fontSize="small" />
+          </IconButton>
+        </Tooltip>
         <Typography variant="body2" sx={{ mr: 1 }}>
           {post.likesCount || 0}
         </Typography>
