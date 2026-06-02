@@ -124,24 +124,12 @@ export default function AsistenteAcademico() {
   const {
     estudiante,
     resumen,
-    materias = [],
     puedeCursar,
     finalesPendientes,
     analisisPorAnio,
     proyeccion,
     paraRecibirse = {},
   } = analisis;
-
-  const materiasOrdenadas = [...materias].sort((a, b) => {
-    if ((a.anio || 0) !== (b.anio || 0)) return (a.anio || 0) - (b.anio || 0);
-
-    const profundidadA = Number.isFinite(a.profundidad) ? a.profundidad : 0;
-    const profundidadB = Number.isFinite(b.profundidad) ? b.profundidad : 0;
-
-    if (profundidadA !== profundidadB) return profundidadA - profundidadB;
-
-    return a.nombre.localeCompare(b.nombre);
-  });
 
   const finalesOrdenados = [...finalesPendientes].sort((a, b) => {
     if ((a.anio || 0) !== (b.anio || 0)) return (a.anio || 0) - (b.anio || 0);
@@ -226,75 +214,6 @@ export default function AsistenteAcademico() {
               </Grid>
             ))}
           </Grid>
-        </CardContent>
-      </Card>
-
-      {/* Análisis de materias */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" display="flex" alignItems="center" gap={1} mb={2}>
-            <School color="primary" /> Análisis de materias
-          </Typography>
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            {[
-              { label: 'Aprobadas', value: resumen.aprobadas, color: 'success.main' },
-              { label: 'Regularizadas', value: resumen.regularizadas, color: 'warning.main' },
-              { label: 'Cursando', value: resumen.cursando, color: 'info.main' },
-              { label: 'No cursadas', value: resumen.noCursadas, color: 'text.secondary' },
-              { label: 'Horas totales', value: formatHoras(totalHoras), color: 'primary.main' },
-            ].map((stat) => (
-              <Grid item xs={6} sm={3} key={stat.label}>
-                <Box textAlign="center" sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50' }}>
-                  <Typography variant="h5" color={stat.color} fontWeight="bold">{stat.value}</Typography>
-                  <Typography variant="caption" color="text.secondary">{stat.label}</Typography>
-                </Box>
-              </Grid>
-            ))}
-          </Grid>
-
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Materia</TableCell>
-                  <TableCell>Año</TableCell>
-                  <TableCell>Horas</TableCell>
-                  <TableCell>Estado</TableCell>
-                  <TableCell>Disponible</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {materiasOrdenadas.map((materia) => (
-                  <TableRow key={materia.id} hover>
-                    <TableCell>{materia.nombre}</TableCell>
-                    <TableCell>{materia.anio ? `${materia.anio}°` : 'Sin año'}</TableCell>
-                    <TableCell>{formatHoras(materia.cargaHoraria)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={materia.estado}
-                        size="small"
-                        color={
-                          materia.estado === 'aprobada' ? 'success' :
-                          materia.estado === 'regularizada' ? 'warning' :
-                          materia.estado === 'cursando' ? 'info' :
-                          'default'
-                        }
-                        variant="outlined"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={materia.disponible ? 'Sí' : 'No'}
-                        size="small"
-                        color={materia.disponible ? 'success' : 'default'}
-                        variant="filled"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
         </CardContent>
       </Card>
 
@@ -396,9 +315,9 @@ export default function AsistenteAcademico() {
               <Grid container spacing={2} sx={{ mb: 2 }}>
                 {[
                   { label: 'Materias por cursar', value: materiasPendientes.length, color: 'primary.main' },
+                  { label: 'Materias disponibles', value: puedeCursar.length, color: 'success.main' },
                   { label: 'Finales pendientes', value: finalesPendientes.length, color: 'warning.main' },
                   { label: 'Horas pendientes', value: formatHoras(horasPendientes), color: 'text.primary' },
-                  { label: 'Horas regularizadas', value: formatHoras(horasRegularizadas), color: 'secondary.main' },
                 ].map((stat) => (
                   <Grid item xs={6} key={stat.label}>
                     <Box textAlign="center" sx={{ p: 1.5, borderRadius: 2, bgcolor: 'grey.50' }}>

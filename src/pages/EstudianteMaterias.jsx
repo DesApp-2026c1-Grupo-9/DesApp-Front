@@ -60,6 +60,8 @@ export const EstudianteMaterias = () => {
     id: materia.id,
     nombre: materia.nombre,
     anio: parseInt(anio),
+    cargaHoraria: materia.cargaHoraria || 0,
+    profundidad: materia.profundidad,
     tipo: materia.tipo || 'cuatrimestral',
     estado:
       materia.estado === 'aprobada'
@@ -171,6 +173,7 @@ export const EstudianteMaterias = () => {
           <TableHead>
             <TableRow>
               <TableCell>Materia</TableCell>
+              <TableCell>Horas</TableCell>
               <TableCell>Estado</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
@@ -179,7 +182,7 @@ export const EstudianteMaterias = () => {
             {aniosOrdenados.map((anio) => (
               <React.Fragment key={`anio-${anio}`}>
                 <TableRow>
-                  <TableCell colSpan={3} sx={{ bgcolor: 'grey.100' }}>
+                  <TableCell colSpan={4} sx={{ bgcolor: 'grey.100' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                       {anio}° año
                     </Typography>
@@ -197,6 +200,7 @@ export const EstudianteMaterias = () => {
                         </Typography>
                       </Box>
                     </TableCell>
+                    <TableCell>{materia.cargaHoraria || 0} hs</TableCell>
                     <TableCell>
                       <Tooltip title={obtenerTooltipEstado(materia)} arrow>
                         <Box component="span">
