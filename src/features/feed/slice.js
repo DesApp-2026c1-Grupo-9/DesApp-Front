@@ -7,6 +7,8 @@ const transformBackendNovedad = (novedad, currentUserId) => {
     inscripcion: 'evento_academico',
     regularizacion: 'evento_academico',
     aprobacion: 'evento_academico',
+    sesion_creada: 'evento_sesion',
+    sesion_cancelada: 'evento_sesion',
   };
 
   const autor = novedad.autor
@@ -43,6 +45,13 @@ const transformBackendNovedad = (novedad, currentUserId) => {
     base.materia = novedad.materia
       ? { nombre: novedad.materia.nombre, codigo: novedad.materia.codigo }
       : { nombre: 'Materia', codigo: `ID: ${novedad.materiaId || '-'}` };
+  }
+
+  if (novedad.sesion) {
+    base.sesion = novedad.sesion;
+  }
+  if (novedad.sesionId) {
+    base.sesionId = novedad.sesionId;
   }
 
   return base;
