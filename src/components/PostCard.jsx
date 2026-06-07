@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 import {
   Card,
@@ -31,6 +32,10 @@ import {
   CheckCircle,
   Edit,
   Comment,
+  Groups,
+  Event,
+  Videocam,
+  LocationOn,
 } from '@mui/icons-material';
 
 import api from '../api/axiosConfig';
@@ -46,6 +51,10 @@ const getIconForTipoEvento = (tipo) => {
       return <Edit fontSize="small" />;
     case TIPO_EVENTO.APROBACION:
       return <CheckCircle fontSize="small" />;
+    case TIPO_EVENTO.SESION_CREADA:
+      return <Groups fontSize="small" />;
+    case TIPO_EVENTO.SESION_CANCELADA:
+      return <Event fontSize="small" color="error" />;
     default:
       return null;
   }
@@ -59,6 +68,10 @@ const getLabelForTipoEvento = (tipo) => {
       return 'regularizó';
     case TIPO_EVENTO.APROBACION:
       return 'aprobó';
+    case TIPO_EVENTO.SESION_CREADA:
+      return 'creó sesión de';
+    case TIPO_EVENTO.SESION_CANCELADA:
+      return 'canceló sesión de';
     default:
       return '';
   }
@@ -68,6 +81,7 @@ const formatFechaComentario = (fecha) => formatFechaRelative(fecha);
 
 function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdateComentariosCount }) {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -214,10 +228,97 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   };
 
   const isEvento = post.tipo === TIPO_POST.EVENTO_ACADEMICO;
+  const isSesionEvento = post.tipo === TIPO_POST.EVENTO_SESION;
+
+  const formatFechaHora = (fechaHora) => {
+    if (!fechaHora) return '';
+    const d = new Date(fechaHora);
+    return d.toLocaleDateString('es-AR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   return (
     <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2, '&:hover': { boxShadow: 2 } }}>
-      {isEvento ? (
+      {isSesionEvento ? (
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+            <Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>
+              {post.autor?.nombre?.charAt(0)}
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+                <Typography variant="subtitle1" fontWeight="bold">
+                  {post.autor?.nombre} {post.autor?.apellido || ''}
+                </Typography>
+                <Chip
+                  icon={getIconForTipoEvento(post.tipoEvento)}
+                  label={getLabelForTipoEvento(post.tipoEvento)}
+                  size="small"
+                  color={post.tipoEvento === TIPO_EVENTO.SESION_CANCELADA ? 'error' : 'primary'}
+                  variant="outlined"
+                />
+              </Box>
+              <Typography variant="caption" color="text.secondary">
+                {formatFechaSeguro(post.fecha)}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'grey.50',
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'grey.200',
+              cursor: 'pointer',
+              '&:hover': { borderColor: 'primary.main' },
+            }}
+            onClick={() => post.sesionId && navigate('/sesiones')}
+          >
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <School color="primary" /> {post.materia?.nombre || 'Materia'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Groups sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'text-top' }} />
+              {post.contenido || post.titulo}
+            </Typography>
+            {post.sesion && (
+              <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  <Event sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'text-top' }} />
+                  {formatFechaHora(post.sesion.fechaHora)} · {post.sesion.duracion}min
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {post.sesion.tipo === 'virtual' ? (
+                    <><Videocam sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'text-top' }} />Virtual</>
+                  ) : (
+                    <><LocationOn sx={{ fontSize: 14, mr: 0.5, verticalAlign: 'text-top' }} />{post.sesion.ubicacion}</>
+                  )}
+                </Typography>
+                {post.sesion.cupos && (
+                  <Typography variant="caption" color="text.secondary">
+                    Cupo: {post.sesion.participantes?.filter(p => p.estado === 'aprobado').length || 0}/{post.sesion.cupos}
+                  </Typography>
+                )}
+              </Box>
+            )}
+            <Button
+              size="small"
+              variant="outlined"
+              sx={{ mt: 1 }}
+              onClick={(e) => { e.stopPropagation(); navigate('/sesiones'); }}
+            >
+              Ver sesión
+            </Button>
+          </Box>
+        </CardContent>
+      ) : isEvento ? (
         <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>
             {post.autor?.nombre?.charAt(0)}
@@ -307,7 +408,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
               <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <School color="primary" /> {post.materia?.nombre}
               </Typography>
-            ) : (
+            ) : isSesionEvento ? null : (
               <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
                 {post.contenido}
               </Typography>
