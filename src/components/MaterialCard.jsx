@@ -110,7 +110,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               sx={{ backgroundColor: '#e3f2fd' }}
             />
             <Typography variant="caption" color="text.secondary">
-              {material.fecha} · {material.creador?.nombre || 'Usuario eliminado'}
+              {material.fecha} · {material.creador ? `${material.creador.nombre} ${material.creador.apellido}` : (material.creadorId ? `Usuario ${material.creadorId}` : 'Usuario eliminado')}
             </Typography>
             {material.nombreArchivo && (
               <Typography variant="caption" color="text.secondary">
