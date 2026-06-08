@@ -60,6 +60,7 @@ export const EstudianteDashboard = () => {
   const [pubInscripciones, setPubInscripciones] = useState(true);
   const [pubRegularizaciones, setPubRegularizaciones] = useState(true);
   const [pubAprobaciones, setPubAprobaciones] = useState(true);
+  const [pubSesiones, setPubSesiones] = useState(true);
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
@@ -78,6 +79,7 @@ export const EstudianteDashboard = () => {
       setPubInscripciones(preferencias.publicarInscripciones ?? true);
       setPubRegularizaciones(preferencias.publicarRegularizaciones ?? true);
       setPubAprobaciones(preferencias.publicarAprobaciones ?? true);
+      setPubSesiones(preferencias.publicarSesiones ?? true);
     }
   }, [preferencias]);
 
@@ -432,8 +434,20 @@ export const EstudianteDashboard = () => {
                 label="Publicar aprobaciones"
               />
 
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={pubSesiones}
+                    onChange={handlePublishChange('publicarSesiones', setPubSesiones)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Publicar sesiones de estudio"
+              />
+
               <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 1 }}>
-                Controla qué eventos académicos se publican automáticamente en tu feed de novedades
+                Controla qué eventos se publican automáticamente en tu feed de novedades
               </Typography>
             </CardContent>
           </Card>

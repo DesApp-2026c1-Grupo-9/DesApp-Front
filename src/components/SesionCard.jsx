@@ -13,6 +13,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
     p.estudianteId === currentUserId || p.estudiante?.id === currentUserId
   );
   
+  const isCanceled = sesion.estado === 'cancelada';
   const isCreator = sesion.creadorId === currentUserId;
   const isJoined = !!participante;
   const isPending = participante?.estado === 'pendiente';
@@ -75,6 +76,9 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
               {visibilidad === 'privado' && (
                 <Chip icon={<Lock />} label="Privado" size="small" color="default" variant="outlined" />
               )}
+              {isCanceled && (
+                <Chip label="Cancelada" size="small" color="error" />
+              )}
             </Box>
 
             {sesion.tipo === 'virtual' ? (
@@ -102,7 +106,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
         <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           {isCreator ? (
             <>
-              <Button size="small" variant="outlined" onClick={() => onEdit(sesion)}>
+              <Button size="small" variant="outlined" onClick={() => onEdit(sesion)} disabled={isCanceled}>
                 Editar
               </Button>
               <Button
@@ -110,55 +114,58 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
                 variant="outlined"
                 color="error"
                 onClick={() => onDelete(sesion.id)}
+                disabled={isCanceled}
               >
                 Eliminar
               </Button>
-              {isCreator && (
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="warning"
-                  onClick={() => onViewParticipantes(sesion)}
-                >
-                  {sesion.necesidadAprobacion && pendingCount > 0 
-                    ? `Ver Participantes (${pendingCount} pendientes)` 
-                    : 'Ver Participantes'}
-                </Button>
-              )}
+              <Button
+                size="small"
+                variant="contained"
+                color="warning"
+                onClick={() => onViewParticipantes(sesion)}
+              >
+                {sesion.necesidadAprobacion && pendingCount > 0 
+                  ? `Ver Participantes (${pendingCount} pendientes)` 
+                  : 'Ver Participantes'}
+              </Button>
             </>
           ) : (
             <>
-              {(!isJoined || isRejected) && (
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={() => onJoin(sesion.id)}
-                  disabled={isThisOperationLoading}
-                >
-                  {isThisOperationLoading && operationLoading.action === 'joining' ? (
-                    <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
-                  ) : null}
-                  {sesion.necesidadAprobacion ? 'Solicitar inscribirse' : 'Inscribirse'}
-                </Button>
-              )}
-              {isPending && (
-                <Button size="small" variant="outlined" disabled>
-                  <HourglassEmpty sx={{ mr: 0.5 }} /> Pendiente
-                </Button>
-              )}
-              {isApproved && (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  color="error"
-                  onClick={() => onLeave(sesion.id)}
-                  disabled={isThisOperationLoading}
-                >
-                  {isThisOperationLoading && operationLoading.action === 'leaving' ? (
-                    <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
-                  ) : null}
-                  Abandonar
-                </Button>
+              {!isCanceled && (
+                <>
+                  {(!isJoined || isRejected) && (
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => onJoin(sesion.id)}
+                      disabled={isThisOperationLoading}
+                    >
+                      {isThisOperationLoading && operationLoading.action === 'joining' ? (
+                        <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
+                      ) : null}
+                      {sesion.necesidadAprobacion ? 'Solicitar inscribirse' : 'Inscribirse'}
+                    </Button>
+                  )}
+                  {isPending && (
+                    <Button size="small" variant="outlined" disabled>
+                      <HourglassEmpty sx={{ mr: 0.5 }} /> Pendiente
+                    </Button>
+                  )}
+                  {isApproved && (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={() => onLeave(sesion.id)}
+                      disabled={isThisOperationLoading}
+                    >
+                      {isThisOperationLoading && operationLoading.action === 'leaving' ? (
+                        <CircularProgress size={16} color="inherit" sx={{ mr: 1 }} />
+                      ) : null}
+                      Abandonar
+                    </Button>
+                  )}
+                </>
               )}
             </>
           )}

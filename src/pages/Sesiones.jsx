@@ -34,6 +34,7 @@ const Sesiones = () => {
 
   const [activeTab, setActiveTab] = useState('todas');
   const [showPastEvents, setShowPastEvents] = useState(false);
+  const [showCanceled, setShowCanceled] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSesion, setEditingSesion] = useState(null);
@@ -61,7 +62,7 @@ const Sesiones = () => {
 
   useEffect(() => {
     if (user?.id) {
-      dispatch(fetchSesiones({ usuarioId: user.id }));
+      dispatch(fetchSesiones({ usuarioId: user.id, incluirCanceladas: true }));
       dispatch(fetchConexiones(user.id));
     }
   }, [user, dispatch]);
@@ -75,7 +76,7 @@ const Sesiones = () => {
       if (sesionDate < today) return false;
     }
 
-    if (s.estado !== 'activa') return false;
+    if (s.estado !== 'activa' && !showCanceled && activeTab !== 'misSesiones') return false;
 
     if (activeTab === 'misMaterias') {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
@@ -288,6 +289,16 @@ const Sesiones = () => {
               />
             }
             label="Mostrar eventos pasados"
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox 
+                checked={showCanceled} 
+                onChange={(e) => setShowCanceled(e.target.checked)} 
+              />
+            }
+            label="Mostrar canceladas"
           />
 
           {hasActiveFilters && (
