@@ -85,6 +85,9 @@ const Sesiones = () => {
     if (activeTab === 'misSesiones') {
       if (s.creadorId !== user.id) return false;
     }
+    if (activeTab === 'misInscripciones') {
+      if (!s.participantes?.some(p => p.estudianteId === user.id || p.estudiante?.id === user.id)) return false;
+    }
 
     if (filters.materia && s.materiaId !== Number(filters.materia)) return false;
     if (filters.tipo && s.tipo !== filters.tipo) return false;
@@ -333,6 +336,7 @@ const Sesiones = () => {
       >
         <Tab value="todas" label="TODAS LAS SESIONES" />
         <Tab value="misMaterias" label="MIS MATERIAS" />
+        <Tab value="misInscripciones" label="MIS INSCRIPCIONES" />
         <Tab value="misSesiones" label="MIS SESIONES" />
       </Tabs>
 
