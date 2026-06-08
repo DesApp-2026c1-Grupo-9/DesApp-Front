@@ -35,6 +35,7 @@ const Sesiones = () => {
   const [activeTab, setActiveTab] = useState('todas');
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
+  const [showOnlyConnections, setShowOnlyConnections] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSesion, setEditingSesion] = useState(null);
@@ -84,6 +85,9 @@ const Sesiones = () => {
     if (activeTab === 'misSesiones') {
       if (s.creadorId !== user.id) return false;
     }
+    if (activeTab === 'misInscripciones') {
+      if (!s.participantes?.some(p => p.estudianteId === user.id || p.estudiante?.id === user.id)) return false;
+    }
 
     if (filters.materia && s.materiaId !== Number(filters.materia)) return false;
     if (filters.tipo && s.tipo !== filters.tipo) return false;
@@ -91,6 +95,8 @@ const Sesiones = () => {
       const sesionDate = s.fechaHora?.split('T')[0];
       if (sesionDate !== filters.fecha) return false;
     }
+
+    if (showOnlyConnections && s.creadorId !== user.id && !conexiones.includes(s.creadorId)) return false;
 
     return true;
   })
@@ -301,6 +307,16 @@ const Sesiones = () => {
             label="Mostrar canceladas"
           />
 
+          <FormControlLabel
+            control={
+              <Checkbox 
+                checked={showOnlyConnections} 
+                onChange={(e) => setShowOnlyConnections(e.target.checked)} 
+              />
+            }
+            label="Solo conexiones"
+          />
+
           {hasActiveFilters && (
             <Button
               variant="text"
@@ -320,6 +336,7 @@ const Sesiones = () => {
       >
         <Tab value="todas" label="TODAS LAS SESIONES" />
         <Tab value="misMaterias" label="MIS MATERIAS" />
+        <Tab value="misInscripciones" label="MIS INSCRIPCIONES" />
         <Tab value="misSesiones" label="MIS SESIONES" />
       </Tabs>
 
