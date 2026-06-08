@@ -35,6 +35,7 @@ const Sesiones = () => {
   const [activeTab, setActiveTab] = useState('todas');
   const [showPastEvents, setShowPastEvents] = useState(false);
   const [showCanceled, setShowCanceled] = useState(false);
+  const [showOnlyConnections, setShowOnlyConnections] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSesion, setEditingSesion] = useState(null);
@@ -91,6 +92,8 @@ const Sesiones = () => {
       const sesionDate = s.fechaHora?.split('T')[0];
       if (sesionDate !== filters.fecha) return false;
     }
+
+    if (showOnlyConnections && s.creadorId !== user.id && !conexiones.includes(s.creadorId)) return false;
 
     return true;
   })
@@ -299,6 +302,16 @@ const Sesiones = () => {
               />
             }
             label="Mostrar canceladas"
+          />
+
+          <FormControlLabel
+            control={
+              <Checkbox 
+                checked={showOnlyConnections} 
+                onChange={(e) => setShowOnlyConnections(e.target.checked)} 
+              />
+            }
+            label="Solo conexiones"
           />
 
           {hasActiveFilters && (
