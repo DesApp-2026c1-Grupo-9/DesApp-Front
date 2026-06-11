@@ -18,6 +18,7 @@ import AdminAcademicoPage from '../pages/AdminAcademicoPage';
 import AdminModeracionPage from '../pages/AdminModeracionPage';
 import AppErrorPage from '../pages/AppErrorPage';
 import AsistenteAcademico from '../pages/AsistenteAcademico';
+import Notificaciones from '../pages/Notificaciones';
 import AuthProvider from '../context/AuthContext';
 import PublicLayout from '../layouts/PublicLayout';
 import AdminLayout from '../layouts/AdminLayout';
@@ -50,6 +51,7 @@ const AppRouter = () => {
               <Route path="/carreras" element={<CareerManagementPage />} />
               <Route path="/materias" element={<SubjectManagementPage />} />
               <Route path="/demo-selector" element={<SelectorEstudiante />} />
+              <Route path="/notificaciones" element={<Notificaciones />} />
             </Route>
             <Route element={<AdminLayout />}>
               <Route path="/admin/usuarios" element={<AdminPage />} />
