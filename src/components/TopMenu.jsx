@@ -14,6 +14,7 @@ import { School, Person, Book, Home, People, Groups, DynamicFeed, LibraryBooks, 
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import { UserSelector } from './UserSelector';
+import NotificacionesPopover from './NotificacionesPopover';
 
 export function TopMenu() {
   const navigate = useNavigate();
@@ -76,6 +77,7 @@ export function TopMenu() {
           ))}
         </Tabs>
 
+        <NotificacionesPopover />
         <UserSelector />
       </Toolbar>
       {estudianteActual?.usuario?.activo === false && (
