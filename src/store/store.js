@@ -7,6 +7,7 @@ import conexionesReducer from '../features/conexiones/slice';
 import academicoReducer from '../features/academico/slice';
 import comentariosReducer from '../features/feed/comentariosSlice';
 import materialesReducer from '../features/materiales/slice';
+import notificacionesReducer from '../features/notificaciones/slice';
 
 export const store = configureStore({
   reducer: {
@@ -18,5 +19,6 @@ export const store = configureStore({
     academico: academicoReducer,
     comentarios: comentariosReducer,
     materiales: materialesReducer,
+    notificaciones: notificacionesReducer,
   },
 });
