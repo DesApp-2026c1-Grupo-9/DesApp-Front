@@ -11,6 +11,7 @@ export default function PublicLayout() {
   const { user } = useSelector((state) => state.auth);
   const location = useLocation();
   const esAdmin = user?.rol === 'administrador';
+  const routeKey = '/' + location.pathname.split('/')[1];
 
   if (authLoading) {
     return <LoadingSpinner fullScreen message="Inicializando sesión..." />;
@@ -24,7 +25,7 @@ export default function PublicLayout() {
     <>
       {esAdmin ? <AdminAppBar /> : <TopMenu />}
       <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
-        <PageTransition key={location.pathname}>
+        <PageTransition key={routeKey}>
           <Outlet />
         </PageTransition>
       </Box>

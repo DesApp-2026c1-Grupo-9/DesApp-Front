@@ -1,9 +1,10 @@
 import { Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Sesiones from '../pages/Sesiones';
+import SocialPage from '../pages/SocialPage';
 import Feed from '../pages/Feed';
 import Conexiones from '../pages/Conexiones';
 import { StudentProfilePage } from '../pages/StudentProfilePage';
@@ -43,8 +44,11 @@ const AppRouter = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/sesiones" element={<Sesiones />} />
               <Route path="/materiales" element={<Materiales />} />
-              <Route path="/feed" element={<Feed />} />
-              <Route path="/conexiones" element={<Conexiones />} />
+              <Route path="/social" element={<SocialPage />}>
+                <Route index element={<Navigate to="/social/feed" replace />} />
+                <Route path="feed" element={<Feed />} />
+                <Route path="conexiones" element={<Conexiones />} />
+              </Route>
               <Route path="/mi-perfil" element={<EstudianteDashboard />} />
               <Route path="/mis-materias" element={<EstudianteMaterias />} />
               <Route path="/asistente" element={<AsistenteAcademico />} />
