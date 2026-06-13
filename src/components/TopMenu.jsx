@@ -10,7 +10,7 @@ import {
   AlertTitle,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, DynamicFeed, LibraryBooks, AdminPanelSettings, Block, MenuBook } from '@mui/icons-material';
+import { School, Person, Book, Home, People, Groups, LibraryBooks, AdminPanelSettings, Block, MenuBook } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import { UserSelector } from './UserSelector';
@@ -29,8 +29,7 @@ export function TopMenu() {
     { label: 'Mi Perfil', path: '/mi-perfil', icon: <Person /> },
     { label: 'Mis Materias', path: '/mis-materias', icon: <Book /> },
     { label: 'Carreras', path: '/carreras', icon: <School /> },
-    { label: 'Feed', path: '/feed', icon: <DynamicFeed /> },
-    { label: 'Conexiones', path: '/conexiones', icon: <Groups /> },
+    { label: 'Social', path: '/social/feed', icon: <Groups /> },
     { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },
     { label: 'Materiales', path: '/materiales', icon: <LibraryBooks /> },
     ...(showAdmin ? [{ label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> }] : []),
@@ -38,7 +37,9 @@ export function TopMenu() {
 
   const visibleItems = menuItems.filter(item => item.label !== 'Inicio');
   const tabIndex = visibleItems.findIndex(
-    item => location.pathname === item.path || (item.label === 'Materias' && location.pathname.includes('/materias'))
+    item => location.pathname === item.path || 
+      (item.label === 'Materias' && location.pathname.includes('/materias')) ||
+      (item.label === 'Social' && location.pathname.startsWith('/social/'))
   );
 
   return (
