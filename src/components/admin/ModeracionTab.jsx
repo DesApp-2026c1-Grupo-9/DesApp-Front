@@ -98,6 +98,13 @@ function ListaDenuncias({ showSuccess, showError }) {
     setPage(0);
   }, [filtroEstado]);
 
+  useEffect(() => {
+    const maxPage = Math.max(0, Math.ceil(total / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [total, rowsPerPage]);
+
   const openDetail = async (denuncia) => {
     try {
       const res = await api.get(`/api/admin/denuncias/${denuncia.id}`);
@@ -217,7 +224,7 @@ function ListaDenuncias({ showSuccess, showError }) {
         </Table>
       </TableContainer>
 
-      {denuncias.length > 0 && (
+      {total > 0 && (
         <TablePagination
           component="div"
           count={total}
