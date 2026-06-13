@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   IconButton,
   Badge,
@@ -19,7 +19,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   fetchContador,
   fetchNotificaciones,
-  readNotificacion,
   readAllNotificaciones,
 } from '../features/notificaciones/slice';
 
@@ -36,24 +35,13 @@ export default function NotificacionesPopover() {
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
     if (userId) {
+      dispatch(readAllNotificaciones(userId));
       dispatch(fetchNotificaciones({ usuarioId: userId, noLeidas: true, page: 1 }));
     }
   };
 
   const handleClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleMarkRead = (id) => {
-    if (userId) {
-      dispatch(readNotificacion({ id, usuarioId: userId }));
-    }
-  };
-
-  const handleMarkAllRead = () => {
-    if (userId) {
-      dispatch(readAllNotificaciones(userId));
-    }
   };
 
   const handleVerTodas = () => {
@@ -134,17 +122,6 @@ export default function NotificacionesPopover() {
                     cursor: 'pointer',
                     '&:hover': { bgcolor: 'action.selected' },
                   }}
-                  secondaryAction={
-                    !notif.leido && (
-                      <Button
-                        size="small"
-                        onClick={() => handleMarkRead(notif.id)}
-                        sx={{ minWidth: 'auto', fontSize: 12 }}
-                      >
-                        Leer
-                      </Button>
-                    )
-                  }
                 >
                   <ListItemText
                     primary={notif.titulo}
@@ -162,10 +139,7 @@ export default function NotificacionesPopover() {
           </List>
         )}
         <Divider />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', p: 1 }}>
-          <Button size="small" onClick={handleMarkAllRead}>
-            Marcar todas leídas
-          </Button>
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 1 }}>
           <Button size="small" onClick={handleVerTodas}>
             Ver todas
           </Button>
