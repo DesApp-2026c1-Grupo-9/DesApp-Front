@@ -1,30 +1,22 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Container,
   Typography,
   Box,
-  Button,
   List,
   ListItem,
   ListItemText,
   Divider,
   Pagination,
-  Chip,
   CircularProgress,
   Alert,
-  Tabs,
-  Tab,
 } from '@mui/material';
 import {
-  MarkEmailRead,
-  DoneAll,
   Notifications as BellIcon,
 } from '@mui/icons-material';
 import {
   fetchNotificaciones,
-  readNotificacion,
-  readAllNotificaciones,
   fetchContador,
 } from '../features/notificaciones/slice';
 
@@ -35,37 +27,21 @@ export default function Notificaciones() {
   );
   const userId = useSelector((state) => state.auth.user?.id);
 
-  const [filtro, setFiltro] = useState(false);
-
   const cargar = useCallback(
     (pagina) => {
       if (!userId) return;
-      dispatch(
-        fetchNotificaciones({
-          usuarioId: userId,
-          noLeidas: filtro,
-          page: pagina,
-        })
-      );
+      dispatch(fetchNotificaciones({ usuarioId: userId, page: pagina }));
     },
-    [userId, filtro, dispatch]
+    [userId, dispatch]
   );
 
   useEffect(() => {
     cargar(1);
     if (userId) dispatch(fetchContador(userId));
-  }, [userId, filtro, dispatch, cargar]);
+  }, [userId, dispatch, cargar]);
 
   const handleCambiarPagina = (_, pagina) => {
     cargar(pagina);
-  };
-
-  const handleMarcarLeida = (id) => {
-    if (userId) dispatch(readNotificacion({ id, usuarioId: userId }));
-  };
-
-  const handleMarcarTodas = () => {
-    if (userId) dispatch(readAllNotificaciones(userId));
   };
 
   const formatDate = (dateStr) => {
@@ -86,26 +62,7 @@ export default function Notificaciones() {
         <Typography variant="h5" fontWeight={600} sx={{ flexGrow: 1 }}>
           Notificaciones
         </Typography>
-        {noLeidas > 0 && (
-          <Button
-            variant="outlined"
-            size="small"
-            startIcon={<DoneAll />}
-            onClick={handleMarcarTodas}
-          >
-            Marcar todas leídas ({noLeidas})
-          </Button>
-        )}
       </Box>
-
-      <Tabs
-        value={filtro ? 1 : 0}
-        onChange={(_, v) => setFiltro(v === 1)}
-        sx={{ mb: 2 }}
-      >
-        <Tab label="Todas" />
-        <Tab label={`No leídas (${noLeidas})`} />
-      </Tabs>
 
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -115,8 +72,7 @@ export default function Notificaciones() {
 
       {!loading && lista.length === 0 && (
         <Alert severity="info" sx={{ mt: 2 }}>
-          No hay notificaciones
-          {filtro ? ' sin leer' : ''}.
+          No hay notificaciones.
         </Alert>
       )}
 
@@ -129,27 +85,6 @@ export default function Notificaciones() {
                   bgcolor: notif.leido ? 'transparent' : 'action.hover',
                   py: 1.5,
                 }}
-                secondaryAction={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {!notif.leido && (
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleMarcarLeida(notif.id)}
-                      >
-                        Marcar leída
-                      </Button>
-                    )}
-                    {notif.leido && (
-                      <Chip
-                        label="Leída"
-                        size="small"
-                        color="default"
-                        variant="outlined"
-                      />
-                    )}
-                  </Box>
-                }
               >
                 <ListItemText
                   primary={notif.titulo}
