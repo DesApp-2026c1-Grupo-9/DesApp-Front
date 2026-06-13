@@ -497,7 +497,7 @@ export const EstudianteDashboard = () => {
                 <Button 
                   variant="contained" 
                   startIcon={<MenuBookIcon />}
-                  onClick={() => navigate('/mis-materias')}
+                  onClick={() => navigate('/academico/mis-materias')}
                   size="large"
                 >
                   Ver Detalle de Materias

@@ -5,6 +5,7 @@ import Home from '../pages/Home';
 import Login from '../pages/Login';
 import Sesiones from '../pages/Sesiones';
 import SocialPage from '../pages/SocialPage';
+import AcademicoPage from '../pages/AcademicoPage';
 import Feed from '../pages/Feed';
 import Conexiones from '../pages/Conexiones';
 import { StudentProfilePage } from '../pages/StudentProfilePage';
@@ -50,9 +51,12 @@ const AppRouter = () => {
                 <Route path="conexiones" element={<Conexiones />} />
               </Route>
               <Route path="/mi-perfil" element={<EstudianteDashboard />} />
-              <Route path="/mis-materias" element={<EstudianteMaterias />} />
+              <Route path="/academico" element={<AcademicoPage />}>
+                <Route index element={<Navigate to="/academico/carreras" replace />} />
+                <Route path="mis-materias" element={<EstudianteMaterias />} />
+                <Route path="carreras" element={<CareerManagementPage />} />
+              </Route>
               <Route path="/asistente" element={<AsistenteAcademico />} />
-              <Route path="/carreras" element={<CareerManagementPage />} />
               <Route path="/materias" element={<SubjectManagementPage />} />
               <Route path="/demo-selector" element={<SelectorEstudiante />} />
               <Route path="/notificaciones" element={<Notificaciones />} />

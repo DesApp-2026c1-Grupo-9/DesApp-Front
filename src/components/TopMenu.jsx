@@ -27,8 +27,7 @@ export function TopMenu() {
   const menuItems = [
     { label: 'Inicio', path: '/', icon: <Home /> },
     { label: 'Mi Perfil', path: '/mi-perfil', icon: <Person /> },
-    { label: 'Mis Materias', path: '/mis-materias', icon: <Book /> },
-    { label: 'Carreras', path: '/carreras', icon: <School /> },
+    { label: 'Académico', path: '/academico/carreras', icon: <School /> },
     { label: 'Social', path: '/social/feed', icon: <Groups /> },
     { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },
     { label: 'Materiales', path: '/materiales', icon: <LibraryBooks /> },
@@ -38,7 +37,7 @@ export function TopMenu() {
   const visibleItems = menuItems.filter(item => item.label !== 'Inicio');
   const tabIndex = visibleItems.findIndex(
     item => location.pathname === item.path || 
-      (item.label === 'Materias' && location.pathname.includes('/materias')) ||
+      (item.label === 'Académico' && location.pathname.startsWith('/academico/')) ||
       (item.label === 'Social' && location.pathname.startsWith('/social/'))
   );
 
