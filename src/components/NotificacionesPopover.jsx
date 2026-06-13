@@ -18,29 +18,36 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
   fetchContador,
-  fetchNotificaciones,
   readAllNotificaciones,
 } from '../features/notificaciones/slice';
+import { getNotificaciones } from '../features/notificaciones/service';
 
 export default function NotificacionesPopover() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { noLeidas, lista, loading } = useSelector(
-    (state) => state.notificaciones
-  );
+  const noLeidas = useSelector((state) => state.notificaciones.noLeidas);
   const userId = useSelector((state) => state.auth.user?.id);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [listaNotifs, setListaNotifs] = useState([]);
+  const [loadingLocal, setLoadingLocal] = useState(false);
   const open = Boolean(anchorEl);
 
-  const handleClick = (event) => {
+  const handleClick = async (event) => {
     setAnchorEl(event.currentTarget);
-    if (userId) {
-      dispatch(readAllNotificaciones(userId));
-      dispatch(fetchNotificaciones({ usuarioId: userId, noLeidas: true, page: 1 }));
+    if (!userId) return;
+    setLoadingLocal(true);
+    try {
+      const res = await getNotificaciones({ usuarioId: userId, noLeidas: 'true', page: 1 });
+      setListaNotifs(res.data.data || []);
+    } catch {
+      setListaNotifs([]);
+    } finally {
+      setLoadingLocal(false);
     }
   };
 
   const handleClose = () => {
+    if (userId) dispatch(readAllNotificaciones(userId));
     setAnchorEl(null);
   };
 
@@ -73,7 +80,7 @@ export default function NotificacionesPopover() {
     });
   };
 
-  const ultimas = lista.slice(0, 5);
+  const ultimas = listaNotifs.slice(0, 5);
 
   return (
     <>
@@ -102,14 +109,14 @@ export default function NotificacionesPopover() {
           </Typography>
         </Box>
         <Divider />
-        {loading ? (
+        {loadingLocal ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
             <CircularProgress size={32} />
           </Box>
         ) : ultimas.length === 0 ? (
           <Box sx={{ py: 4, textAlign: 'center' }}>
             <Typography variant="body2" color="text.secondary">
-              No hay notificaciones
+              No hay notificaciones sin leer
             </Typography>
           </Box>
         ) : (
