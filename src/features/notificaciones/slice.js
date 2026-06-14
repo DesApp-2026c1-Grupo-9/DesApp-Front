@@ -2,7 +2,6 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
   getNotificaciones,
   getContador,
-  marcarLeida,
   marcarTodasLeidas,
 } from './service';
 
@@ -28,18 +27,6 @@ export const fetchContador = createAsyncThunk(
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al obtener contador');
-    }
-  }
-);
-
-export const readNotificacion = createAsyncThunk(
-  'notificaciones/read',
-  async ({ id, usuarioId }, { rejectWithValue }) => {
-    try {
-      await marcarLeida(id, { usuarioId });
-      return id;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Error al marcar como leída');
     }
   }
 );
@@ -71,12 +58,6 @@ const notificacionesSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
-    setNoLeidas: (state, action) => {
-      state.noLeidas = action.payload;
-    },
-    incrementNoLeidas: (state) => {
-      state.noLeidas += 1;
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -98,14 +79,6 @@ const notificacionesSlice = createSlice({
       .addCase(fetchContador.fulfilled, (state, action) => {
         state.noLeidas = action.payload.noLeidas;
       })
-      .addCase(readNotificacion.fulfilled, (state, action) => {
-        const id = action.payload;
-        const notif = state.lista.find((n) => n.id === id);
-        if (notif) {
-          notif.leido = true;
-        }
-        state.noLeidas = Math.max(0, state.noLeidas - 1);
-      })
       .addCase(readAllNotificaciones.fulfilled, (state) => {
         state.lista.forEach((n) => {
           n.leido = true;
@@ -115,5 +88,5 @@ const notificacionesSlice = createSlice({
   },
 });
 
-export const { clearError, setNoLeidas, incrementNoLeidas } = notificacionesSlice.actions;
+export const { clearError } = notificacionesSlice.actions;
 export default notificacionesSlice.reducer;

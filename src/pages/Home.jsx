@@ -237,7 +237,7 @@ const Home = () => {
           color="primary" 
           size="large"
           startIcon={<School />}
-          onClick={() => navigate('/mis-materias')}
+          onClick={() => navigate('/academico/mis-materias')}
           sx={{ px: 4, py: 1.5 }}
         >
           Ver Plan de Estudios Completo

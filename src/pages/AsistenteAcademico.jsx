@@ -778,7 +778,7 @@ export default function AsistenteAcademico() {
     <PageContainer padding={3}>
       {/* Header */}
       <Box display="flex" alignItems="center" mb={3} gap={2}>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/mis-materias')}>
+        <Button startIcon={<ArrowBack />} onClick={() => navigate('/academico/mis-materias')}>
           Mis Materias
         </Button>
         <Box flexGrow={1}>
