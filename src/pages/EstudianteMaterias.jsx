@@ -640,7 +640,19 @@ export const EstudianteMaterias = () => {
           {importError && <Alert severity="error" sx={{ mt: 2 }}>{importError}</Alert>}
           {importResultado && (
             <Box mt={2}>
-              <Alert severity="success" sx={{ mb: 1 }}>{importResultado.message}</Alert>
+              <Alert
+                severity={
+                  (importResultado.data?.resumen?.importadas || 0) > 0
+                    ? (importResultado.data?.resumen?.errores || 0) > 0 ||
+                      (importResultado.data?.resumen?.ignoradas || 0) > 0
+                      ? 'warning'
+                      : 'success'
+                    : 'error'
+                }
+                sx={{ mb: 1 }}
+              >
+                {importResultado.message}
+              </Alert>
               {importResultado.data?.ignoradas?.length > 0 && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
                   {importResultado.data.ignoradas.length} filas ignoradas (estado inválido o nombre vacío)

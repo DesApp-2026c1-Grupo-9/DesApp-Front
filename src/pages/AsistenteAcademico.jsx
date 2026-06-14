@@ -44,6 +44,33 @@ const formatHoras = (horas) => `${Number(horas || 0)} hs`;
 const STORAGE_PLANES_PREFIX = 'desapp-planes-cursada';
 const MAX_MATERIAS_POR_PERIODO = 5;
 
+const normalizarTextoExcel = (valor) =>
+  String(valor || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const mapearEstadoExcel = (estado) => {
+  const normalizado = normalizarTextoExcel(estado).replace(/\s+/g, '_');
+
+  const alias = {
+    aprobada: 'aprobada',
+    aprobado: 'aprobada',
+    regularizada: 'regularizada',
+    regularizado: 'regularizada',
+    cursando: 'cursando',
+    cursada: 'cursando',
+    cursado: 'cursando',
+    no_cursada: 'no_cursada',
+    no_cursado: 'no_cursada',
+    pendiente: 'no_cursada',
+    libre: 'no_cursada',
+  };
+
+  return alias[normalizado] || normalizado;
+};
+
 const cumpleEstadoCorrelativa = (estado) =>
   estado === 'aprobada' || estado === 'regularizada';
 
@@ -231,6 +258,11 @@ const recalcularCargaPeriodos = (periodos) =>
     ),
   }));
 
+const compactarPeriodosVacios = (periodos) =>
+  recalcularCargaPeriodos(
+    (periodos || []).filter((p) => (p.materias || []).length > 0)
+  );
+
 const validarCorrelativasPlan = (periodos, materiasBase = []) => {
   const materiasMap = new Map((materiasBase || []).map((m) => [m.id, m]));
   const estadoBase = new Map((materiasBase || []).map((m) => [m.id, m.estado]));
@@ -324,6 +356,76 @@ const compararPlanConActual = (plan, materias) => {
   };
 };
 
+const reacomodarCorrelativasHaciaAbajo = (periodos, materiasBase = []) => {
+  const periodosMutables = (periodos || []).map((p) => ({
+    ...p,
+    materias: [...(p.materias || [])],
+  }));
+  const materiasMap = new Map((materiasBase || []).map((m) => [m.id, m]));
+  const estadosBase = new Map((materiasBase || []).map((m) => [m.id, m.estado]));
+
+  const buscarIndicePeriodo = (materiaId) =>
+    periodosMutables.findIndex((p) => (p.materias || []).some((m) => m.id === materiaId));
+
+  const obtenerDestino = (materiaId) => {
+    const detalle = materiasMap.get(materiaId);
+    if (!detalle) return 0;
+
+    let destino = 0;
+    (detalle.prerrequisitos || []).forEach((preId) => {
+      const estadoPre = estadosBase.get(preId) || 'no_cursada';
+      if (cumpleEstadoCorrelativa(estadoPre)) return;
+
+      const indicePre = buscarIndicePeriodo(preId);
+      if (indicePre >= 0) {
+        destino = Math.max(destino, indicePre + 1);
+      }
+    });
+
+    return destino;
+  };
+
+  let guard = 0;
+  while (guard < 100) {
+    guard += 1;
+    let reubicada = false;
+
+    for (let periodoIndex = 0; periodoIndex < periodosMutables.length; periodoIndex += 1) {
+      const materiasPeriodo = periodosMutables[periodoIndex].materias || [];
+
+      for (let materiaIndex = 0; materiaIndex < materiasPeriodo.length; materiaIndex += 1) {
+        const materia = materiasPeriodo[materiaIndex];
+        const destino = obtenerDestino(materia.id);
+
+        if (destino > periodoIndex) {
+          const [movida] = materiasPeriodo.splice(materiaIndex, 1);
+
+          while (periodosMutables.length <= destino) {
+            periodosMutables.push({
+              numero: periodosMutables.length + 1,
+              materias: [],
+            });
+          }
+
+          periodosMutables[destino].materias.push(movida);
+          reubicada = true;
+          break;
+        }
+      }
+
+      if (reubicada) {
+        break;
+      }
+    }
+
+    if (!reubicada) {
+      break;
+    }
+  }
+
+  return compactarPeriodosVacios(periodosMutables);
+};
+
 export default function AsistenteAcademico() {
   const navigate = useNavigate();
   const { estudianteActual } = useAuth();
@@ -384,9 +486,17 @@ export default function AsistenteAcademico() {
       // Esperar columnas: "nombre" y "estado" (case-insensitive)
       const materias = rows
         .map((row) => {
-          const nombre = row['nombre'] || row['Nombre'] || row['NOMBRE'] || '';
-          const estado = row['estado'] || row['Estado'] || row['ESTADO'] || '';
-          return { nombre: String(nombre).trim(), estado: String(estado).trim().toLowerCase() };
+          const entries = Object.entries(row);
+          const nombreEntry = entries.find(([key]) => normalizarTextoExcel(key) === 'nombre');
+          const estadoEntry = entries.find(([key]) => normalizarTextoExcel(key) === 'estado');
+
+          const nombre = nombreEntry?.[1] || '';
+          const estado = estadoEntry?.[1] || '';
+
+          return {
+            nombre: String(nombre).trim(),
+            estado: mapearEstadoExcel(estado),
+          };
         })
         .filter((r) => r.nombre);
 
@@ -522,7 +632,8 @@ export default function AsistenteAcademico() {
       periodos[origen].materias = periodos[origen].materias.filter((m) => m.id !== materiaId);
       periodos[destino].materias.push(materia);
 
-      const invalidas = validarCorrelativasPlan(periodos, materias);
+      const periodosReacomodados = reacomodarCorrelativasHaciaAbajo(periodos, materias);
+      const invalidas = validarCorrelativasPlan(periodosReacomodados, materias);
       if (invalidas.length > 0) {
         const primera = invalidas[0];
         setPlanificadorFeedback({
@@ -536,7 +647,7 @@ export default function AsistenteAcademico() {
 
       return {
         ...prev,
-        periodos: recalcularCargaPeriodos(periodos),
+        periodos: periodosReacomodados,
       };
     });
   };
@@ -599,7 +710,7 @@ export default function AsistenteAcademico() {
 
       return {
         ...prev,
-        periodos: recalcularCargaPeriodos(periodos),
+        periodos: compactarPeriodosVacios(periodos),
         pendientesSinAsignar: pendientes.sort((a, b) => {
           if ((a.anio || 0) !== (b.anio || 0)) return (a.anio || 0) - (b.anio || 0);
           return a.nombre.localeCompare(b.nombre);
@@ -1286,7 +1397,19 @@ export default function AsistenteAcademico() {
           {importError && <Alert severity="error" sx={{ mt: 2 }}>{importError}</Alert>}
           {importResultado && (
             <Box mt={2}>
-              <Alert severity="success" sx={{ mb: 1 }}>{importResultado.message}</Alert>
+              <Alert
+                severity={
+                  (importResultado.data?.resumen?.importadas || 0) > 0
+                    ? (importResultado.data?.resumen?.errores || 0) > 0 ||
+                      (importResultado.data?.resumen?.ignoradas || 0) > 0
+                      ? 'warning'
+                      : 'success'
+                    : 'error'
+                }
+                sx={{ mb: 1 }}
+              >
+                {importResultado.message}
+              </Alert>
               {importResultado.data?.ignoradas?.length > 0 && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
                   {importResultado.data.ignoradas.length} filas ignoradas (estado inválido o nombre vacío)
