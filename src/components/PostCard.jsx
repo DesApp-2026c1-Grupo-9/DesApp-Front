@@ -40,7 +40,7 @@ import {
 } from '@mui/icons-material';
 
 import { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
-import { formatFechaRelative, formatFechaSeguro } from '../utils';
+import { formatFechaRelative } from '../utils';
 import useComentarios from '../hooks/useComentarios';
 
 const getIconForTipoEvento = (tipo) => {
@@ -181,7 +181,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                 />
               </Box>
               <Typography variant="caption" color="text.secondary">
-                {formatFechaSeguro(post.fecha)}
+                {formatFechaRelative(post.fecha)}
               </Typography>
             </Box>
           </Box>
@@ -255,7 +255,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
             </Box>
             <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography variant="caption" color="text.secondary">
-                {formatFechaSeguro(post.fecha)}
+                {formatFechaRelative(post.fecha)}
               </Typography>
               {post.editedAt && (
                 <Typography
@@ -284,7 +284,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
           }
           subheader={
             <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {formatFechaSeguro(post.fecha)}
+              {formatFechaRelative(post.fecha)}
               {post.editedAt && (
                 <Typography
                   component="span"
