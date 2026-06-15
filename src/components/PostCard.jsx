@@ -554,17 +554,31 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
                         >
-                          <IconButton
-                            size="small"
-                            onClick={() => handleLikeComentario(com.id, com.liked)}
-                            color={com.liked ? 'primary' : 'default'}
-                            sx={{ p: 0.5 }}
+                          <Tooltip
+                            title={
+                              String(com.autor?.id) === String(currentUserId)
+                                ? 'No puedes dar like a tu propio comentario'
+                                : ''
+                            }
                           >
-                            <ThumbUp
-                              fontSize="inherit"
-                              style={{ fontSize: '1.1rem' }}
-                            />
-                          </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleLikeComentario(com.id, com.liked)}
+                              color={com.liked ? 'primary' : 'default'}
+                              disabled={String(com.autor?.id) === String(currentUserId)}
+                              sx={{
+                                p: 0.5,
+                                ...(String(com.autor?.id) === String(currentUserId)
+                                  ? { opacity: 0.4, cursor: 'not-allowed' }
+                                  : {}),
+                              }}
+                            >
+                              <ThumbUp
+                                fontSize="inherit"
+                                style={{ fontSize: '1.1rem' }}
+                              />
+                            </IconButton>
+                          </Tooltip>
 
                           <Typography variant="caption" sx={{ fontWeight: '500' }}>
                             {com.likesCount || 0}
@@ -720,17 +734,31 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                 <Box
                                   sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
                                 >
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleLikeComentario(reply.id, reply.liked)}
-                                    color={reply.liked ? 'primary' : 'default'}
-                                    sx={{ p: 0.5 }}
+                                  <Tooltip
+                                    title={
+                                      String(reply.autor?.id) === String(currentUserId)
+                                        ? 'No puedes dar like a tu propio comentario'
+                                        : ''
+                                    }
                                   >
-                                    <ThumbUp
-                                      fontSize="inherit"
-                                      style={{ fontSize: '1rem' }}
-                                    />
-                                  </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleLikeComentario(reply.id, reply.liked)}
+                                      color={reply.liked ? 'primary' : 'default'}
+                                      disabled={String(reply.autor?.id) === String(currentUserId)}
+                                      sx={{
+                                        p: 0.5,
+                                        ...(String(reply.autor?.id) === String(currentUserId)
+                                          ? { opacity: 0.4, cursor: 'not-allowed' }
+                                          : {}),
+                                      }}
+                                    >
+                                      <ThumbUp
+                                        fontSize="inherit"
+                                        style={{ fontSize: '1rem' }}
+                                      />
+                                    </IconButton>
+                                  </Tooltip>
                                   <Typography variant="caption">{reply.likesCount || 0}</Typography>
 
                                   <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
