@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+
+import {
+  fetchComentarios as fetchComentariosThunk,
+  addComentario,
+  removeComentario,
+  editComentario,
+  likeComentario as likeComentarioThunk,
+  unlikeComentario as unlikeComentarioThunk,
+  clearNovedadComentarios,
+} from '../features/feed/comentariosSlice';
 
 import {
   Card,
@@ -38,8 +48,6 @@ import {
   LocationOn,
 } from '@mui/icons-material';
 
-import api from '../api/axiosConfig';
-import { likeComentario, unlikeComentario } from '../features/feed/comentariosSlice';
 import { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
 import { formatFechaRelative, formatFechaSeguro } from '../utils';
 
@@ -83,16 +91,17 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const comentarios = useSelector((state) => state.comentarios.byNovedad[post.id] || []);
+  const loadingComentarios = useSelector((state) => state.comentarios.loadingByNovedad[post.id] || false);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.contenido || '');
   const isOwner = String(post.autor?.id) === String(currentUserId);
 
-  const [comentarios, setComentarios] = useState([]);
   const [showComentarios, setShowComentarios] = useState(false);
   const [visibleCount, setVisibleCount] = useState(1);
   const [nuevoComentario, setNuevoComentario] = useState('');
-  const [loadingComentarios, setLoadingComentarios] = useState(false);
 
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
@@ -106,9 +115,9 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const [editReplyContent, setEditReplyContent] = useState('');
 
   useEffect(() => {
-    setComentarios([]);
+    dispatch(clearNovedadComentarios(post.id));
     setShowComentarios(false);
-  }, [currentUserId]);
+  }, [currentUserId, post.id, dispatch]);
 
   const handleMenuClick = (event) => {
     event.stopPropagation();
@@ -127,6 +136,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   };
 
   const fetchComentarios = async () => {
+    if (loadingComentarios) return;
     if (comentarios.length > 0 && showComentarios) {
       setShowComentarios(false);
       return;
@@ -135,26 +145,22 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
       setShowComentarios(true);
       return;
     }
-    setLoadingComentarios(true);
     try {
-      const response = await api.get(`/api/novedades/${post.id}/comentarios?usuarioId=${currentUserId}`);
-      setComentarios(response.data.data || []);
+      await dispatch(fetchComentariosThunk({ novedadId: post.id, usuarioId: currentUserId })).unwrap();
       setShowComentarios(true);
     } catch (error) {
       console.error('Error al cargar comentarios:', error);
-    } finally {
-      setLoadingComentarios(false);
     }
   };
 
   const handleAddComentario = async () => {
     if (!nuevoComentario.trim()) return;
     try {
-      const response = await api.post(`/api/novedades/${post.id}/comentarios`, {
+      await dispatch(addComentario({
+        novedadId: post.id,
         contenido: nuevoComentario.trim(),
         usuarioId: currentUserId,
-      });
-      setComentarios([...comentarios, response.data.data]);
+      })).unwrap();
       setNuevoComentario('');
       setVisibleCount((prev) => prev + 1);
       if (onUpdateComentariosCount)
@@ -166,11 +172,12 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
 
   const handleEditComentario = async () => {
     try {
-      const res = await api.put(`/api/novedades/${post.id}/comentarios/${editandoComentarioId}`, {
+      await dispatch(editComentario({
+        novedadId: post.id,
+        comentarioId: editandoComentarioId,
         contenido: editComentarioContent.trim(),
         usuarioId: currentUserId,
-      });
-      setComentarios(comentarios.map((c) => (c.id === editandoComentarioId ? res.data.data : c)));
+      })).unwrap();
       setEditandoComentarioId(null);
     } catch (err) {
       console.error(err);
@@ -179,45 +186,21 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
 
   const handleLikeComentario = (comentarioId, liked) => {
     if (liked) {
-      dispatch(unlikeComentario({ novidadeId: post.id, comentarioId, usuarioId: currentUserId }));
+      dispatch(unlikeComentarioThunk({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
     } else {
-      dispatch(likeComentario({ novidadeId: post.id, comentarioId, usuarioId: currentUserId }));
+      dispatch(likeComentarioThunk({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
     }
-
-    const actualizarLikes = (items) =>
-      items.map((item) => {
-        if (item.id === comentarioId) {
-          return {
-            ...item,
-            liked: !liked,
-            likesCount: liked ? (item.likesCount || 1) - 1 : (item.likesCount || 0) + 1,
-          };
-        }
-        if (item.respuestas) {
-          return { ...item, respuestas: actualizarLikes(item.respuestas) };
-        }
-        return item;
-      });
-
-    setComentarios(actualizarLikes(comentarios));
   };
 
   const handleReply = async (comentarioPadreId, contenido) => {
     if (!contenido.trim()) return;
     try {
-      const response = await api.post(`/api/novedades/${post.id}/comentarios`, {
+      await dispatch(addComentario({
+        novedadId: post.id,
         contenido,
         usuarioId: currentUserId,
         comentarioPadreId,
-      });
-      setComentarios(
-        comentarios.map((c) => {
-          if (c.id === comentarioPadreId) {
-            return { ...c, respuestas: [...(c.respuestas || []), response.data.data] };
-          }
-          return c;
-        })
-      );
+      })).unwrap();
       setReplyingTo(null);
       setReplyText('');
       if (onUpdateComentariosCount)
@@ -686,26 +669,12 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                   size="small"
                                   onClick={async () => {
                                     try {
-                                      const res = await api.put(
-                                        `/api/novedades/${post.id}/comentarios/${reply.id}`,
-                                        {
-                                          contenido: editReplyContent.trim(),
-                                          usuarioId: currentUserId,
-                                        }
-                                      );
-                                      setComentarios(
-                                        comentarios.map((c) => {
-                                          if (c.id === com.id) {
-                                            return {
-                                              ...c,
-                                              respuestas: c.respuestas.map((r) =>
-                                                r.id === reply.id ? res.data.data : r
-                                              ),
-                                            };
-                                          }
-                                          return c;
-                                        })
-                                      );
+                                      await dispatch(editComentario({
+                                        novedadId: post.id,
+                                        comentarioId: reply.id,
+                                        contenido: editReplyContent.trim(),
+                                        usuarioId: currentUserId,
+                                      })).unwrap();
                                       setEditandoReplyId(null);
                                     } catch (err) {
                                       console.error(err);
@@ -827,11 +796,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         <MenuItem
           onClick={async () => {
             try {
-              await api.delete(
-                `/api/novedades/${post.id}/comentarios/${comentarioSeleccionado.id}`,
-                { data: { usuarioId: currentUserId } }
-              );
-              setComentarios(comentarios.filter((c) => c.id !== comentarioSeleccionado.id));
+              await dispatch(removeComentario({
+                novedadId: post.id,
+                comentarioId: comentarioSeleccionado.id,
+                usuarioId: currentUserId,
+              })).unwrap();
               onUpdateComentariosCount(
                 post.id,
                 Math.max(0, (post.comentariosCount || 0) - 1)
@@ -863,18 +832,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         <MenuItem
           onClick={async () => {
             try {
-              await api.delete(
-                `/api/novedades/${post.id}/comentarios/${replySeleccionada.id}`,
-                { data: { usuarioId: currentUserId } }
-              );
-              setComentarios(
-                comentarios.map((c) => ({
-                  ...c,
-                  respuestas: c.respuestas
-                    ? c.respuestas.filter((r) => r.id !== replySeleccionada.id)
-                    : [],
-                }))
-              );
+              await dispatch(removeComentario({
+                novedadId: post.id,
+                comentarioId: replySeleccionada.id,
+                usuarioId: currentUserId,
+              })).unwrap();
               onUpdateComentariosCount(
                 post.id,
                 Math.max(0, (post.comentariosCount || 0) - 1)

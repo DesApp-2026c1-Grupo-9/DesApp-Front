@@ -14,12 +14,13 @@ const transformBackendNovedad = (novedad, currentUserId) => {
   const autor = novedad.autor
     ? {
         id: novedad.autor.id,
-        nombre: `${novedad.autor.nombre} ${novedad.autor.apellido || ''}`.trim(),
+        nombre: novedad.autor.nombre,
+        apellido: novedad.autor.apellido || '',
         avatar: novedad.autor.avatarUrl || null,
       }
     : novedad.autorId
-    ? { id: novedad.autorId, nombre: 'Estudiante', avatar: null }
-    : { id: null, nombre: 'Estudiante', avatar: null };
+    ? { id: novedad.autorId, nombre: 'Estudiante', apellido: '', avatar: null }
+    : { id: null, nombre: 'Estudiante', apellido: '', avatar: null };
 
   const likesArray = Array.isArray(novedad.likes) ? novedad.likes.map(id => Number(id)) : [];
   const liked = novedad.liked !== undefined ? novedad.liked : false;
@@ -122,7 +123,8 @@ const feedSlice = createSlice({
   name: 'feed',
   initialState: {
     posts: [],
-    loading: false,
+    loadingFeed: false,
+    posting: false,
     error: null,
     currentUserId: null,
   },
@@ -144,28 +146,28 @@ const feedSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchFeed.pending, (state) => {
-        state.loading = true;
+        state.loadingFeed = true;
         state.error = null;
       })
       .addCase(fetchFeed.fulfilled, (state, action) => {
-        state.loading = false;
+        state.loadingFeed = false;
         state.posts = action.payload.novedades;
       })
       .addCase(fetchFeed.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingFeed = false;
         state.error = action.payload;
       })
       .addCase(addPost.pending, (state) => {
-        state.loading = true;
+        state.posting = true;
         state.error = null;
       })
       .addCase(addPost.fulfilled, (state, action) => {
-        state.loading = false;
+        state.posting = false;
         const newPost = transformBackendNovedad(action.payload, state.currentUserId);
         state.posts.unshift(newPost);
       })
       .addCase(addPost.rejected, (state, action) => {
-        state.loading = false;
+        state.posting = false;
         state.error = action.payload;
       })
       .addCase(removePost.fulfilled, (state, action) => {

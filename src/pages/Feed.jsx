@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { Typography, Box } from '@mui/material';
+import { Typography, Box, CircularProgress } from '@mui/material';
 import { fetchFeed, addPost, removePost, toggleLike, editPost } from '../features/feed/slice';
 
 import PostCard from '../components/PostCard';
@@ -12,7 +12,7 @@ export { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
 
 function Feed() {
   const dispatch = useDispatch();
-  const { posts, loading } = useSelector((state) => state.feed);
+  const { posts, loadingFeed, posting } = useSelector((state) => state.feed);
   const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
@@ -32,12 +32,21 @@ function Feed() {
       {user?.id && (
         <CreatePostForm
           onSubmit={(data) => dispatch(addPost({ postData: data, autorId: user.id }))}
-          loading={loading}
+          loading={posting}
           currentStudent={user}
         />
       )}
 
-      {posts.map((post) => (
+      {loadingFeed ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress />
+        </Box>
+      ) : posts.length === 0 ? (
+        <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
+          No hay novedades para mostrar.
+        </Typography>
+      ) : (
+        posts.map((post) => (
         <PostCard
           key={post.id}
           post={post}
@@ -53,7 +62,7 @@ function Feed() {
             dispatch({ type: 'feed/updateComentariosCount', payload: { postId: id, comentariosCount: count } })
           }
         />
-      ))}
+      )))}
     </PageContainer>
   );
 }

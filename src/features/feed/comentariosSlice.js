@@ -4,9 +4,9 @@ import { likeComentario as likeService, unlikeComentario as unlikeService } from
 
 export const fetchComentarios = createAsyncThunk(
   'comentarios/fetchComentarios',
-  async (novedadId, { rejectWithValue }) => {
+  async ({ novedadId, usuarioId }, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/novedades/${novedadId}/comentarios`);
+      const response = await api.get(`/api/novedades/${novedadId}/comentarios?usuarioId=${usuarioId}`);
       return { novedadId, comentarios: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al cargar comentarios');
@@ -81,27 +81,32 @@ const comentariosSlice = createSlice({
   name: 'comentarios',
   initialState: {
     byNovedad: {},
-    loading: false,
+    loadingByNovedad: {},
     error: null,
   },
   reducers: {
     clearComentariosError: (state) => {
       state.error = null;
     },
+    clearNovedadComentarios: (state, action) => {
+      const novedadId = action.payload;
+      delete state.byNovedad[novedadId];
+      delete state.loadingByNovedad[novedadId];
+    },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchComentarios.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchComentarios.pending, (state, action) => {
+        state.loadingByNovedad[action.meta.arg.novedadId] = true;
         state.error = null;
       })
       .addCase(fetchComentarios.fulfilled, (state, action) => {
-        state.loading = false;
         const { novedadId, comentarios } = action.payload;
+        state.loadingByNovedad[novedadId] = false;
         state.byNovedad[novedadId] = comentarios;
       })
       .addCase(fetchComentarios.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingByNovedad[action.meta.arg.novedadId] = false;
         state.error = action.payload;
       })
       .addCase(addComentario.fulfilled, (state, action) => {
@@ -189,5 +194,5 @@ const comentariosSlice = createSlice({
   },
 });
 
-export const { clearComentariosError } = comentariosSlice.actions;
+export const { clearComentariosError, clearNovedadComentarios } = comentariosSlice.actions;
 export default comentariosSlice.reducer;
