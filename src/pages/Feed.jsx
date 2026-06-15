@@ -58,9 +58,6 @@ function Feed() {
           onToggleLike={(id, liked) =>
             user?.id && dispatch(toggleLike({ postId: id, currentlyLiked: liked, usuarioId: user.id }))
           }
-          onUpdateComentariosCount={(id, count) =>
-            dispatch({ type: 'feed/updateComentariosCount', payload: { postId: id, comentariosCount: count } })
-          }
         />
       )))}
     </PageContainer>

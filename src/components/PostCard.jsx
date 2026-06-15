@@ -1,16 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import {
-  fetchComentarios as fetchComentariosThunk,
-  addComentario,
-  removeComentario,
-  editComentario,
-  likeComentario as likeComentarioThunk,
-  unlikeComentario as unlikeComentarioThunk,
-  clearNovedadComentarios,
-} from '../features/feed/comentariosSlice';
 
 import {
   Card,
@@ -33,6 +22,8 @@ import {
   ListItemAvatar,
   ListItemText,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   ThumbUp,
@@ -50,6 +41,7 @@ import {
 
 import { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
 import { formatFechaRelative, formatFechaSeguro } from '../utils';
+import useComentarios from '../hooks/useComentarios';
 
 const getIconForTipoEvento = (tipo) => {
   switch (tipo) {
@@ -87,37 +79,54 @@ const getLabelForTipoEvento = (tipo) => {
 
 const formatFechaComentario = (fecha) => formatFechaRelative(fecha);
 
-function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdateComentariosCount }) {
-  const dispatch = useDispatch();
+function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
   const navigate = useNavigate();
-
-  const comentarios = useSelector((state) => state.comentarios.byNovedad[post.id] || []);
-  const loadingComentarios = useSelector((state) => state.comentarios.loadingByNovedad[post.id] || false);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.contenido || '');
   const isOwner = String(post.autor?.id) === String(currentUserId);
 
-  const [showComentarios, setShowComentarios] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(1);
-  const [nuevoComentario, setNuevoComentario] = useState('');
-
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState('');
-  const [comentarioMenuEl, setComentarioMenuEl] = useState(null);
-  const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null);
-  const [editandoComentarioId, setEditandoComentarioId] = useState(null);
-  const [editComentarioContent, setEditComentarioContent] = useState('');
-  const [replyMenuEl, setReplyMenuEl] = useState(null);
-  const [replySeleccionada, setReplySeleccionada] = useState(null);
-  const [editandoReplyId, setEditandoReplyId] = useState(null);
-  const [editReplyContent, setEditReplyContent] = useState('');
-
-  useEffect(() => {
-    dispatch(clearNovedadComentarios(post.id));
-    setShowComentarios(false);
-  }, [currentUserId, post.id, dispatch]);
+  const {
+    comentarios,
+    loadingComentarios,
+    showComentarios,
+    visibleCount,
+    setVisibleCount,
+    nuevoComentario,
+    setNuevoComentario,
+    replyingTo,
+    setReplyingTo,
+    replyText,
+    setReplyText,
+    comentarioMenuEl,
+    setComentarioMenuEl,
+    comentarioSeleccionado,
+    setComentarioSeleccionado,
+    editandoComentarioId,
+    setEditandoComentarioId,
+    editComentarioContent,
+    setEditComentarioContent,
+    replyMenuEl,
+    setReplyMenuEl,
+    replySeleccionada,
+    setReplySeleccionada,
+    editandoReplyId,
+    setEditandoReplyId,
+    editReplyContent,
+    setEditReplyContent,
+    error,
+    handleFetchComentarios,
+    handleAddComentario,
+    handleEditComentario,
+    handleEditReply,
+    handleLikeComentario,
+    handleReply,
+    handleDeleteComentario,
+    handleDeleteReply,
+    handleClearError,
+    comentariosCount,
+  } = useComentarios(post, currentUserId);
 
   const handleMenuClick = (event) => {
     event.stopPropagation();
@@ -133,81 +142,6 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
     if (!editContent.trim()) return;
     onEdit(post.id, { contenido: editContent.trim(), titulo: editContent.trim().substring(0, 50) });
     setIsEditing(false);
-  };
-
-  const fetchComentarios = async () => {
-    if (loadingComentarios) return;
-    if (showComentarios) {
-      setShowComentarios(false);
-      return;
-    }
-    if (comentarios.length > 0) {
-      setShowComentarios(true);
-      return;
-    }
-    try {
-      await dispatch(fetchComentariosThunk({ novedadId: post.id, usuarioId: currentUserId })).unwrap();
-      setShowComentarios(true);
-    } catch (error) {
-      console.error('Error al cargar comentarios:', error);
-    }
-  };
-
-  const handleAddComentario = async () => {
-    if (!nuevoComentario.trim()) return;
-    try {
-      await dispatch(addComentario({
-        novedadId: post.id,
-        contenido: nuevoComentario.trim(),
-        usuarioId: currentUserId,
-      })).unwrap();
-      setNuevoComentario('');
-      setVisibleCount((prev) => prev + 1);
-      if (onUpdateComentariosCount)
-        onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleEditComentario = async () => {
-    try {
-      await dispatch(editComentario({
-        novedadId: post.id,
-        comentarioId: editandoComentarioId,
-        contenido: editComentarioContent.trim(),
-        usuarioId: currentUserId,
-      })).unwrap();
-      setEditandoComentarioId(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleLikeComentario = (comentarioId, liked) => {
-    if (liked) {
-      dispatch(unlikeComentarioThunk({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
-    } else {
-      dispatch(likeComentarioThunk({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
-    }
-  };
-
-  const handleReply = async (comentarioPadreId, contenido) => {
-    if (!contenido.trim()) return;
-    try {
-      await dispatch(addComentario({
-        novedadId: post.id,
-        contenido,
-        usuarioId: currentUserId,
-        comentarioPadreId,
-      })).unwrap();
-      setReplyingTo(null);
-      setReplyText('');
-      if (onUpdateComentariosCount)
-        onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   const isEvento = post.tipo === TIPO_POST.EVENTO_ACADEMICO;
@@ -429,19 +363,18 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         </Box>
 
         <IconButton
-          onClick={fetchComentarios}
+          onClick={handleFetchComentarios}
           color={showComentarios ? 'primary' : 'default'}
         >
           <Comment fontSize="small" />
         </IconButton>
         <Typography variant="body2">
-          {post.comentariosCount ??
-            comentarios.reduce((acc, c) => acc + 1 + (c.respuestas?.length || 0), 0)}
+          {comentariosCount}
         </Typography>
         {loadingComentarios && <CircularProgress size={20} sx={{ ml: 1 }} />}
       </Box>
 
-      <Collapse in={showComentarios}>
+      <Collapse in={showComentarios} keepMounted>
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: '1px solid #eee' }}>
           <Box sx={{ display: 'flex', gap: 1, mt: 2, mb: 2 }}>
             <TextField
@@ -681,19 +614,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                 />
                                 <Button
                                   size="small"
-                                  onClick={async () => {
-                                    try {
-                                      await dispatch(editComentario({
-                                        novedadId: post.id,
-                                        comentarioId: reply.id,
-                                        contenido: editReplyContent.trim(),
-                                        usuarioId: currentUserId,
-                                      })).unwrap();
-                                      setEditandoReplyId(null);
-                                    } catch (err) {
-                                      console.error(err);
-                                    }
-                                  }}
+                                  onClick={handleEditReply}
                                 >
                                   Guardar
                                 </Button>
@@ -821,24 +742,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         >
           <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
         </MenuItem>
-        <MenuItem
-          onClick={async () => {
-            try {
-              await dispatch(removeComentario({
-                novedadId: post.id,
-                comentarioId: comentarioSeleccionado.id,
-                usuarioId: currentUserId,
-              })).unwrap();
-              onUpdateComentariosCount(
-                post.id,
-                Math.max(0, (post.comentariosCount || 0) - 1)
-              );
-            } catch (err) {
-              console.error(err);
-            }
-            setComentarioMenuEl(null);
-          }}
-        >
+        <MenuItem onClick={handleDeleteComentario}>
           <Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar
         </MenuItem>
       </Menu>
@@ -857,27 +761,16 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         >
           <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
         </MenuItem>
-        <MenuItem
-          onClick={async () => {
-            try {
-              await dispatch(removeComentario({
-                novedadId: post.id,
-                comentarioId: replySeleccionada.id,
-                usuarioId: currentUserId,
-              })).unwrap();
-              onUpdateComentariosCount(
-                post.id,
-                Math.max(0, (post.comentariosCount || 0) - 1)
-              );
-            } catch (err) {
-              console.error(err);
-            }
-            setReplyMenuEl(null);
-          }}
-        >
+        <MenuItem onClick={handleDeleteReply}>
           <Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar
         </MenuItem>
       </Menu>
+
+      <Snackbar open={!!error} autoHideDuration={4000} onClose={handleClearError} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleClearError} severity="error" variant="filled">
+          {error}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 }
