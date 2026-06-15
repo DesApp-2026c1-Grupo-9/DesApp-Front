@@ -60,6 +60,7 @@ export const EstudianteDashboard = () => {
   const [pubRegularizaciones, setPubRegularizaciones] = useState(true);
   const [pubAprobaciones, setPubAprobaciones] = useState(true);
   const [pubSesiones, setPubSesiones] = useState(true);
+  const [recibirEmails, setRecibirEmails] = useState(true);
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
@@ -79,6 +80,7 @@ export const EstudianteDashboard = () => {
       setPubRegularizaciones(preferencias.publicarRegularizaciones ?? true);
       setPubAprobaciones(preferencias.publicarAprobaciones ?? true);
       setPubSesiones(preferencias.publicarSesiones ?? true);
+      setRecibirEmails(preferencias.recibirEmails ?? true);
     }
   }, [preferencias]);
 
@@ -445,6 +447,24 @@ export const EstudianteDashboard = () => {
 
               <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 1 }}>
                 Controla qué eventos se publican automáticamente en tu feed de novedades
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={recibirEmails}
+                    onChange={handlePublishChange('recibirEmails', setRecibirEmails)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Recibir notificaciones por email"
+              />
+
+              <Typography variant="caption" color="textSecondary" display="block">
+                Recibirás un email por cada notificación generada en la plataforma
               </Typography>
             </CardContent>
           </Card>
