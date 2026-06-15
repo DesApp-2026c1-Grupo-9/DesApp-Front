@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   TextField, Select, MenuItem, FormControl, InputLabel,
@@ -10,9 +10,13 @@ import api from '../api/axiosConfig';
 
 const SesionModal = ({ open, sesion, onSave, onCancel }) => {
   const [materias, setMaterias] = useState([]);
+  const [materiaMenuWidth, setMateriaMenuWidth] = useState(0);
+  const materiaFormRef = useCallback(node => {
+    if (node && !materiaMenuWidth) setMateriaMenuWidth(node.offsetWidth);
+  }, []);
 
   useEffect(() => {
-    api.get('/api/materias')
+    api.get('/api/materias?limit=0')
       .then(res => {
         const lista = res.data?.data || res.data || [];
         const mapped = Array.isArray(lista) 
@@ -105,12 +109,15 @@ const SesionModal = ({ open, sesion, onSave, onCancel }) => {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <FormControl fullWidth required>
+            <FormControl fullWidth required ref={materiaFormRef}>
               <InputLabel>Materia</InputLabel>
               <Select
                 value={formData.materiaId}
                 onChange={handleChange('materiaId')}
                 label="Materia"
+                MenuProps={{
+                  PaperProps: { style: { maxHeight: 280, width: materiaMenuWidth || undefined } }
+                }}
               >
                 {materias.map(m => (
                   <MenuItem key={m.id} value={m.id}>{m.nombre}</MenuItem>
