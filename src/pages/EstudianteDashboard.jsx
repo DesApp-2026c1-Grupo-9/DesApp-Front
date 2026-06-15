@@ -328,9 +328,6 @@ export const EstudianteDashboard = () => {
                   <Typography variant="h6">
                     {estudiante.nombre} {estudiante.apellido}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    ID: {estudiante.id}
-                  </Typography>
                 </Box>
               </Box>
               <Typography variant="body2" gutterBottom>
