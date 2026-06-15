@@ -105,7 +105,7 @@ const Home = () => {
               </Avatar>
               <Box>
                 <Typography variant="h3" gutterBottom>
-                  ¡Bienvenido, {user?.nombre || 'Admin Inicial'}!
+                  ¡Hola, {user?.nombre || 'Admin Inicial'}!
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
                   Panel de administracion del sistema
@@ -170,7 +170,7 @@ const Home = () => {
             </Avatar>
             <Box>
               <Typography variant="h3" gutterBottom>
-                ¡Bienvenido, {estudianteInfo.nombre} {estudianteInfo.apellido}!
+                ¡Hola, {estudianteInfo.nombre} {estudianteInfo.apellido}!
               </Typography>
               <Typography variant="h6" color="text.secondary">
                 {estudianteInfo.carreras?.[0]?.nombre || 'Sin carrera'} - 2024 • 1er Cuatrimestre 2026
