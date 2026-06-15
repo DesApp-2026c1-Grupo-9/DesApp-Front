@@ -137,7 +137,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
 
   const fetchComentarios = async () => {
     if (loadingComentarios) return;
-    if (comentarios.length > 0 && showComentarios) {
+    if (showComentarios) {
       setShowComentarios(false);
       return;
     }
@@ -495,7 +495,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                     }
                   >
                     <ListItemAvatar>
-                      <Avatar src={com.autor?.avatar} sx={{ width: 35, height: 35 }}>
+                      <Avatar src={com.autor?.avatarUrl} sx={{ width: 35, height: 35 }}>
                         {com.autor?.nombre?.charAt(0)}
                       </Avatar>
                     </ListItemAvatar>
@@ -666,7 +666,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                             }
                           >
                             <ListItemAvatar>
-                              <Avatar src={reply.autor?.avatar} sx={{ width: 30, height: 30 }}>
+                              <Avatar src={reply.autor?.avatarUrl} sx={{ width: 30, height: 30 }}>
                                 {reply.autor?.nombre?.charAt(0)}
                               </Avatar>
                             </ListItemAvatar>

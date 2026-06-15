@@ -16,11 +16,26 @@ const transformBackendNovedad = (novedad, currentUserId) => {
         id: novedad.autor.id,
         nombre: novedad.autor.nombre,
         apellido: novedad.autor.apellido || '',
-        avatar: novedad.autor.avatarUrl || null,
+        rol: novedad.autor.rol || 'estudiante',
+        avatar:
+          novedad.autor.avatarUrl ||
+          `https://ui-avatars.com/api/?name=${novedad.autor.nombre}+${novedad.autor.apellido || ''}&background=random`,
       }
     : novedad.autorId
-    ? { id: novedad.autorId, nombre: 'Estudiante', apellido: '', avatar: null }
-    : { id: null, nombre: 'Estudiante', apellido: '', avatar: null };
+    ? {
+        id: novedad.autorId,
+        nombre: 'Estudiante',
+        apellido: '',
+        rol: 'estudiante',
+        avatar: `https://ui-avatars.com/api/?name=Estudiante&background=random`,
+      }
+    : {
+        id: null,
+        nombre: 'Estudiante',
+        apellido: '',
+        rol: 'estudiante',
+        avatar: `https://ui-avatars.com/api/?name=Estudiante&background=random`,
+      };
 
   const likesArray = Array.isArray(novedad.likes) ? novedad.likes.map(id => Number(id)) : [];
   const liked = novedad.liked !== undefined ? novedad.liked : false;

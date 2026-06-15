@@ -1,6 +1,15 @@
 ﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api/axiosConfig';
+
 import { likeComentario as likeService, unlikeComentario as unlikeService } from './comentariosService';
+
+const avatarFallback = (autor) => {
+  if (!autor) return autor;
+  if (!autor.avatarUrl) {
+    autor.avatarUrl = `https://ui-avatars.com/api/?name=${autor.nombre}+${autor.apellido || ''}&background=random`;
+  }
+  return autor;
+};
 
 export const fetchComentarios = createAsyncThunk(
   'comentarios/fetchComentarios',
@@ -104,6 +113,11 @@ const comentariosSlice = createSlice({
         const { novedadId, comentarios } = action.payload;
         state.loadingByNovedad[novedadId] = false;
         state.byNovedad[novedadId] = comentarios;
+
+        comentarios.forEach(c => {
+          avatarFallback(c.autor);
+          (c.respuestas || []).forEach(r => avatarFallback(r.autor));
+        });
       })
       .addCase(fetchComentarios.rejected, (state, action) => {
         state.loadingByNovedad[action.meta.arg.novedadId] = false;
@@ -111,6 +125,7 @@ const comentariosSlice = createSlice({
       })
       .addCase(addComentario.fulfilled, (state, action) => {
         const { novedadId, comentario } = action.payload;
+        avatarFallback(comentario.autor);
         if (!state.byNovedad[novedadId]) {
           state.byNovedad[novedadId] = [];
         }
