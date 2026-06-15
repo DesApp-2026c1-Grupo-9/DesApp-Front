@@ -34,8 +34,10 @@ const Sesiones = () => {
 
   const [activeTab, setActiveTab] = useState('todas');
   const [showPastEvents, setShowPastEvents] = useState(false);
-  const [showCanceled, setShowCanceled] = useState(false);
-  const [showOnlyConnections, setShowOnlyConnections] = useState(false);
+  const [materiaMenuWidth, setMateriaMenuWidth] = useState(0);
+  const materiaFormRef = useCallback(node => {
+    if (node && !materiaMenuWidth) setMateriaMenuWidth(node.offsetWidth);
+  }, []);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSesion, setEditingSesion] = useState(null);
@@ -45,7 +47,7 @@ const Sesiones = () => {
   const [sesionToDelete, setSesionToDelete] = useState(null);
 
   const { data: materias, loading: loadingMaterias, refetch: refetchMaterias } = useFetchData({
-    fetchFn: () => api.get('/api/materias').then(res => {
+    fetchFn: () => api.get('/api/materias?limit=0').then(res => {
       const lista = res.data?.data || res.data || [];
       return Array.isArray(lista) ? lista : [];
     }),
@@ -63,7 +65,7 @@ const Sesiones = () => {
 
   useEffect(() => {
     if (user?.id) {
-      dispatch(fetchSesiones({ usuarioId: user.id, incluirCanceladas: true }));
+      dispatch(fetchSesiones({ usuarioId: user.id }));
       dispatch(fetchConexiones(user.id));
     }
   }, [user, dispatch]);
@@ -76,8 +78,6 @@ const Sesiones = () => {
       const sesionDate = s.fechaHora?.split('T')[0];
       if (sesionDate < today) return false;
     }
-
-    if (s.estado !== 'activa' && !showCanceled && activeTab !== 'misSesiones') return false;
 
     if (activeTab === 'misMaterias') {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
@@ -95,8 +95,6 @@ const Sesiones = () => {
       const sesionDate = s.fechaHora?.split('T')[0];
       if (sesionDate !== filters.fecha) return false;
     }
-
-    if (showOnlyConnections && s.creadorId !== user.id && !conexiones.includes(s.creadorId)) return false;
 
     return true;
   })
@@ -244,12 +242,15 @@ const Sesiones = () => {
       <Box sx={{ mb: 3 }}>
         <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
           <Grid item xs={12} sm={4}>
-            <FormControl fullWidth disabled={loadingMaterias}>
+            <FormControl fullWidth disabled={loadingMaterias} ref={materiaFormRef}>
               <InputLabel>Materia</InputLabel>
               <Select
                 label="Materia"
                 value={filters.materia || ''}
                 onChange={(e) => setFilter('materia', e.target.value || null)}
+                MenuProps={{
+                  PaperProps: { style: { maxHeight: 280, width: materiaMenuWidth || undefined } }
+                }}
               >
                 <MenuItem value="">Todas</MenuItem>
                 {materias?.map(m => (
@@ -295,26 +296,6 @@ const Sesiones = () => {
               />
             }
             label="Mostrar eventos pasados"
-          />
-
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={showCanceled} 
-                onChange={(e) => setShowCanceled(e.target.checked)} 
-              />
-            }
-            label="Mostrar canceladas"
-          />
-
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={showOnlyConnections} 
-                onChange={(e) => setShowOnlyConnections(e.target.checked)} 
-              />
-            }
-            label="Solo conexiones"
           />
 
           {hasActiveFilters && (
@@ -429,18 +410,18 @@ const Sesiones = () => {
         onClose={handleCloseAprobacionModal}
       />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Cancel Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
-        <DialogTitle>Confirmar Eliminación</DialogTitle>
+        <DialogTitle>Confirmar Cancelación</DialogTitle>
         <DialogContent>
           <DialogContentText>
             ¿Estás seguro de que deseas cancelar esta sesión? Esta acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelDelete}>Cancelar</Button>
+          <Button onClick={handleCancelDelete}>Volver</Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error">
-            Eliminar
+            Cancelar sesión
           </Button>
         </DialogActions>
 </Dialog>
