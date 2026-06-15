@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AppBar, Toolbar, Typography, Box, Tabs, Tab } from '@mui/material';
-import { Person, AdminPanelSettings, PersonAdd, School, Gavel } from '@mui/icons-material';
+import { Person, AdminPanelSettings, PersonAdd, School, Gavel, DynamicFeed } from '@mui/icons-material';
 import { UserSelector } from './UserSelector';
 
 export function AdminAppBar() {
@@ -41,7 +41,7 @@ export function AdminAppBar() {
           <Tab icon={<PersonAdd />} label="Usuarios" iconPosition="start" />
           <Tab icon={<School />} label="Académico" iconPosition="start" />
           <Tab icon={<Gavel />} label="Moderación" iconPosition="start" />
-          <Tab icon={<Person />} label="Mi Perfil" iconPosition="start" />
+          <Tab icon={<DynamicFeed />} label="Mi Perfil" iconPosition="start" />
         </Tabs>
         <Box sx={{ ml: 2 }}>
           <UserSelector />

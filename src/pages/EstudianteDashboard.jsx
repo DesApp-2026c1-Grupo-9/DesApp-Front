@@ -21,7 +21,6 @@ import { PageContainer, LoadingSpinner } from '../components/ui';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { calcularEdad } from '../utils';
 import {
-  Person as PersonIcon,
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
   Public,
@@ -319,14 +318,15 @@ export const EstudianteDashboard = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Avatar 
-                  src={estudiante.avatarUrl} 
+                  src={estudiante.avatarUrl || `https://ui-avatars.com/api/?name=${estudiante.nombre}+${estudiante.apellido}&background=random`}
                   sx={{ width: 80, height: 80, mr: 2 }}
-                >
-                  <PersonIcon />
-                </Avatar>
+                ></Avatar>
                 <Box>
-                  <Typography variant="h6">
+                  <Typography variant="h5" fontWeight="bold">
                     {estudiante.nombre} {estudiante.apellido}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Estudiante
                   </Typography>
                 </Box>
               </Box>

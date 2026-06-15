@@ -10,7 +10,7 @@ import {
   AlertTitle,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, LibraryBooks, AdminPanelSettings, Block, MenuBook } from '@mui/icons-material';
+import { School, Person, Book, Home, People, Groups, LibraryBooks, AdminPanelSettings, Block, MenuBook, DynamicFeed } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import { UserSelector } from './UserSelector';
@@ -26,7 +26,7 @@ export function TopMenu() {
 
   const menuItems = [
     { label: 'Inicio', path: '/', icon: <Home /> },
-    { label: 'Mi Perfil', path: '/mi-perfil', icon: <Person /> },
+    { label: 'Mi Perfil', path: '/mi-perfil', icon: <DynamicFeed /> },
     { label: 'Académico', path: '/academico/carreras', icon: <School /> },
     { label: 'Social', path: '/social/feed', icon: <Groups /> },
     { label: 'Sesiones', path: '/sesiones', icon: <Groups /> },

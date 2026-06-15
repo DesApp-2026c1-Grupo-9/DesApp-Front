@@ -163,11 +163,9 @@ const Home = () => {
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center">
             <Avatar 
-              src={estudianteInfo.avatarUrl}
+              src={estudianteInfo.avatarUrl || `https://ui-avatars.com/api/?name=${estudianteInfo.nombre}+${estudianteInfo.apellido}&background=random`}
               sx={{ width: 80, height: 80, mr: 3 }}
-            >
-              <Person sx={{ fontSize: 40 }} />
-            </Avatar>
+            ></Avatar>
             <Box>
               <Typography variant="h3" gutterBottom>
                 ¡Hola, {estudianteInfo.nombre} {estudianteInfo.apellido}!
