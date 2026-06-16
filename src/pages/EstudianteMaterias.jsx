@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
   Box, Typography, Card, CardContent, Button, Table, TableBody,
@@ -10,7 +11,6 @@ import {
   ListItemText, ListItemIcon, Tooltip, CircularProgress
 } from '@mui/material';
 import {
-  ArrowBack as ArrowBackIcon,
   CheckCircle as CheckCircleIcon,
   Schedule as ScheduleIcon,
   School as SchoolIcon,
@@ -45,6 +45,7 @@ export const EstudianteMaterias = () => {
   const [importLoading, setImportLoading] = useState(false);
   const [importResultado, setImportResultado] = useState(null);
   const [importError, setImportError] = useState(null);
+  const inicializado = useRef(false);
 
   // Estados para manejar conflictos de correlatividades
   const [dialogoConflicto, setDialogoConflicto] = useState({ 
@@ -274,71 +275,82 @@ export const EstudianteMaterias = () => {
     if (response.data) {
       setEstudiante(response.data.estudiante);
       setSituacionAcademica(reconstruirSituacionAcademica(response.data));
-
-      const disponibles = response.data.carrerasDisponibles || [];
-      setCarrerasDisponibles(disponibles);
-
-      const planes = response.data.planesDisponibles || [];
-      setPlanesDisponibles(planes);
-
-      if (!carreraSeleccionadaId) {
-        const carreraActivaId = response.data.carrera?.id;
-        if (carreraActivaId) {
-          setCarreraSeleccionadaId(String(carreraActivaId));
-        }
-      }
-
-      if (!planSeleccionadoId) {
-        const planActivoId = response.data.planDeEstudio?.id;
-        if (planActivoId) {
-          setPlanSeleccionadoId(String(planActivoId));
-        }
-      }
+      setCarrerasDisponibles(response.data.carrerasDisponibles || []);
+      setPlanesDisponibles(response.data.planesDisponibles || []);
     }
   };
 
+  // Reset plan al cambiar carrera
   useEffect(() => {
     setPlanSeleccionadoId('');
   }, [carreraSeleccionadaId]);
 
+  // Carga inicial al cambiar de estudiante
   useEffect(() => {
-    const cargarDatos = async () => {
-      if (!estudianteActual?.id) {
-        setEstudiante(null);
-        setSituacionAcademica(null);
-        setCarrerasDisponibles([]);
-        setCarreraSeleccionadaId('');
-        setPlanesDisponibles([]);
-        setPlanSeleccionadoId('');
-        setError(null);
-        setLoading(false);
-        return;
-      }
+    inicializado.current = false;
+    if (!estudianteActual?.id) {
+      setEstudiante(null);
+      setSituacionAcademica(null);
+      setCarrerasDisponibles([]);
+      setCarreraSeleccionadaId('');
+      setPlanesDisponibles([]);
+      setPlanSeleccionadoId('');
+      setError(null);
+      setLoading(false);
+      return;
+    }
 
+    const init = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        setError(null);
-        await cargarPlan(
-          estudianteActual.id,
-          carreraSeleccionadaId || null,
-          planSeleccionadoId || null
-        );
+        const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
+        if (response.data) {
+          setEstudiante(response.data.estudiante);
+          setSituacionAcademica(reconstruirSituacionAcademica(response.data));
+          setCarrerasDisponibles(response.data.carrerasDisponibles || []);
+          setPlanesDisponibles(response.data.planesDisponibles || []);
+          if (response.data.carrera?.id) setCarreraSeleccionadaId(String(response.data.carrera.id));
+          if (response.data.planDeEstudio?.id) setPlanSeleccionadoId(String(response.data.planDeEstudio.id));
+        }
       } catch (errorCargar) {
         console.error('Error al cargar datos del estudiante:', errorCargar);
-        if (planSeleccionadoId) {
-          setPlanSeleccionadoId('');
-        } else if (carreraSeleccionadaId) {
-          setCarreraSeleccionadaId('');
-        } else {
-          setError('Error al cargar los datos del estudiante');
+        setError('Error al cargar los datos del estudiante');
+      } finally {
+        setLoading(false);
+        inicializado.current = true;
+      }
+    };
+    init();
+  }, [estudianteActual?.id]);
+
+  // Recarga cuando el usuario cambia carrera/plan (skip initial trigger)
+  useEffect(() => {
+    if (!inicializado.current) return;
+    if (!estudianteActual?.id || !carreraSeleccionadaId) return;
+
+    const reload = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await EstudianteService.obtenerPlanEstudios(
+          estudianteActual.id,
+          carreraSeleccionadaId,
+          planSeleccionadoId
+        );
+        if (response.data) {
+          setEstudiante(response.data.estudiante);
+          setSituacionAcademica(reconstruirSituacionAcademica(response.data));
+          setPlanesDisponibles(response.data.planesDisponibles || []);
         }
+      } catch (errorCargar) {
+        console.error('Error al recargar datos:', errorCargar);
       } finally {
         setLoading(false);
       }
     };
-
-    cargarDatos();
-  }, [estudianteActual?.id, carreraSeleccionadaId, planSeleccionadoId]);
+    reload();
+  }, [carreraSeleccionadaId, planSeleccionadoId]);
 
   // Función para cambiar el estado de una materia
   const handleCambiarEstadoMateria = async (materiaId, nuevoEstado, confirmarCascada = false) => {
@@ -552,13 +564,6 @@ export const EstudianteMaterias = () => {
     <PageContainer padding={3}>
       {/* Header */}
       <Box display="flex" alignItems="center" mb={3}>
-        <Button 
-          startIcon={<ArrowBackIcon />} 
-          onClick={() => navigate('/mi-perfil')}
-          sx={{ mr: 2 }}
-        >
-          Mi Perfil
-        </Button>
         <Box flexGrow={1}>
           <Typography variant="h4">
             Materias de {estudiante?.nombre} {estudiante?.apellido}
