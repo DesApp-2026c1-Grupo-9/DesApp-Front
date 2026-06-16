@@ -5,7 +5,7 @@ import {
   Box, Typography, Card, CardContent, Button, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
   Alert, Tabs, Tab, Grid, Avatar, ButtonGroup,
-  Select, MenuItem, FormControl, Dialog, DialogActions,
+  Select, MenuItem, FormControl, Dialog, DialogActions, Menu,
   DialogContent, DialogContentText, DialogTitle, List, ListItem,
   ListItemText, ListItemIcon, Tooltip, CircularProgress
 } from '@mui/material';
@@ -18,7 +18,8 @@ import {
   Warning as WarningIcon,
   Book as BookIcon,
   AutoAwesome as AutoAwesomeIcon,
-  UploadFile as UploadFileIcon
+  UploadFile as UploadFileIcon,
+  ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +31,11 @@ export const EstudianteMaterias = () => {
   const { estudianteActual, loading: authLoading } = useAuth();
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
+  const [carrerasDisponibles, setCarrerasDisponibles] = useState([]);
+  const [carreraSeleccionadaId, setCarreraSeleccionadaId] = useState('');
+  const [anchorCarreraEl, setAnchorCarreraEl] = useState(null);
+  const [planesDisponibles, setPlanesDisponibles] = useState([]);
+  const [planSeleccionadoId, setPlanSeleccionadoId] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -258,37 +264,81 @@ export const EstudianteMaterias = () => {
     );
   };
 
+  const cargarPlan = async (idEstudiante, idCarrera = null, idPlan = null) => {
+    const response = await EstudianteService.obtenerPlanEstudios(
+      idEstudiante,
+      idCarrera || undefined,
+      idPlan || undefined
+    );
+
+    if (response.data) {
+      setEstudiante(response.data.estudiante);
+      setSituacionAcademica(reconstruirSituacionAcademica(response.data));
+
+      const disponibles = response.data.carrerasDisponibles || [];
+      setCarrerasDisponibles(disponibles);
+
+      const planes = response.data.planesDisponibles || [];
+      setPlanesDisponibles(planes);
+
+      if (!carreraSeleccionadaId) {
+        const carreraActivaId = response.data.carrera?.id;
+        if (carreraActivaId) {
+          setCarreraSeleccionadaId(String(carreraActivaId));
+        }
+      }
+
+      if (!planSeleccionadoId) {
+        const planActivoId = response.data.planDeEstudio?.id;
+        if (planActivoId) {
+          setPlanSeleccionadoId(String(planActivoId));
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    setPlanSeleccionadoId('');
+  }, [carreraSeleccionadaId]);
+
   useEffect(() => {
     const cargarDatos = async () => {
       if (!estudianteActual?.id) {
         setEstudiante(null);
         setSituacionAcademica(null);
+        setCarrerasDisponibles([]);
+        setCarreraSeleccionadaId('');
+        setPlanesDisponibles([]);
+        setPlanSeleccionadoId('');
         setError(null);
         setLoading(false);
         return;
       }
-      
+
       try {
         setLoading(true);
         setError(null);
-        
-        // Cargar datos del plan de materias desde el backend
-        const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
-        
-        if (response.data) {
-          setEstudiante(response.data.estudiante);
-          setSituacionAcademica(reconstruirSituacionAcademica(response.data));
+        await cargarPlan(
+          estudianteActual.id,
+          carreraSeleccionadaId || null,
+          planSeleccionadoId || null
+        );
+      } catch (errorCargar) {
+        console.error('Error al cargar datos del estudiante:', errorCargar);
+        if (planSeleccionadoId) {
+          setPlanSeleccionadoId('');
+        } else if (carreraSeleccionadaId) {
+          setCarreraSeleccionadaId('');
+        } else {
+          setError('Error al cargar los datos del estudiante');
         }
-      } catch (error) {
-        console.error('Error al cargar datos del estudiante:', error);
-        setError('Error al cargar los datos del estudiante');
       } finally {
         setLoading(false);
       }
     };
 
     cargarDatos();
-  }, [estudianteActual?.id]);
+  }, [estudianteActual?.id, carreraSeleccionadaId, planSeleccionadoId]);
 
   // Función para cambiar el estado de una materia
   const handleCambiarEstadoMateria = async (materiaId, nuevoEstado, confirmarCascada = false) => {
@@ -300,16 +350,17 @@ export const EstudianteMaterias = () => {
         estudianteActual.id, 
         materiaId, 
         estadoMapeado,
-        confirmarCascada
+        confirmarCascada,
+        planSeleccionadoId || null
       );
       
       // Recargar los datos para reflejar el cambio
-      const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
-      if (response.data) {
-        setSituacionAcademica(reconstruirSituacionAcademica(response.data));
-        
-        console.log(`Materia actualizada exitosamente: ${nuevoEstado}`);
-      }
+      await cargarPlan(
+        estudianteActual.id,
+        carreraSeleccionadaId || null,
+        planSeleccionadoId || null
+      );
+      console.log(`Materia actualizada exitosamente: ${nuevoEstado}`);
     } catch (error) {
       console.error('Error al actualizar materia:', error);
       
@@ -334,7 +385,7 @@ export const EstudianteMaterias = () => {
           accion: obtenerAccionEstado(nuevoEstado)
         });
       } else {
-        setError('Error al actualizar el estado de la materia');
+        setError(error.message || 'Error al actualizar el estado de la materia');
       }
     }
   };
@@ -421,11 +472,11 @@ export const EstudianteMaterias = () => {
       setImportResultado(result);
 
       // Recargar datos
-      const response = await EstudianteService.obtenerPlanEstudios(estudianteActual.id);
-      if (response.data) {
-        setEstudiante(response.data.estudiante);
-        setSituacionAcademica(reconstruirSituacionAcademica(response.data));
-      }
+      await cargarPlan(
+        estudianteActual.id,
+        carreraSeleccionadaId || null,
+        planSeleccionadoId || null
+      );
     } catch (err) {
       setImportError(err.message);
     } finally {
@@ -512,10 +563,75 @@ export const EstudianteMaterias = () => {
           <Typography variant="h4">
             Materias de {estudiante?.nombre} {estudiante?.apellido}
           </Typography>
-          <Typography variant="subtitle1" color="textSecondary">
-            {situacionAcademica?.carrera?.nombre || 'Sin carrera asignada'}
-          </Typography>
+          {carrerasDisponibles.length > 0 ? (
+            <>
+              <Button
+                onClick={(e) => setAnchorCarreraEl(e.currentTarget)}
+                endIcon={<ExpandMoreIcon />}
+                sx={{
+                  mt: 0.5,
+                  minWidth: 300,
+                  justifyContent: 'space-between',
+                  bgcolor: 'background.paper',
+                  boxShadow: 1,
+                  borderRadius: 1,
+                  color: 'text.primary',
+                  textTransform: 'none',
+                  px: 1.5,
+                  py: 0.8,
+                  '&:hover': {
+                    bgcolor: 'background.paper',
+                    boxShadow: 2,
+                  },
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Avatar sx={{ width: 24, height: 24, bgcolor: 'primary.main' }}>
+                    <SchoolIcon sx={{ fontSize: 16 }} />
+                  </Avatar>
+                  <Typography variant="body2" fontWeight="500">
+                    {carrerasDisponibles.find((item) => String(item.id) === String(carreraSeleccionadaId))?.nombre ||
+                      situacionAcademica?.carrera?.nombre ||
+                      'Seleccionar carrera'}
+                  </Typography>
+                </Box>
+              </Button>
+              <Menu
+                anchorEl={anchorCarreraEl}
+                open={Boolean(anchorCarreraEl)}
+                onClose={() => setAnchorCarreraEl(null)}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+                PaperProps={{ sx: { mt: 1, minWidth: 300 } }}
+              >
+                {carrerasDisponibles.map((carrera) => (
+                  <MenuItem
+                    key={`selector-carrera-${carrera.id}`}
+                    selected={String(carrera.id) === String(carreraSeleccionadaId)}
+                    onClick={() => {
+                      setCarreraSeleccionadaId(String(carrera.id));
+                      setAnchorCarreraEl(null);
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Avatar sx={{ width: 28, height: 28, bgcolor: 'primary.main' }}>
+                        <SchoolIcon sx={{ fontSize: 16 }} />
+                      </Avatar>
+                      <Box>
+                        <Typography>{carrera.nombre}</Typography>
+                      </Box>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Menu>
+            </>
+          ) : (
+            <Typography variant="subtitle1" color="textSecondary">
+              {situacionAcademica?.carrera?.nombre || 'Sin carrera asignada'}
+            </Typography>
+          )}
         </Box>
+
         <Box display="flex" gap={1}>
           <Button
             variant="outlined"
@@ -640,7 +756,19 @@ export const EstudianteMaterias = () => {
           {importError && <Alert severity="error" sx={{ mt: 2 }}>{importError}</Alert>}
           {importResultado && (
             <Box mt={2}>
-              <Alert severity="success" sx={{ mb: 1 }}>{importResultado.message}</Alert>
+              <Alert
+                severity={
+                  (importResultado.data?.resumen?.importadas || 0) > 0
+                    ? (importResultado.data?.resumen?.errores || 0) > 0 ||
+                      (importResultado.data?.resumen?.ignoradas || 0) > 0
+                      ? 'warning'
+                      : 'success'
+                    : 'error'
+                }
+                sx={{ mb: 1 }}
+              >
+                {importResultado.message}
+              </Alert>
               {importResultado.data?.ignoradas?.length > 0 && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
                   {importResultado.data.ignoradas.length} filas ignoradas (estado inválido o nombre vacío)

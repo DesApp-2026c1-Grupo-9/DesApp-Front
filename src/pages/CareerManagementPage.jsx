@@ -1,13 +1,58 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, CardContent, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Accordion, AccordionSummary, AccordionDetails, List, ListItem, ListItemText, CircularProgress, Alert } from '@mui/material';
+import { Box, Card, CardContent, Grid, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Chip, Accordion, AccordionSummary, AccordionDetails, List, ListItem, ListItemText, CircularProgress, Alert, Button, Stack, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@mui/material';
 import { School, ExpandMore, Business, Schedule, Assignment } from '@mui/icons-material';
 import { PageContainer } from '../components/ui';
 import api from '../api/axiosConfig';
+import { useAuth } from '../context/AuthContext';
+import EstudianteService from '../services/EstudianteService';
 
 export function CareerManagementPage() {
+  const { estudianteActual } = useAuth();
   const [carreras, setCarreras] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [carrerasEstudiante, setCarrerasEstudiante] = useState([]);
+  const [inscripcionFeedback, setInscripcionFeedback] = useState(null);
+  const [inscripcionLoadingId, setInscripcionLoadingId] = useState(null);
+  const [elegibilidad, setElegibilidad] = useState(null);
+  const [dialogBaja, setDialogBaja] = useState({
+    abierto: false,
+    carreraId: null,
+    carreraNombre: '',
+  });
+  const [bajaLoading, setBajaLoading] = useState(false);
+
+  const estudianteId = estudianteActual?.id;
+
+  const cargarCarrerasEstudiante = async () => {
+    if (!estudianteId) {
+      setCarrerasEstudiante([]);
+      return;
+    }
+
+    try {
+      const response = await EstudianteService.obtenerEstudiante(estudianteId);
+      setCarrerasEstudiante(response?.data?.carreras || []);
+    } catch {
+      setCarrerasEstudiante(estudianteActual?.carreras || []);
+    }
+  };
+
+  const cargarElegibilidad = async () => {
+    if (!estudianteId) {
+      setElegibilidad(null);
+      return;
+    }
+
+    try {
+      const response = await EstudianteService.obtenerElegibilidadInscripcion(
+        estudianteId
+      );
+      setElegibilidad(response?.data || null);
+    } catch {
+      setElegibilidad(null);
+    }
+  };
 
   useEffect(() => {
     const fetchCarreras = async () => {
@@ -16,6 +61,8 @@ export function CareerManagementPage() {
         setError(null);
         const res = await api.get('/api/carreras', { params: { limit: 100 } });
         setCarreras(res.data.data || []);
+        await cargarCarrerasEstudiante();
+        await cargarElegibilidad();
       } catch (err) {
         console.error('Error al cargar carreras:', err);
         setError('No se pudieron cargar las carreras. Verifique la conexión con el servidor.');
@@ -24,7 +71,7 @@ export function CareerManagementPage() {
       }
     };
     fetchCarreras();
-  }, []);
+  }, [estudianteId]);
 
   const getEstadoPlanColor = (estado) => {
     switch (estado) {
@@ -40,6 +87,111 @@ export function CareerManagementPage() {
   const planesVigentes = carreras.reduce((total, carrera) =>
     total + (carrera.planesEstudio?.filter(plan => plan.estado === 'vigente').length || 0), 0
   );
+  const alcanzoMaximoCarreras = carrerasEstudiante.length >= 2;
+  const puedeInscribirseSegunRegla = elegibilidad?.puedeInscribirse ?? !alcanzoMaximoCarreras;
+  const esTecnicatura = (carrera) =>
+    /tecnicatura/i.test(`${carrera?.nombre || ''} ${carrera?.titulo || ''}`);
+  const carreraBaseActual = carrerasEstudiante[0] || null;
+  const puedeInscribirseEnCarrera = (carrera) => {
+    if (estaInscripto(carrera.id) || alcanzoMaximoCarreras) {
+      return false;
+    }
+
+    if (carrerasEstudiante.length === 0) {
+      return true;
+    }
+
+    if (carrerasEstudiante.length === 1) {
+      const baseEsTecnicatura = esTecnicatura(carreraBaseActual);
+      const destinoEsTecnicatura = esTecnicatura(carrera);
+
+      if (!baseEsTecnicatura && destinoEsTecnicatura) {
+        return true;
+      }
+
+      if (baseEsTecnicatura && destinoEsTecnicatura) {
+        return (elegibilidad?.porcentajeCarreraActual ?? 0) > 50;
+      }
+
+      return (elegibilidad?.porcentajeCarreraActual ?? 0) > 60;
+    }
+
+    return false;
+  };
+  const bloquearInscripcion = (carrera) => !puedeInscribirseEnCarrera(carrera);
+
+  const estaInscripto = (carreraId) =>
+    carrerasEstudiante.some((carrera) => Number(carrera.id) === Number(carreraId));
+
+  const handleInscribirse = async (carreraId) => {
+    if (!estudianteId) return;
+
+    try {
+      setInscripcionFeedback(null);
+      setInscripcionLoadingId(carreraId);
+
+      const response = await EstudianteService.inscribirEnCarrera(estudianteId, carreraId);
+      setInscripcionFeedback({
+        severity: 'success',
+        message: response?.message || 'Inscripción completada correctamente.',
+      });
+      await cargarCarrerasEstudiante();
+      await cargarElegibilidad();
+    } catch (inscribirError) {
+      setInscripcionFeedback({
+        severity: 'error',
+        message: inscribirError.message || 'No se pudo completar la inscripción.',
+      });
+    } finally {
+      setInscripcionLoadingId(null);
+    }
+  };
+
+  const abrirDialogoBaja = (carrera) => {
+    setDialogBaja({
+      abierto: true,
+      carreraId: carrera.id,
+      carreraNombre: carrera.nombre,
+    });
+  };
+
+  const cerrarDialogoBaja = () => {
+    setDialogBaja({
+      abierto: false,
+      carreraId: null,
+      carreraNombre: '',
+    });
+  };
+
+  const confirmarBajaCarrera = async () => {
+    if (!estudianteId || !dialogBaja.carreraId) return;
+
+    try {
+      setBajaLoading(true);
+      setInscripcionFeedback(null);
+
+      const response = await EstudianteService.darDeBajaCarrera(
+        estudianteId,
+        dialogBaja.carreraId
+      );
+
+      setInscripcionFeedback({
+        severity: 'success',
+        message: response?.message || 'Se dio de baja la carrera correctamente.',
+      });
+
+      await cargarCarrerasEstudiante();
+      await cargarElegibilidad();
+      cerrarDialogoBaja();
+    } catch (bajaError) {
+      setInscripcionFeedback({
+        severity: 'error',
+        message: bajaError.message || 'No se pudo dar de baja la carrera.',
+      });
+    } finally {
+      setBajaLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -66,6 +218,61 @@ export function CareerManagementPage() {
           Gestión de Carreras y Planes de Estudio
         </Typography>
       </Box>
+
+      {inscripcionFeedback && (
+        <Alert severity={inscripcionFeedback.severity} sx={{ mb: 3 }}>
+          {inscripcionFeedback.message}
+        </Alert>
+      )}
+
+      {alcanzoMaximoCarreras && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          Ya alcanzaste el máximo permitido de 2 carreras.
+        </Alert>
+      )}
+
+      {!alcanzoMaximoCarreras && elegibilidad && !elegibilidad.puedeInscribirse && !(
+        carrerasEstudiante.length === 1 && carreraBaseActual && !esTecnicatura(carreraBaseActual)
+      ) && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          {elegibilidad.message}
+        </Alert>
+      )}
+
+      <Card sx={{ mb: 3, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            Mi inscripción a carreras
+          </Typography>
+
+          {carrerasEstudiante.length === 0 ? (
+            <Alert severity="info">
+              Todavía no estás inscripto en ninguna carrera. Seleccioná una de la lista para anotarte.
+            </Alert>
+          ) : (
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+              {carrerasEstudiante.map((carrera) => (
+                <Box key={`carrera-est-${carrera.id}`} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Chip
+                    label={carrera.nombre}
+                    color="primary"
+                    variant="filled"
+                  />
+                  <Button
+                    size="small"
+                    variant="text"
+                    color="error"
+                    onClick={() => abrirDialogoBaja(carrera)}
+                    disabled={carrerasEstudiante.length <= 1}
+                  >
+                    Dar de baja
+                  </Button>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Resumen General */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -122,6 +329,25 @@ export function CareerManagementPage() {
                     <Business sx={{ fontSize: 16, mr: 0.5, verticalAlign: 'middle' }} />
                     {carrera.instituto} • Duración: {carrera.duracion} años
                   </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 2 }}>
+                  {estaInscripto(carrera.id) ? (
+                    <Chip size="small" color="success" label="Inscripto" />
+                  ) : (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleInscribirse(carrera.id);
+                      }}
+                      disabled={
+                        inscripcionLoadingId === carrera.id || bloquearInscripcion(carrera)
+                      }
+                    >
+                      {inscripcionLoadingId === carrera.id ? 'Inscribiendo...' : 'Inscribirme'}
+                    </Button>
+                  )}
                 </Box>
               </AccordionSummary>
 
@@ -200,6 +426,21 @@ export function CareerManagementPage() {
           ))}
         </CardContent>
       </Card>
+
+      <Dialog open={dialogBaja.abierto} onClose={cerrarDialogoBaja} maxWidth="xs" fullWidth>
+        <DialogTitle>Confirmar baja de carrera</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {`¿Estás seguro que querés darte de baja de ${dialogBaja.carreraNombre}? Esta acción puede impactar en tu plan académico.`}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={cerrarDialogoBaja} disabled={bajaLoading}>Cancelar</Button>
+          <Button color="error" variant="contained" onClick={confirmarBajaCarrera} disabled={bajaLoading}>
+            {bajaLoading ? 'Dando de baja...' : 'Confirmar baja'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 }

@@ -34,9 +34,17 @@ class EstudianteService {
   /**
    * Obtiene las materias y situación académica del estudiante desde el backend
    */
-  static async obtenerMateriasEstudiante(id) {
+  static async obtenerMateriasEstudiante(id, carreraId = null, planId = null) {
     try {
-      const response = await api.get(`/api/estudiantes/${id}/plan-materias`);
+      const response = await api.get(`/api/estudiantes/${id}/plan-materias`, {
+        params:
+          carreraId || planId
+            ? {
+                ...(carreraId ? { carreraId } : {}),
+                ...(planId ? { planId } : {}),
+              }
+            : undefined,
+      });
       return response.data;
     } catch (error) {
       console.error(`Error al obtener materias del estudiante ${id}:`, error);
@@ -47,9 +55,22 @@ class EstudianteService {
   /**
    * Obtiene el plan de estudios del estudiante desde el backend
    */
-  static async obtenerPlanEstudios(id) {
+  static async obtenerPlanEstudios(id, carreraId = null, planId = null) {
     try {
-      const response = await api.get(`/api/estudiantes/${id}/plan-materias`);
+      // IMPORTANTE: Si se especifica carrera, ignora el plan anterior
+      // para evitar errores 400 (plan no pertenece a carrera)
+      const params =
+        carreraId
+          ? { carreraId }
+          : planId
+          ? { planId }
+          : undefined;
+
+      console.log(`📡 obtenerPlanEstudios - ID: ${id}, carreraId: ${carreraId}, planId: ${planId} => params enviados:`, params);
+
+      const response = await api.get(`/api/estudiantes/${id}/plan-materias`, {
+        params,
+      });
       return response.data;
     } catch (error) {
       console.error(`Error al obtener plan de estudios del estudiante ${id}:`, error);
@@ -138,11 +159,21 @@ class EstudianteService {
   /**
    * Actualiza el estado de una materia para un estudiante
    */
-  static async actualizarEstadoMateria(estudianteId, materiaId, nuevoEstado, confirmarCascada = false) {
+  static async actualizarEstadoMateria(
+    estudianteId,
+    materiaId,
+    nuevoEstado,
+    confirmarCascada = false,
+    planId = null
+  ) {
     try {
       const response = await api.patch(
         `/api/estudiantes/${estudianteId}/materias/${materiaId}/estado`,
-        { estado: nuevoEstado, confirmarCascada }
+        {
+          estado: nuevoEstado,
+          confirmarCascada,
+          ...(planId ? { planId } : {}),
+        }
       );
       return response.data;
     } catch (error) {
@@ -164,7 +195,9 @@ class EstudianteService {
         };
       }
       
-      throw new Error('Error al actualizar el estado de la materia');
+      throw new Error(
+        error.response?.data?.message || 'Error al actualizar el estado de la materia'
+      );
     }
   }
 
@@ -178,6 +211,54 @@ class EstudianteService {
     } catch (error) {
       console.error('Error al obtener carreras:', error);
       throw new Error('Error al cargar las carreras');
+    }
+  }
+
+  /**
+   * Inscribe un estudiante en una carrera
+   */
+  static async inscribirEnCarrera(estudianteId, carreraId) {
+    try {
+      const response = await api.post(`/api/estudiantes/${estudianteId}/carreras`, {
+        carreraId,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error al inscribir carrera:', error);
+      throw new Error(error.response?.data?.message || 'No se pudo completar la inscripción en la carrera');
+    }
+  }
+
+  /**
+   * Da de baja una carrera para un estudiante
+   */
+  static async darDeBajaCarrera(estudianteId, carreraId) {
+    try {
+      const response = await api.delete(
+        `/api/estudiantes/${estudianteId}/carreras/${carreraId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error al dar de baja carrera:', error);
+      throw new Error(error.response?.data?.message || 'No se pudo dar de baja la carrera');
+    }
+  }
+
+  /**
+   * Obtiene elegibilidad para inscripción de carreras
+   */
+  static async obtenerElegibilidadInscripcion(estudianteId) {
+    try {
+      const response = await api.get(
+        `/api/estudiantes/${estudianteId}/carreras/elegibilidad`
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener elegibilidad de inscripción:', error);
+      throw new Error(
+        error.response?.data?.message ||
+          'No se pudo validar la elegibilidad de inscripción'
+      );
     }
   }
 
@@ -230,9 +311,11 @@ class EstudianteService {
   /**
    * Obtiene el análisis del asistente académico para un estudiante
    */
-  static async obtenerAsistenteAcademico(estudianteId) {
+  static async obtenerAsistenteAcademico(estudianteId, options = {}) {
     try {
-      const response = await api.get(`/api/estudiantes/${estudianteId}/asistente`);
+      const response = await api.get(`/api/estudiantes/${estudianteId}/asistente`, {
+        params: options,
+      });
       return response.data;
     } catch (error) {
       console.error('Error al obtener asistente académico:', error);
