@@ -2,6 +2,8 @@ import { useState, useCallback } from 'react';
 import * as XLSX from 'xlsx';
 import EstudianteService from '../services/EstudianteService';
 
+const EXTENSIONES_VALIDAS = ['.xlsx', '.xls', '.csv', '.ods'];
+
 export function useImportarMaterias({ estudianteId, onImportComplete }) {
   const [dialogImport, setDialogImport] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
@@ -15,9 +17,16 @@ export function useImportarMaterias({ estudianteId, onImportComplete }) {
     setImportError(null);
     setImportResultado(null);
 
+    const fileName = file.name.toLowerCase();
+    const ext = fileName.slice(fileName.lastIndexOf('.'));
+    if (!EXTENSIONES_VALIDAS.includes(ext)) {
+      setImportError(`Formato no soportado. Usá: ${EXTENSIONES_VALIDAS.join(', ')}`);
+      setImportLoading(false);
+      return;
+    }
+
     try {
-      const fileName = file.name.toLowerCase();
-      const isCSV = fileName.endsWith('.csv');
+      const isCSV = ext === '.csv';
       let rows;
 
       if (isCSV) {
@@ -61,7 +70,11 @@ export function useImportarMaterias({ estudianteId, onImportComplete }) {
         await onImportComplete();
       }
     } catch (err) {
-      setImportError(err.message);
+      setImportError(
+        err.message?.includes('XLSX') || err.message?.includes('read')
+          ? 'El archivo no se puede leer. Verificá que no esté dañado o que sea un formato válido.'
+          : err.message
+      );
     } finally {
       setImportLoading(false);
       if (e.target) e.target.value = '';
