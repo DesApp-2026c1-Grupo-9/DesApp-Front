@@ -164,12 +164,21 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
       {isSesionEvento ? (
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-            <Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>
+            <Avatar
+              src={post.autor?.avatar}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
+              onClick={() => navigate('/perfil/' + post.autor?.id)}
+            >
               {post.autor?.nombre?.charAt(0)}
             </Avatar>
             <Box sx={{ flex: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                <Typography variant="subtitle1" fontWeight="bold">
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="bold"
+                  sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                  onClick={() => navigate('/perfil/' + post.autor?.id)}
+                >
                   {post.autor?.nombre} {post.autor?.apellido || ''}
                 </Typography>
                 <Chip
@@ -237,12 +246,21 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         </CardContent>
       ) : isEvento ? (
         <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>
+          <Avatar
+            src={post.autor?.avatar}
+            sx={{ width: 45, height: 45, cursor: 'pointer' }}
+            onClick={() => navigate('/perfil/' + post.autor?.id)}
+          >
             {post.autor?.nombre?.charAt(0)}
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                onClick={() => navigate('/perfil/' + post.autor?.id)}
+              >
                 {post.autor?.nombre} {post.autor?.apellido}
               </Typography>
               <Chip
@@ -273,12 +291,21 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
       ) : (
         <CardHeader
           avatar={
-            <Avatar src={post.autor?.avatar} sx={{ width: 45, height: 45 }}>
+            <Avatar
+              src={post.autor?.avatar}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
+              onClick={() => navigate('/perfil/' + post.autor?.id)}
+            >
               {post.autor?.nombre?.charAt(0)}
             </Avatar>
           }
           title={
-            <Typography variant="subtitle1" fontWeight="bold">
+            <Typography
+              variant="subtitle1"
+              fontWeight="bold"
+              sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+              onClick={() => navigate('/perfil/' + post.autor?.id)}
+            >
               {post.autor?.nombre} {post.autor?.apellido}
             </Typography>
           }

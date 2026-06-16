@@ -12,6 +12,9 @@ import { StudentProfilePage } from '../pages/StudentProfilePage';
 import { CareerManagementPage } from '../pages/CareerManagementPage';
 import { SubjectManagementPage } from '../pages/SubjectManagementPage';
 import { EstudianteDashboard } from '../pages/EstudianteDashboard';
+import { ConfiguracionPerfil } from '../pages/ConfiguracionPerfil';
+import { PerfilUsuario } from '../pages/PerfilUsuario';
+import { MateriasVisitante } from '../pages/MateriasVisitante';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import Materiales from '../pages/Materiales';
@@ -51,6 +54,9 @@ const AppRouter = () => {
                 <Route path="conexiones" element={<Conexiones />} />
               </Route>
               <Route path="/mi-perfil" element={<EstudianteDashboard />} />
+              <Route path="/configuracion" element={<ConfiguracionPerfil />} />
+              <Route path="/perfil/:id" element={<PerfilUsuario />} />
+              <Route path="/perfil/:id/materias" element={<MateriasVisitante />} />
               <Route path="/academico" element={<AcademicoPage />}>
                 <Route index element={<Navigate to="/academico/carreras" replace />} />
                 <Route path="mis-materias" element={<EstudianteMaterias />} />
