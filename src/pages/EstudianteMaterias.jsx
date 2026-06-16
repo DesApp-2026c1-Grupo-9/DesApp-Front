@@ -54,6 +54,8 @@ export const EstudianteMaterias = () => {
     handleCloseImportDialog,
   } = useImportarMaterias({
     estudianteId: estudianteActual?.id,
+    carreraId: carreraSeleccionadaId || undefined,
+    planId: planSeleccionadoId || undefined,
     onImportComplete: async () => {
       await cargarPlan(
         estudianteActual.id,

@@ -3,8 +3,9 @@ import * as XLSX from 'xlsx';
 import EstudianteService from '../services/EstudianteService';
 
 const EXTENSIONES_VALIDAS = ['.xlsx', '.xls', '.csv', '.ods'];
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 
-export function useImportarMaterias({ estudianteId, onImportComplete }) {
+export function useImportarMaterias({ estudianteId, carreraId, planId, onImportComplete }) {
   const [dialogImport, setDialogImport] = useState(false);
   const [importLoading, setImportLoading] = useState(false);
   const [importResultado, setImportResultado] = useState(null);
@@ -16,6 +17,12 @@ export function useImportarMaterias({ estudianteId, onImportComplete }) {
     setImportLoading(true);
     setImportError(null);
     setImportResultado(null);
+
+    if (file.size > MAX_FILE_SIZE) {
+      setImportError(`El archivo supera el tamaño máximo de 25 MB.`);
+      setImportLoading(false);
+      return;
+    }
 
     const fileName = file.name.toLowerCase();
     const ext = fileName.slice(fileName.lastIndexOf('.'));
@@ -62,7 +69,9 @@ export function useImportarMaterias({ estudianteId, onImportComplete }) {
 
       const result = await EstudianteService.importarMateriasDesdeExcel(
         estudianteId,
-        validas
+        validas,
+        carreraId,
+        planId
       );
       setImportResultado(result);
 
@@ -79,7 +88,7 @@ export function useImportarMaterias({ estudianteId, onImportComplete }) {
       setImportLoading(false);
       if (e.target) e.target.value = '';
     }
-  }, [estudianteId, onImportComplete]);
+  }, [estudianteId, carreraId, planId, onImportComplete]);
 
   const handleDescargarTemplate = useCallback((materiasEditables) => {
     if (!materiasEditables || materiasEditables.length === 0) return;

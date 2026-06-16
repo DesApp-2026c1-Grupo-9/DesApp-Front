@@ -434,6 +434,15 @@ export default function AsistenteAcademico() {
   const [error, setError] = useState(null);
 
   const [materiasProyeccionSeleccionadas, setMateriasProyeccionSeleccionadas] = useState([]);
+  const [alcancePlanificacion, setAlcancePlanificacion] = useState('intercalado');
+  const [horasPlanificador, setHorasPlanificador] = useState(12);
+  const [planSugerido, setPlanSugerido] = useState(null);
+  const [nombrePlan, setNombrePlan] = useState('');
+  const [planesGuardados, setPlanesGuardados] = useState([]);
+  const [planActivoId, setPlanActivoId] = useState(null);
+  const [planificadorFeedback, setPlanificadorFeedback] = useState(null);
+  const [planActionLoadingId, setPlanActionLoadingId] = useState(null);
+  const [planActionFeedback, setPlanActionFeedback] = useState(null);
 
   // Hook compartido para importar materias desde Excel/CSV
   const {
@@ -447,19 +456,11 @@ export default function AsistenteAcademico() {
     handleCloseImportDialog,
   } = useImportarMaterias({
     estudianteId: estudianteActual?.id,
+    carreraId: alcancePlanificacion !== 'intercalado' ? Number(alcancePlanificacion) : undefined,
     onImportComplete: async () => {
       await cargarAnalisis();
     },
   });
-  const [horasPlanificador, setHorasPlanificador] = useState(12);
-  const [planSugerido, setPlanSugerido] = useState(null);
-  const [nombrePlan, setNombrePlan] = useState('');
-  const [planesGuardados, setPlanesGuardados] = useState([]);
-  const [planActivoId, setPlanActivoId] = useState(null);
-  const [planificadorFeedback, setPlanificadorFeedback] = useState(null);
-  const [planActionLoadingId, setPlanActionLoadingId] = useState(null);
-  const [planActionFeedback, setPlanActionFeedback] = useState(null);
-  const [alcancePlanificacion, setAlcancePlanificacion] = useState('intercalado');
 
   const cargarAnalisis = useCallback(async () => {
     if (!estudianteActual?.id) {
