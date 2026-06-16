@@ -350,7 +350,8 @@ export const EstudianteMaterias = () => {
         estudianteActual.id, 
         materiaId, 
         estadoMapeado,
-        confirmarCascada
+        confirmarCascada,
+        planSeleccionadoId || null
       );
       
       // Recargar los datos para reflejar el cambio

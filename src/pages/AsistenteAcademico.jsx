@@ -8,7 +8,7 @@ import {
   AccordionDetails, Divider, Dialog, DialogTitle, DialogContent,
   DialogActions, List, ListItem, ListItemText, ListItemIcon,
   TextField, FormControlLabel, Checkbox, IconButton, Snackbar,
-  CircularProgress,
+  CircularProgress, MenuItem,
 } from '@mui/material';
 import {
   ExpandMore, CheckCircle, Schedule, School, TrendingUp,
@@ -447,6 +447,7 @@ export default function AsistenteAcademico() {
   const [planificadorFeedback, setPlanificadorFeedback] = useState(null);
   const [planActionLoadingId, setPlanActionLoadingId] = useState(null);
   const [planActionFeedback, setPlanActionFeedback] = useState(null);
+  const [alcancePlanificacion, setAlcancePlanificacion] = useState('intercalado');
 
   const cargarAnalisis = useCallback(async () => {
     if (!estudianteActual?.id) {
@@ -456,14 +457,21 @@ export default function AsistenteAcademico() {
     try {
       setLoading(true);
       setError(null);
-      const response = await EstudianteService.obtenerAsistenteAcademico(estudianteActual.id);
+      const params =
+        alcancePlanificacion === 'intercalado'
+          ? { modo: 'intercalado' }
+          : { modo: 'una', carreraId: Number(alcancePlanificacion) };
+      const response = await EstudianteService.obtenerAsistenteAcademico(
+        estudianteActual.id,
+        params
+      );
       setAnalisis(response.data);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
-  }, [estudianteActual?.id]);
+  }, [estudianteActual?.id, alcancePlanificacion]);
 
   useEffect(() => {
     cargarAnalisis();
@@ -548,6 +556,13 @@ export default function AsistenteAcademico() {
   if (loading) return <PageContainer centered padding={3}><LoadingSpinner message="Analizando situación académica..." /></PageContainer>;
   if (error) return <PageContainer padding={3}><EmptyState title="Error" message={error} icon="error" actionLabel="Reintentar" onAction={cargarAnalisis} /></PageContainer>;
   if (!analisis) return <PageContainer padding={3}><EmptyState title="Sin datos" message="No se encontró información académica" icon="inbox" /></PageContainer>;
+
+  const carrerasDisponiblesAsistente = analisis?.carrerasDisponibles || [];
+  const carrerasSeleccionadasAsistente = analisis?.carrerasSeleccionadas || [];
+  const subtituloAlcance =
+    analisis?.scope?.modo === 'intercalado'
+      ? ` ${carrerasSeleccionadasAsistente.map((c) => c.nombre).join(' + ')}`
+      : carrerasSeleccionadasAsistente[0]?.nombre || analisis?.carrera?.nombre || 'Sin carrera seleccionada';
 
   const {
     estudiante,
@@ -787,9 +802,24 @@ export default function AsistenteAcademico() {
             Asistente Académico
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            {estudiante?.nombre} {estudiante?.apellido} — {analisis?.carrera?.nombre}
+            {estudiante?.nombre} {estudiante?.apellido} — {subtituloAlcance}
           </Typography>
         </Box>
+        <TextField
+          select
+          size="small"
+          label="Modo de planificación"
+          value={alcancePlanificacion}
+          onChange={(e) => setAlcancePlanificacion(e.target.value)}
+          sx={{ minWidth: 320 }}
+        >
+          <MenuItem value="intercalado">Todas mis carreras</MenuItem>
+          {carrerasDisponiblesAsistente.map((carrera) => (
+            <MenuItem key={`alcance-carrera-${carrera.id}`} value={String(carrera.id)}>
+              Solo {carrera.nombre}
+            </MenuItem>
+          ))}
+        </TextField>
         <Button
           variant="outlined"
           startIcon={<UploadFile />}

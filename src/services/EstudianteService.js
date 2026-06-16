@@ -159,11 +159,21 @@ class EstudianteService {
   /**
    * Actualiza el estado de una materia para un estudiante
    */
-  static async actualizarEstadoMateria(estudianteId, materiaId, nuevoEstado, confirmarCascada = false) {
+  static async actualizarEstadoMateria(
+    estudianteId,
+    materiaId,
+    nuevoEstado,
+    confirmarCascada = false,
+    planId = null
+  ) {
     try {
       const response = await api.patch(
         `/api/estudiantes/${estudianteId}/materias/${materiaId}/estado`,
-        { estado: nuevoEstado, confirmarCascada }
+        {
+          estado: nuevoEstado,
+          confirmarCascada,
+          ...(planId ? { planId } : {}),
+        }
       );
       return response.data;
     } catch (error) {
@@ -301,9 +311,11 @@ class EstudianteService {
   /**
    * Obtiene el análisis del asistente académico para un estudiante
    */
-  static async obtenerAsistenteAcademico(estudianteId) {
+  static async obtenerAsistenteAcademico(estudianteId, options = {}) {
     try {
-      const response = await api.get(`/api/estudiantes/${estudianteId}/asistente`);
+      const response = await api.get(`/api/estudiantes/${estudianteId}/asistente`, {
+        params: options,
+      });
       return response.data;
     } catch (error) {
       console.error('Error al obtener asistente académico:', error);
