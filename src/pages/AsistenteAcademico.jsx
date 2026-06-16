@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import * as XLSX from 'xlsx';
 import {
   Box, Typography, Card, CardContent, Grid, Chip, Alert, Button,
   LinearProgress, Table, TableBody, TableCell, TableContainer,
@@ -17,6 +16,7 @@ import {
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+import { useImportarMaterias } from '../hooks/useImportarMaterias';
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 const ESTADO_COLOR = {
@@ -433,12 +433,8 @@ export default function AsistenteAcademico() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Import Excel
-  const [dialogImport, setDialogImport] = useState(false);
-  const [importLoading, setImportLoading] = useState(false);
-  const [importResultado, setImportResultado] = useState(null);
-  const [importError, setImportError] = useState(null);
   const [materiasProyeccionSeleccionadas, setMateriasProyeccionSeleccionadas] = useState([]);
+  const [alcancePlanificacion, setAlcancePlanificacion] = useState('intercalado');
   const [horasPlanificador, setHorasPlanificador] = useState(12);
   const [planSugerido, setPlanSugerido] = useState(null);
   const [nombrePlan, setNombrePlan] = useState('');
@@ -447,7 +443,24 @@ export default function AsistenteAcademico() {
   const [planificadorFeedback, setPlanificadorFeedback] = useState(null);
   const [planActionLoadingId, setPlanActionLoadingId] = useState(null);
   const [planActionFeedback, setPlanActionFeedback] = useState(null);
-  const [alcancePlanificacion, setAlcancePlanificacion] = useState('intercalado');
+
+  // Hook compartido para importar materias desde Excel/CSV
+  const {
+    dialogImport,
+    setDialogImport,
+    importLoading,
+    importResultado,
+    importError,
+    handleArchivoExcel,
+    handleDescargarTemplate,
+    handleCloseImportDialog,
+  } = useImportarMaterias({
+    estudianteId: estudianteActual?.id,
+    carreraId: alcancePlanificacion !== 'intercalado' ? Number(alcancePlanificacion) : undefined,
+    onImportComplete: async () => {
+      await cargarAnalisis();
+    },
+  });
 
   const cargarAnalisis = useCallback(async () => {
     if (!estudianteActual?.id) {
@@ -477,56 +490,7 @@ export default function AsistenteAcademico() {
     cargarAnalisis();
   }, [cargarAnalisis]);
 
-  // --- Excel import ---
-  const handleArchivoExcel = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImportLoading(true);
-    setImportError(null);
-    setImportResultado(null);
-
-    try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-      // Esperar columnas: "nombre" y "estado" (case-insensitive)
-      const materias = rows
-        .map((row) => {
-          const entries = Object.entries(row);
-          const nombreEntry = entries.find(([key]) => normalizarTextoExcel(key) === 'nombre');
-          const estadoEntry = entries.find(([key]) => normalizarTextoExcel(key) === 'estado');
-
-          const nombre = nombreEntry?.[1] || '';
-          const estado = estadoEntry?.[1] || '';
-
-          return {
-            nombre: String(nombre).trim(),
-            estado: mapearEstadoExcel(estado),
-          };
-        })
-        .filter((r) => r.nombre);
-
-      if (materias.length === 0) {
-        setImportError('El archivo no tiene filas válidas. Asegurate de que tenga columnas "nombre" y "estado".');
-        setImportLoading(false);
-        return;
-      }
-
-      const result = await EstudianteService.importarMateriasDesdeExcel(
-        estudianteActual.id,
-        materias
-      );
-      setImportResultado(result);
-      await cargarAnalisis();
-    } catch (err) {
-      setImportError(err.message);
-    } finally {
-      setImportLoading(false);
-      e.target.value = '';
-    }
-  };
+  // --- Excel import (manejado por useImportarMaterias hook) ---
 
   const materiasAnalisis = analisis?.materias || [];
   const materiasCursando = materiasAnalisis.filter((m) => m.estado === 'cursando');
@@ -1431,18 +1395,44 @@ export default function AsistenteAcademico() {
       </Snackbar>
 
       {/* Dialog de importación */}
-      <Dialog open={dialogImport} onClose={() => { setDialogImport(false); setImportResultado(null); setImportError(null); }} maxWidth="sm" fullWidth>
+      <Dialog open={dialogImport} onClose={handleCloseImportDialog} maxWidth="sm" fullWidth>
         <DialogTitle display="flex" alignItems="center" gap={1}>
-          <UploadFile /> Importar materias desde Excel
+          <UploadFile /> Importar materias
         </DialogTitle>
         <DialogContent>
-          <Typography variant="body2" color="text.secondary" mb={2}>
-            El archivo Excel debe tener dos columnas: <strong>nombre</strong> (nombre exacto de la materia) y <strong>estado</strong> (aprobada, regularizada o cursando).
-          </Typography>
-          <Button variant="outlined" component="label" startIcon={importLoading ? <CircularProgress size={16} /> : <UploadFile />} disabled={importLoading} fullWidth>
-            {importLoading ? 'Importando...' : 'Seleccionar archivo .xlsx'}
-            <input type="file" hidden accept=".xlsx,.xls,.csv" onChange={handleArchivoExcel} />
-          </Button>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Formatos soportados: <strong>.xlsx</strong>, <strong>.xls</strong>, <strong>.csv</strong>, <strong>.ods</strong>
+          </Alert>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Descargá el <strong>template</strong> con tus materias disponibles, completá la columna <strong>estado</strong> (aprobada, regularizada, cursando) e importalo.
+            <br />El archivo debe tener una columna <strong>id</strong> (ID de la materia, provisto por el template) y una columna <strong>estado</strong>.
+          </Alert>
+
+          <Box display="flex" gap={1} mb={2}>
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={importLoading ? <CircularProgress size={16} /> : <UploadFile />}
+              disabled={importLoading}
+              fullWidth
+            >
+              {importLoading ? 'Importando...' : 'Seleccionar archivo'}
+              <input type="file" hidden accept=".xlsx,.xls,.csv,.ods" onChange={handleArchivoExcel} />
+            </Button>
+            <Button
+              variant="text"
+              onClick={() => {
+                const editables = (analisis?.materias || []).filter(
+                  (m) => m.estado !== 'aprobada' && !(m.estado === 'no_cursada' && !m.disponible)
+                );
+                handleDescargarTemplate(editables);
+              }}
+              disabled={!analisis?.materias}
+            >
+              Descargar template
+            </Button>
+          </Box>
+
           {importError && <Alert severity="error" sx={{ mt: 2 }}>{importError}</Alert>}
           {importResultado && (
             <Box mt={2}>
@@ -1461,17 +1451,24 @@ export default function AsistenteAcademico() {
               </Alert>
               {importResultado.data?.ignoradas?.length > 0 && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
-                  {importResultado.data.ignoradas.length} filas ignoradas (estado inválido o nombre vacío)
+                  {importResultado.data.ignoradas.length} filas ignoradas:
+                  <List dense>
+                    {importResultado.data.ignoradas.map((e, i) => (
+                      <ListItem key={i} disablePadding>
+                        <ListItemText primary={e.razon} secondary={e.fila.nombre ? `"${e.fila.nombre}"` : ''} />
+                      </ListItem>
+                    ))}
+                  </List>
                 </Alert>
               )}
               {importResultado.data?.errores?.length > 0 && (
                 <Alert severity="error">
-                  {importResultado.data.errores.length} materias no encontradas en el sistema:
+                  {importResultado.data.errores.length} errores:
                   <List dense>
                     {importResultado.data.errores.map((e, i) => (
                       <ListItem key={i} disablePadding>
                         <ListItemIcon><School fontSize="small" /></ListItemIcon>
-                        <ListItemText primary={`"${e.fila.nombre}" — ${e.razon}`} />
+                        <ListItemText primary={e.razon} secondary={e.fila.nombre ? `"${e.fila.nombre}"` : ''} />
                       </ListItem>
                     ))}
                   </List>
@@ -1481,7 +1478,7 @@ export default function AsistenteAcademico() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setDialogImport(false); setImportResultado(null); setImportError(null); }}>Cerrar</Button>
+          <Button onClick={handleCloseImportDialog}>Cerrar</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

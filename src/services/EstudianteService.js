@@ -295,11 +295,14 @@ class EstudianteService {
   /**
    * Importa estados de materias desde un JSON (parseado del Excel en el frontend)
    */
-  static async importarMateriasDesdeExcel(estudianteId, materias) {
+  static async importarMateriasDesdeExcel(estudianteId, materias, carreraId = null, planId = null) {
     try {
+      const body = { materias };
+      if (carreraId) body.carreraId = carreraId;
+      if (planId) body.planId = planId;
       const response = await api.post(
         `/api/estudiantes/${estudianteId}/importar-materias`,
-        { materias }
+        body
       );
       return response.data;
     } catch (error) {
