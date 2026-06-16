@@ -7,8 +7,8 @@ import {
   TableHead, TableRow, Paper, Accordion, AccordionSummary,
   AccordionDetails, Divider, Dialog, DialogTitle, DialogContent,
   DialogActions, List, ListItem, ListItemText, ListItemIcon,
-  TextField, FormControlLabel, Checkbox, IconButton, Snackbar,
-  CircularProgress, MenuItem,
+  TextField, FormControl, FormControlLabel, InputLabel, Checkbox, IconButton, Snackbar,
+  CircularProgress, MenuItem, Select,
 } from '@mui/material';
 import {
   ExpandMore, CheckCircle, Schedule, School, TrendingUp,
@@ -802,30 +802,49 @@ export default function AsistenteAcademico() {
             Asistente Académico
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            {estudiante?.nombre} {estudiante?.apellido} — {subtituloAlcance}
+            {estudiante?.nombre} {estudiante?.apellido}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {subtituloAlcance}
           </Typography>
         </Box>
-        <TextField
-          select
-          size="small"
-          label="Modo de planificación"
-          value={alcancePlanificacion}
-          onChange={(e) => setAlcancePlanificacion(e.target.value)}
-          sx={{ minWidth: 320 }}
-        >
-          <MenuItem value="intercalado">Todas mis carreras</MenuItem>
-          {carrerasDisponiblesAsistente.map((carrera) => (
-            <MenuItem key={`alcance-carrera-${carrera.id}`} value={String(carrera.id)}>
-              Solo {carrera.nombre}
-            </MenuItem>
-          ))}
-        </TextField>
+        <FormControl size="small">
+          <InputLabel id="modo-planificacion-label">Modo de planificación</InputLabel>
+          <Select
+            labelId="modo-planificacion-label"
+            label="Modo de planificación"
+            value={alcancePlanificacion}
+            onChange={(e) => setAlcancePlanificacion(e.target.value)}
+            MenuProps={{
+              PaperProps: {
+                sx: {
+                  minWidth: 350,
+                },
+              },
+            }}
+            sx={{
+              minWidth: 350,
+              '& .MuiSelect-select': {
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              },
+            }}
+          >
+            <MenuItem value="intercalado">Todas mis carreras</MenuItem>
+            {carrerasDisponiblesAsistente.map((carrera) => (
+              <MenuItem key={`alcance-carrera-${carrera.id}`} value={String(carrera.id)}>
+                Solo {carrera.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <Button
           variant="outlined"
           startIcon={<UploadFile />}
           onClick={() => setDialogImport(true)}
         >
-          Importar desde Excel
+          Importar Excel
         </Button>
       </Box>
 
