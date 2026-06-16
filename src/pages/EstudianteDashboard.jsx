@@ -21,7 +21,6 @@ import { PageContainer, LoadingSpinner } from '../components/ui';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { calcularEdad } from '../utils';
 import {
-  Person as PersonIcon,
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
   Public,
@@ -61,6 +60,7 @@ export const EstudianteDashboard = () => {
   const [pubRegularizaciones, setPubRegularizaciones] = useState(true);
   const [pubAprobaciones, setPubAprobaciones] = useState(true);
   const [pubSesiones, setPubSesiones] = useState(true);
+  const [recibirEmails, setRecibirEmails] = useState(true);
 
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
@@ -80,6 +80,7 @@ export const EstudianteDashboard = () => {
       setPubRegularizaciones(preferencias.publicarRegularizaciones ?? true);
       setPubAprobaciones(preferencias.publicarAprobaciones ?? true);
       setPubSesiones(preferencias.publicarSesiones ?? true);
+      setRecibirEmails(preferencias.recibirEmails ?? true);
     }
   }, [preferencias]);
 
@@ -319,17 +320,15 @@ export const EstudianteDashboard = () => {
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
                 <Avatar 
-                  src={estudiante.avatarUrl} 
+                  src={estudiante.avatarUrl || `https://ui-avatars.com/api/?name=${estudiante.nombre}+${estudiante.apellido}&background=random`}
                   sx={{ width: 80, height: 80, mr: 2 }}
-                >
-                  <PersonIcon />
-                </Avatar>
+                ></Avatar>
                 <Box>
-                  <Typography variant="h6">
+                  <Typography variant="h5" fontWeight="bold">
                     {estudiante.nombre} {estudiante.apellido}
                   </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    ID: {estudiante.id}
+                  <Typography variant="body2" color="text.secondary">
+                    Estudiante
                   </Typography>
                 </Box>
               </Box>
@@ -448,6 +447,24 @@ export const EstudianteDashboard = () => {
 
               <Typography variant="caption" color="textSecondary" display="block" sx={{ mt: 1 }}>
                 Controla qué eventos se publican automáticamente en tu feed de novedades
+              </Typography>
+
+              <Divider sx={{ my: 2 }} />
+
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={recibirEmails}
+                    onChange={handlePublishChange('recibirEmails', setRecibirEmails)}
+                    size="small"
+                    disabled={loadingPreferencias}
+                  />
+                }
+                label="Recibir notificaciones por email"
+              />
+
+              <Typography variant="caption" color="textSecondary" display="block">
+                Recibirás un email por cada notificación generada en la plataforma
               </Typography>
             </CardContent>
           </Card>

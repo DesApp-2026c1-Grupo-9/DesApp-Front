@@ -1,12 +1,21 @@
 ﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api/axiosConfig';
+
 import { likeComentario as likeService, unlikeComentario as unlikeService } from './comentariosService';
+
+const avatarFallback = (autor) => {
+  if (!autor) return autor;
+  if (!autor.avatarUrl) {
+    autor.avatarUrl = `https://ui-avatars.com/api/?name=${autor.nombre}+${autor.apellido || ''}&background=random`;
+  }
+  return autor;
+};
 
 export const fetchComentarios = createAsyncThunk(
   'comentarios/fetchComentarios',
-  async (novedadId, { rejectWithValue }) => {
+  async ({ novedadId, usuarioId }, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/novedades/${novedadId}/comentarios`);
+      const response = await api.get(`/api/novedades/${novedadId}/comentarios?usuarioId=${usuarioId}`);
       return { novedadId, comentarios: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al cargar comentarios');
@@ -81,31 +90,42 @@ const comentariosSlice = createSlice({
   name: 'comentarios',
   initialState: {
     byNovedad: {},
-    loading: false,
+    loadingByNovedad: {},
     error: null,
   },
   reducers: {
     clearComentariosError: (state) => {
       state.error = null;
     },
+    clearNovedadComentarios: (state, action) => {
+      const novedadId = action.payload;
+      delete state.byNovedad[novedadId];
+      delete state.loadingByNovedad[novedadId];
+    },
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchComentarios.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchComentarios.pending, (state, action) => {
+        state.loadingByNovedad[action.meta.arg.novedadId] = true;
         state.error = null;
       })
       .addCase(fetchComentarios.fulfilled, (state, action) => {
-        state.loading = false;
         const { novedadId, comentarios } = action.payload;
+        state.loadingByNovedad[novedadId] = false;
         state.byNovedad[novedadId] = comentarios;
+
+        comentarios.forEach(c => {
+          avatarFallback(c.autor);
+          (c.respuestas || []).forEach(r => avatarFallback(r.autor));
+        });
       })
       .addCase(fetchComentarios.rejected, (state, action) => {
-        state.loading = false;
+        state.loadingByNovedad[action.meta.arg.novedadId] = false;
         state.error = action.payload;
       })
       .addCase(addComentario.fulfilled, (state, action) => {
         const { novedadId, comentario } = action.payload;
+        avatarFallback(comentario.autor);
         if (!state.byNovedad[novedadId]) {
           state.byNovedad[novedadId] = [];
         }
@@ -189,5 +209,5 @@ const comentariosSlice = createSlice({
   },
 });
 
-export const { clearComentariosError } = comentariosSlice.actions;
+export const { clearComentariosError, clearNovedadComentarios } = comentariosSlice.actions;
 export default comentariosSlice.reducer;

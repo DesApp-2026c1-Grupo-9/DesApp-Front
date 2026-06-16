@@ -31,13 +31,21 @@ export const formatFechaRelative = (fecha) => {
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
 
-  if (diffMins < 1) return 'ahora';
-  if (diffMins < 60) return `${diffMins}m`;
-  if (diffHours < 24) return `${diffHours}h`;
-  if (diffDays < 7) return `${diffDays}d`;
-
-  return date.toLocaleDateString();
+  if (diffMins < 1) return 'Ahora';
+  if (diffMins < 60) return `${diffMins} min`;
+  if (diffHours < 24) return `${diffHours} h`;
+  if (diffDays === 1) return '1 d';
+  if (diffDays < 7) return `${diffDays} d`;
+  if (diffWeeks === 1) return '1 sem';
+  if (diffDays < 30) return `${diffWeeks} sem`;
+  if (diffMonths === 1) return '1 mes';
+  if (diffDays < 365) return `${diffMonths} meses`;
+  if (diffYears === 1) return '1 año';
+  return `${diffYears} años`;
 };
 
 export const formatHora = (fecha) => {

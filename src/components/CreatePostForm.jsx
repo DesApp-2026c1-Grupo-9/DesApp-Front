@@ -15,7 +15,7 @@ function CreatePostForm({ onSubmit, loading, currentStudent }) {
   return (
     <Paper sx={{ p: 3, mb: 4, borderRadius: 2, boxShadow: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Avatar src={currentStudent?.avatar} sx={{ width: 40, height: 40 }}>
+        <Avatar src={currentStudent?.avatarUrl} sx={{ width: 40, height: 40 }}>
           {currentStudent?.nombre?.charAt(0)}
         </Avatar>
         <Typography variant="subtitle1" fontWeight="500">

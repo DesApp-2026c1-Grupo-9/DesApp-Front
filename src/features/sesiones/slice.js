@@ -202,7 +202,8 @@ const sesionesSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(removeSesion.fulfilled, (state, action) => {
-        state.list = state.list.filter(s => s.id !== action.payload);
+        const sesion = state.list.find(s => s.id === action.payload);
+        if (sesion) sesion.estado = 'cancelada';
       })
       .addCase(joinToSesion.pending, (state, action) => {
         state.operationLoading = { action: 'joining', sesionId: action.meta.arg.sesionId };

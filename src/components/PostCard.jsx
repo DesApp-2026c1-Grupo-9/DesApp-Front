@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -23,6 +22,8 @@ import {
   ListItemAvatar,
   ListItemText,
   Typography,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import {
   ThumbUp,
@@ -38,10 +39,9 @@ import {
   LocationOn,
 } from '@mui/icons-material';
 
-import api from '../api/axiosConfig';
-import { likeComentario, unlikeComentario } from '../features/feed/comentariosSlice';
 import { TIPO_EVENTO, TIPO_POST } from '../constants/postTypes';
-import { formatFechaRelative, formatFechaSeguro } from '../utils';
+import { formatFechaRelative } from '../utils';
+import useComentarios from '../hooks/useComentarios';
 
 const getIconForTipoEvento = (tipo) => {
   switch (tipo) {
@@ -79,8 +79,7 @@ const getLabelForTipoEvento = (tipo) => {
 
 const formatFechaComentario = (fecha) => formatFechaRelative(fecha);
 
-function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdateComentariosCount }) {
-  const dispatch = useDispatch();
+function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
   const navigate = useNavigate();
 
   const [anchorEl, setAnchorEl] = useState(null);
@@ -88,27 +87,46 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
   const [editContent, setEditContent] = useState(post.contenido || '');
   const isOwner = String(post.autor?.id) === String(currentUserId);
 
-  const [comentarios, setComentarios] = useState([]);
-  const [showComentarios, setShowComentarios] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(1);
-  const [nuevoComentario, setNuevoComentario] = useState('');
-  const [loadingComentarios, setLoadingComentarios] = useState(false);
-
-  const [replyingTo, setReplyingTo] = useState(null);
-  const [replyText, setReplyText] = useState('');
-  const [comentarioMenuEl, setComentarioMenuEl] = useState(null);
-  const [comentarioSeleccionado, setComentarioSeleccionado] = useState(null);
-  const [editandoComentarioId, setEditandoComentarioId] = useState(null);
-  const [editComentarioContent, setEditComentarioContent] = useState('');
-  const [replyMenuEl, setReplyMenuEl] = useState(null);
-  const [replySeleccionada, setReplySeleccionada] = useState(null);
-  const [editandoReplyId, setEditandoReplyId] = useState(null);
-  const [editReplyContent, setEditReplyContent] = useState('');
-
-  useEffect(() => {
-    setComentarios([]);
-    setShowComentarios(false);
-  }, [currentUserId]);
+  const {
+    comentarios,
+    loadingComentarios,
+    showComentarios,
+    visibleCount,
+    setVisibleCount,
+    nuevoComentario,
+    setNuevoComentario,
+    replyingTo,
+    setReplyingTo,
+    replyText,
+    setReplyText,
+    comentarioMenuEl,
+    setComentarioMenuEl,
+    comentarioSeleccionado,
+    setComentarioSeleccionado,
+    editandoComentarioId,
+    setEditandoComentarioId,
+    editComentarioContent,
+    setEditComentarioContent,
+    replyMenuEl,
+    setReplyMenuEl,
+    replySeleccionada,
+    setReplySeleccionada,
+    editandoReplyId,
+    setEditandoReplyId,
+    editReplyContent,
+    setEditReplyContent,
+    error,
+    handleFetchComentarios,
+    handleAddComentario,
+    handleEditComentario,
+    handleEditReply,
+    handleLikeComentario,
+    handleReply,
+    handleDeleteComentario,
+    handleDeleteReply,
+    handleClearError,
+    comentariosCount,
+  } = useComentarios(post, currentUserId);
 
   const handleMenuClick = (event) => {
     event.stopPropagation();
@@ -124,107 +142,6 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
     if (!editContent.trim()) return;
     onEdit(post.id, { contenido: editContent.trim(), titulo: editContent.trim().substring(0, 50) });
     setIsEditing(false);
-  };
-
-  const fetchComentarios = async () => {
-    if (comentarios.length > 0 && showComentarios) {
-      setShowComentarios(false);
-      return;
-    }
-    if (comentarios.length > 0) {
-      setShowComentarios(true);
-      return;
-    }
-    setLoadingComentarios(true);
-    try {
-      const response = await api.get(`/api/novedades/${post.id}/comentarios?usuarioId=${currentUserId}`);
-      setComentarios(response.data.data || []);
-      setShowComentarios(true);
-    } catch (error) {
-      console.error('Error al cargar comentarios:', error);
-    } finally {
-      setLoadingComentarios(false);
-    }
-  };
-
-  const handleAddComentario = async () => {
-    if (!nuevoComentario.trim()) return;
-    try {
-      const response = await api.post(`/api/novedades/${post.id}/comentarios`, {
-        contenido: nuevoComentario.trim(),
-        usuarioId: currentUserId,
-      });
-      setComentarios([...comentarios, response.data.data]);
-      setNuevoComentario('');
-      setVisibleCount((prev) => prev + 1);
-      if (onUpdateComentariosCount)
-        onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
-  const handleEditComentario = async () => {
-    try {
-      const res = await api.put(`/api/novedades/${post.id}/comentarios/${editandoComentarioId}`, {
-        contenido: editComentarioContent.trim(),
-        usuarioId: currentUserId,
-      });
-      setComentarios(comentarios.map((c) => (c.id === editandoComentarioId ? res.data.data : c)));
-      setEditandoComentarioId(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleLikeComentario = (comentarioId, liked) => {
-    if (liked) {
-      dispatch(unlikeComentario({ novidadeId: post.id, comentarioId, usuarioId: currentUserId }));
-    } else {
-      dispatch(likeComentario({ novidadeId: post.id, comentarioId, usuarioId: currentUserId }));
-    }
-
-    const actualizarLikes = (items) =>
-      items.map((item) => {
-        if (item.id === comentarioId) {
-          return {
-            ...item,
-            liked: !liked,
-            likesCount: liked ? (item.likesCount || 1) - 1 : (item.likesCount || 0) + 1,
-          };
-        }
-        if (item.respuestas) {
-          return { ...item, respuestas: actualizarLikes(item.respuestas) };
-        }
-        return item;
-      });
-
-    setComentarios(actualizarLikes(comentarios));
-  };
-
-  const handleReply = async (comentarioPadreId, contenido) => {
-    if (!contenido.trim()) return;
-    try {
-      const response = await api.post(`/api/novedades/${post.id}/comentarios`, {
-        contenido,
-        usuarioId: currentUserId,
-        comentarioPadreId,
-      });
-      setComentarios(
-        comentarios.map((c) => {
-          if (c.id === comentarioPadreId) {
-            return { ...c, respuestas: [...(c.respuestas || []), response.data.data] };
-          }
-          return c;
-        })
-      );
-      setReplyingTo(null);
-      setReplyText('');
-      if (onUpdateComentariosCount)
-        onUpdateComentariosCount(post.id, (post.comentariosCount || 0) + 1);
-    } catch (error) {
-      console.error(error);
-    }
   };
 
   const isEvento = post.tipo === TIPO_POST.EVENTO_ACADEMICO;
@@ -264,7 +181,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                 />
               </Box>
               <Typography variant="caption" color="text.secondary">
-                {formatFechaSeguro(post.fecha)}
+                {formatFechaRelative(post.fecha)}
               </Typography>
             </Box>
           </Box>
@@ -338,7 +255,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
             </Box>
             <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography variant="caption" color="text.secondary">
-                {formatFechaSeguro(post.fecha)}
+                {formatFechaRelative(post.fecha)}
               </Typography>
               {post.editedAt && (
                 <Typography
@@ -367,7 +284,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
           }
           subheader={
             <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {formatFechaSeguro(post.fecha)}
+              {formatFechaRelative(post.fecha)}
               {post.editedAt && (
                 <Typography
                   component="span"
@@ -446,19 +363,18 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         </Box>
 
         <IconButton
-          onClick={fetchComentarios}
+          onClick={handleFetchComentarios}
           color={showComentarios ? 'primary' : 'default'}
         >
           <Comment fontSize="small" />
         </IconButton>
         <Typography variant="body2">
-          {post.comentariosCount ??
-            comentarios.reduce((acc, c) => acc + 1 + (c.respuestas?.length || 0), 0)}
+          {comentariosCount}
         </Typography>
         {loadingComentarios && <CircularProgress size={20} sx={{ ml: 1 }} />}
       </Box>
 
-      <Collapse in={showComentarios}>
+      <Collapse in={showComentarios} keepMounted timeout={475}>
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: '1px solid #eee' }}>
           <Box sx={{ display: 'flex', gap: 1, mt: 2, mb: 2 }}>
             <TextField
@@ -512,7 +428,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                     }
                   >
                     <ListItemAvatar>
-                      <Avatar src={com.autor?.avatar} sx={{ width: 35, height: 35 }}>
+                      <Avatar src={com.autor?.avatarUrl} sx={{ width: 35, height: 35 }}>
                         {com.autor?.nombre?.charAt(0)}
                       </Avatar>
                     </ListItemAvatar>
@@ -571,17 +487,31 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
                         >
-                          <IconButton
-                            size="small"
-                            onClick={() => handleLikeComentario(com.id, com.liked)}
-                            color={com.liked ? 'primary' : 'default'}
-                            sx={{ p: 0.5 }}
+                          <Tooltip
+                            title={
+                              String(com.autor?.id) === String(currentUserId)
+                                ? 'No puedes dar like a tu propio comentario'
+                                : ''
+                            }
                           >
-                            <ThumbUp
-                              fontSize="inherit"
-                              style={{ fontSize: '1.1rem' }}
-                            />
-                          </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleLikeComentario(com.id, com.liked)}
+                              color={com.liked ? 'primary' : 'default'}
+                              disabled={String(com.autor?.id) === String(currentUserId)}
+                              sx={{
+                                p: 0.5,
+                                ...(String(com.autor?.id) === String(currentUserId)
+                                  ? { opacity: 0.4, cursor: 'not-allowed' }
+                                  : {}),
+                              }}
+                            >
+                              <ThumbUp
+                                fontSize="inherit"
+                                style={{ fontSize: '1.1rem' }}
+                              />
+                            </IconButton>
+                          </Tooltip>
 
                           <Typography variant="caption" sx={{ fontWeight: '500' }}>
                             {com.likesCount || 0}
@@ -669,7 +599,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                             }
                           >
                             <ListItemAvatar>
-                              <Avatar src={reply.autor?.avatar} sx={{ width: 30, height: 30 }}>
+                              <Avatar src={reply.autor?.avatarUrl} sx={{ width: 30, height: 30 }}>
                                 {reply.autor?.nombre?.charAt(0)}
                               </Avatar>
                             </ListItemAvatar>
@@ -684,33 +614,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                 />
                                 <Button
                                   size="small"
-                                  onClick={async () => {
-                                    try {
-                                      const res = await api.put(
-                                        `/api/novedades/${post.id}/comentarios/${reply.id}`,
-                                        {
-                                          contenido: editReplyContent.trim(),
-                                          usuarioId: currentUserId,
-                                        }
-                                      );
-                                      setComentarios(
-                                        comentarios.map((c) => {
-                                          if (c.id === com.id) {
-                                            return {
-                                              ...c,
-                                              respuestas: c.respuestas.map((r) =>
-                                                r.id === reply.id ? res.data.data : r
-                                              ),
-                                            };
-                                          }
-                                          return c;
-                                        })
-                                      );
-                                      setEditandoReplyId(null);
-                                    } catch (err) {
-                                      console.error(err);
-                                    }
-                                  }}
+                                  onClick={handleEditReply}
                                 >
                                   Guardar
                                 </Button>
@@ -751,17 +655,31 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
                                 <Box
                                   sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
                                 >
-                                  <IconButton
-                                    size="small"
-                                    onClick={() => handleLikeComentario(reply.id, reply.liked)}
-                                    color={reply.liked ? 'primary' : 'default'}
-                                    sx={{ p: 0.5 }}
+                                  <Tooltip
+                                    title={
+                                      String(reply.autor?.id) === String(currentUserId)
+                                        ? 'No puedes dar like a tu propio comentario'
+                                        : ''
+                                    }
                                   >
-                                    <ThumbUp
-                                      fontSize="inherit"
-                                      style={{ fontSize: '1rem' }}
-                                    />
-                                  </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => handleLikeComentario(reply.id, reply.liked)}
+                                      color={reply.liked ? 'primary' : 'default'}
+                                      disabled={String(reply.autor?.id) === String(currentUserId)}
+                                      sx={{
+                                        p: 0.5,
+                                        ...(String(reply.autor?.id) === String(currentUserId)
+                                          ? { opacity: 0.4, cursor: 'not-allowed' }
+                                          : {}),
+                                      }}
+                                    >
+                                      <ThumbUp
+                                        fontSize="inherit"
+                                        style={{ fontSize: '1rem' }}
+                                      />
+                                    </IconButton>
+                                  </Tooltip>
                                   <Typography variant="caption">{reply.likesCount || 0}</Typography>
 
                                   <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
@@ -824,24 +742,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         >
           <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
         </MenuItem>
-        <MenuItem
-          onClick={async () => {
-            try {
-              await api.delete(
-                `/api/novedades/${post.id}/comentarios/${comentarioSeleccionado.id}`,
-                { data: { usuarioId: currentUserId } }
-              );
-              setComentarios(comentarios.filter((c) => c.id !== comentarioSeleccionado.id));
-              onUpdateComentariosCount(
-                post.id,
-                Math.max(0, (post.comentariosCount || 0) - 1)
-              );
-            } catch (err) {
-              console.error(err);
-            }
-            setComentarioMenuEl(null);
-          }}
-        >
+        <MenuItem onClick={handleDeleteComentario}>
           <Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar
         </MenuItem>
       </Menu>
@@ -860,34 +761,16 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit, onUpdat
         >
           <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
         </MenuItem>
-        <MenuItem
-          onClick={async () => {
-            try {
-              await api.delete(
-                `/api/novedades/${post.id}/comentarios/${replySeleccionada.id}`,
-                { data: { usuarioId: currentUserId } }
-              );
-              setComentarios(
-                comentarios.map((c) => ({
-                  ...c,
-                  respuestas: c.respuestas
-                    ? c.respuestas.filter((r) => r.id !== replySeleccionada.id)
-                    : [],
-                }))
-              );
-              onUpdateComentariosCount(
-                post.id,
-                Math.max(0, (post.comentariosCount || 0) - 1)
-              );
-            } catch (err) {
-              console.error(err);
-            }
-            setReplyMenuEl(null);
-          }}
-        >
+        <MenuItem onClick={handleDeleteReply}>
           <Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar
         </MenuItem>
       </Menu>
+
+      <Snackbar open={!!error} autoHideDuration={4000} onClose={handleClearError} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert onClose={handleClearError} severity="error" variant="filled">
+          {error}
+        </Alert>
+      </Snackbar>
     </Card>
   );
 }

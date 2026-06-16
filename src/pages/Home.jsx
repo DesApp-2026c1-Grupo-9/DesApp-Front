@@ -105,7 +105,7 @@ const Home = () => {
               </Avatar>
               <Box>
                 <Typography variant="h3" gutterBottom>
-                  ¡Bienvenido, {user?.nombre || 'Admin Inicial'}!
+                  ¡Hola, {user?.nombre || 'Admin Inicial'}!
                 </Typography>
                 <Typography variant="h6" color="text.secondary">
                   Panel de administracion del sistema
@@ -163,14 +163,12 @@ const Home = () => {
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
           <Box display="flex" alignItems="center">
             <Avatar 
-              src={estudianteInfo.avatarUrl}
+              src={estudianteInfo.avatarUrl || `https://ui-avatars.com/api/?name=${estudianteInfo.nombre}+${estudianteInfo.apellido}&background=random`}
               sx={{ width: 80, height: 80, mr: 3 }}
-            >
-              <Person sx={{ fontSize: 40 }} />
-            </Avatar>
+            ></Avatar>
             <Box>
               <Typography variant="h3" gutterBottom>
-                ¡Bienvenido, {estudianteInfo.nombre} {estudianteInfo.apellido}!
+                ¡Hola, {estudianteInfo.nombre} {estudianteInfo.apellido}!
               </Typography>
               <Typography variant="h6" color="text.secondary">
                 {estudianteInfo.carreras?.[0]?.nombre || 'Sin carrera'} - 2024 • 1er Cuatrimestre 2026
