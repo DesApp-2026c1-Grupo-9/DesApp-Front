@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const ERROR_STORAGE_KEY = 'app_unexpected_error';
+const GENERAL_ERROR_EVENT = 'app-general-error';
 
 const buildErrorPayload = (error) => {
   const status = error?.response?.status;
@@ -44,6 +45,12 @@ const guardarErrorInesperado = (error) => {
   } catch (storageError) {
     console.error('No se pudo guardar el error inesperado en sessionStorage', storageError);
   }
+
+  try {
+    window.dispatchEvent(new CustomEvent(GENERAL_ERROR_EVENT, { detail: payload }));
+  } catch (eventError) {
+    console.error('No se pudo emitir el evento de error general', eventError);
+  }
 };
 
 const api = axios.create({
@@ -70,7 +77,14 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    try {
+      sessionStorage.removeItem(ERROR_STORAGE_KEY);
+    } catch {
+      // noop
+    }
+    return response;
+  },
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
@@ -97,9 +111,6 @@ api.interceptors.response.use(
 
     if (esErrorInesperado) {
       guardarErrorInesperado(error);
-      if (window.location.pathname !== '/error') {
-        window.location.replace('/error');
-      }
     }
 
     return Promise.reject(error);
