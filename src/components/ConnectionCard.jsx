@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -10,6 +11,7 @@ import {
 import { Delete, Block } from '@mui/icons-material';
 
 const ConnectionCard = ({ conexion, onDelete }) => {
+  const navigate = useNavigate();
   const contacto = conexion.contacto;
   const inactivo = contacto?.activo === false;
 
@@ -25,13 +27,17 @@ const ConnectionCard = ({ conexion, onDelete }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={contacto?.avatarUrl}
-              sx={{ width: 50, height: 50 }}
-            >
-              {contacto?.nombre?.charAt(0)}
-            </Avatar>
+              src={contacto?.avatarUrl || `https://ui-avatars.com/api/?name=${contacto?.nombre}+${contacto?.apellido}&background=random`}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
+              onClick={() => navigate('/perfil/' + contacto?.id)}
+            />
             <Box>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                onClick={() => navigate('/perfil/' + contacto?.id)}
+              >
                 {contacto?.nombre} {contacto?.apellido}
               </Typography>
               <Typography variant="body2" color="text.secondary">

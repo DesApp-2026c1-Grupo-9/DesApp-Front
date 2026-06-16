@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -9,6 +10,8 @@ import {
 import { PersonAdd } from '@mui/icons-material';
 
 const DiscoverCard = ({ student, onInvite, isInviting, isInvited }) => {
+  const navigate = useNavigate();
+
   return (
     <Card sx={{ mb: 2, borderRadius: 2, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
       <CardContent>
@@ -20,11 +23,18 @@ const DiscoverCard = ({ student, onInvite, isInviting, isInvited }) => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Avatar src={student.avatar} sx={{ width: 50, height: 50 }}>
-              {student.nombre?.charAt(0)}
-            </Avatar>
+            <Avatar
+              src={student.avatar || `https://ui-avatars.com/api/?name=${student.nombre}+${student.apellido}&background=random`}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
+              onClick={() => navigate('/perfil/' + student.id)}
+            />
             <Box>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                onClick={() => navigate('/perfil/' + student.id)}
+              >
                 {student.nombre} {student.apellido}
               </Typography>
               <Typography variant="body2" color="text.secondary">

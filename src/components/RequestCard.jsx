@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import {
   Card,
   CardContent,
@@ -10,6 +11,7 @@ import {
 import { CheckCircle, Cancel } from '@mui/icons-material';
 
 const RequestCard = ({ request, onAccept, onReject }) => {
+  const navigate = useNavigate();
   const usuario = request.usuario;
 
   return (
@@ -24,13 +26,17 @@ const RequestCard = ({ request, onAccept, onReject }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={usuario?.avatarUrl}
-              sx={{ width: 50, height: 50 }}
-            >
-              {usuario?.nombre?.charAt(0)}
-            </Avatar>
+              src={usuario?.avatarUrl || `https://ui-avatars.com/api/?name=${usuario?.nombre}+${usuario?.apellido}&background=random`}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
+              onClick={() => navigate('/perfil/' + usuario?.id)}
+            />
             <Box>
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                onClick={() => navigate('/perfil/' + usuario?.id)}
+              >
                 {usuario?.nombre} {usuario?.apellido}
               </Typography>
               <Typography variant="body2" color="text.secondary">

@@ -9,6 +9,7 @@ export { default as CommentSection } from './CommentSection';
 export { default as TopMenu } from './TopMenu';
 export { default as AppErrorBoundary } from './AppErrorBoundary';
 export { default as DashboardAcademicoCompleto } from './DashboardAcademicoCompleto';
+export { default as ProfileViewCard } from './ProfileViewCard';
 export { default as AcademicAnalysisComponent } from './AcademicAnalysisComponent';
 export { default as ConnectionCard } from './ConnectionCard';
 export { default as RequestCard } from './RequestCard';
