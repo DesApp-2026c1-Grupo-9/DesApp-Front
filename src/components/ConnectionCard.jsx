@@ -27,12 +27,10 @@ const ConnectionCard = ({ conexion, onDelete }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={contacto?.avatarUrl}
-              sx={{ width: 50, height: 50, cursor: 'pointer' }}
+              src={contacto?.avatarUrl || `https://ui-avatars.com/api/?name=${contacto?.nombre}+${contacto?.apellido}&background=random`}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
               onClick={() => navigate('/perfil/' + contacto?.id)}
-            >
-              {contacto?.nombre?.charAt(0)}
-            </Avatar>
+            />
             <Box>
               <Typography
                 variant="subtitle1"

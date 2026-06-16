@@ -24,12 +24,10 @@ const DiscoverCard = ({ student, onInvite, isInviting, isInvited }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={student.avatar}
-              sx={{ width: 50, height: 50, cursor: 'pointer' }}
+              src={student.avatar || `https://ui-avatars.com/api/?name=${student.nombre}+${student.apellido}&background=random`}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
               onClick={() => navigate('/perfil/' + student.id)}
-            >
-              {student.nombre?.charAt(0)}
-            </Avatar>
+            />
             <Box>
               <Typography
                 variant="subtitle1"

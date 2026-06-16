@@ -26,12 +26,10 @@ const RequestCard = ({ request, onAccept, onReject }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={usuario?.avatarUrl}
-              sx={{ width: 50, height: 50, cursor: 'pointer' }}
+              src={usuario?.avatarUrl || `https://ui-avatars.com/api/?name=${usuario?.nombre}+${usuario?.apellido}&background=random`}
+              sx={{ width: 45, height: 45, cursor: 'pointer' }}
               onClick={() => navigate('/perfil/' + usuario?.id)}
-            >
-              {usuario?.nombre?.charAt(0)}
-            </Avatar>
+            />
             <Box>
               <Typography
                 variant="subtitle1"
