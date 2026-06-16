@@ -3,25 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper,
-  Chip, Button, Alert, Grid, Divider,
+  Button, Alert, Grid, Divider, Avatar,
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
-  CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon,
-  School as SchoolIcon,
-  Person as PersonIcon,
 } from '@mui/icons-material';
 import { PageContainer, LoadingSpinner } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import EstudianteService from '../services/EstudianteService';
-
-const estadoConfig = {
-  aprobada: { label: 'Aprobada', color: 'success', icon: <CheckCircleIcon fontSize="small" /> },
-  regularizada: { label: 'Regularizada', color: 'warning', icon: <ScheduleIcon fontSize="small" /> },
-  cursando: { label: 'Cursando', color: 'info', icon: <SchoolIcon fontSize="small" /> },
-  no_cursada: { label: 'No cursada', color: 'default', icon: null },
-};
 
 export const MateriasVisitante = () => {
   const { id } = useParams();
@@ -67,17 +56,19 @@ export const MateriasVisitante = () => {
 
   const { estudiante, carrera, materiasPorAnio, resumen } = data;
   const anios = Object.keys(materiasPorAnio).sort((a, b) => parseInt(a) - parseInt(b));
+  const nombreCompleto = `${estudiante?.nombre || ''} ${estudiante?.apellido || ''}`.trim();
 
   if (anios.length === 0) {
     return (
       <PageContainer maxWidth={900}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Box display="flex" alignItems="center" gap={1}>
-            <PersonIcon />
+            <Avatar
+              src={estudiante?.avatarUrl || `https://ui-avatars.com/api/?name=${estudiante?.nombre}+${estudiante?.apellido}&background=1976d2&color=fff`}
+              sx={{ width: 40, height: 40 }}
+            />
             <Box>
-              <Typography variant="h5" fontWeight="bold">
-                {estudiante?.nombre} {estudiante?.apellido}
-              </Typography>
+              <Typography variant="h5" fontWeight="bold" color="primary">Materias de {nombreCompleto}</Typography>
               {carrera && <Typography variant="body2" color="text.secondary">{carrera.nombre}</Typography>}
             </Box>
           </Box>
@@ -93,11 +84,14 @@ export const MateriasVisitante = () => {
   return (
     <PageContainer maxWidth={900}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <PersonIcon />
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <Avatar
+            src={estudiante?.avatarUrl || `https://ui-avatars.com/api/?name=${estudiante?.nombre}+${estudiante?.apellido}&background=1976d2&color=fff`}
+            sx={{ width: 44, height: 44 }}
+          />
           <Box>
-            <Typography variant="h5" fontWeight="bold">
-              {estudiante?.nombre} {estudiante?.apellido}
+            <Typography variant="h5" fontWeight="bold" color="primary">
+              Materias de {nombreCompleto}
             </Typography>
             {carrera && (
               <Typography variant="body2" color="text.secondary">
@@ -143,36 +137,37 @@ export const MateriasVisitante = () => {
               <Table size="small" sx={{ '& .MuiTableRow-root:hover': { backgroundColor: 'transparent' } }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell><strong>Materia</strong></TableCell>
-                    <TableCell><strong>Estado</strong></TableCell>
+                    <TableCell align="center" sx={{ bgcolor: '#e8f5e9', fontWeight: 'bold', width: '33%' }}>Aprobadas</TableCell>
+                    <TableCell align="center" sx={{ bgcolor: '#fff3e0', fontWeight: 'bold', width: '33%' }}>Regularizadas</TableCell>
+                    <TableCell align="center" sx={{ bgcolor: '#e3f2fd', fontWeight: 'bold', width: '34%' }}>Cursando</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {materiasPorAnio[anio]
-                    .filter((m) => m.estado !== 'no_cursada')
-                    .sort((a, b) => {
-                      const order = { aprobada: 0, regularizada: 1, cursando: 2 };
-                      return (order[a.estado] || 99) - (order[b.estado] || 99);
-                    })
-                    .map((materia) => {
-                      const config = estadoConfig[materia.estado] || estadoConfig.no_cursada;
-                      return (
-                        <TableRow key={materia.id}>
-                          <TableCell component="th" scope="row">
-                            <Typography fontWeight="500">{materia.nombre}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={config.icon}
-                              label={config.label}
-                              size="small"
-                              color={config.color}
-                              variant="outlined"
-                            />
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                  {(() => {
+                    const agrupadas = { aprobada: [], regularizada: [], cursando: [] };
+                    materiasPorAnio[anio].forEach((m) => {
+                      if (agrupadas[m.estado]) agrupadas[m.estado].push(m.nombre);
+                    });
+                    return (
+                      <TableRow>
+                        <TableCell align="center" sx={{ verticalAlign: 'top' }}>
+                          {agrupadas.aprobada.length > 0 ? agrupadas.aprobada.map((n, i) => (
+                            <Typography key={i} variant="body2">{n}</Typography>
+                          )) : <Typography variant="body2" color="text.disabled">-</Typography>}
+                        </TableCell>
+                        <TableCell align="center" sx={{ verticalAlign: 'top' }}>
+                          {agrupadas.regularizada.length > 0 ? agrupadas.regularizada.map((n, i) => (
+                            <Typography key={i} variant="body2">{n}</Typography>
+                          )) : <Typography variant="body2" color="text.disabled">-</Typography>}
+                        </TableCell>
+                        <TableCell align="center" sx={{ verticalAlign: 'top' }}>
+                          {agrupadas.cursando.length > 0 ? agrupadas.cursando.map((n, i) => (
+                            <Typography key={i} variant="body2">{n}</Typography>
+                          )) : <Typography variant="body2" color="text.disabled">-</Typography>}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })()}
                 </TableBody>
               </Table>
             </TableContainer>
