@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRef } from 'react';
-import * as XLSX from 'xlsx';
 import {
   Box, Typography, Card, CardContent, Button, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
@@ -23,6 +22,7 @@ import {
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+import { useImportarMaterias } from '../hooks/useImportarMaterias';
 
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
@@ -40,12 +40,28 @@ export const EstudianteMaterias = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // Estados para importar Excel
-  const [dialogImport, setDialogImport] = useState(false);
-  const [importLoading, setImportLoading] = useState(false);
-  const [importResultado, setImportResultado] = useState(null);
-  const [importError, setImportError] = useState(null);
   const inicializado = useRef(false);
+
+  // Hook compartido para importar materias desde Excel/CSV
+  const {
+    dialogImport,
+    setDialogImport,
+    importLoading,
+    importResultado,
+    importError,
+    handleArchivoExcel,
+    handleDescargarTemplate,
+    handleCloseImportDialog,
+  } = useImportarMaterias({
+    estudianteId: estudianteActual?.id,
+    onImportComplete: async () => {
+      await cargarPlan(
+        estudianteActual.id,
+        carreraSeleccionadaId || null,
+        planSeleccionadoId || null
+      );
+    },
+  });
 
   // Estados para manejar conflictos de correlatividades
   const [dialogoConflicto, setDialogoConflicto] = useState({ 
@@ -449,53 +465,6 @@ export const EstudianteMaterias = () => {
     });
   };
 
-  // --- Excel import ---
-  const handleArchivoExcel = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    setImportLoading(true);
-    setImportError(null);
-    setImportResultado(null);
-
-    try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-      const materias = rows
-        .map((row) => {
-          const nombre = row['nombre'] || row['Nombre'] || row['NOMBRE'] || '';
-          const estado = row['estado'] || row['Estado'] || row['ESTADO'] || '';
-          return { nombre: String(nombre).trim(), estado: String(estado).trim().toLowerCase() };
-        })
-        .filter((r) => r.nombre);
-
-      if (materias.length === 0) {
-        setImportError('El archivo no tiene filas válidas. Asegurate de que tenga columnas "nombre" y "estado".');
-        setImportLoading(false);
-        return;
-      }
-
-      const result = await EstudianteService.importarMateriasDesdeExcel(
-        estudianteActual.id,
-        materias
-      );
-      setImportResultado(result);
-
-      // Recargar datos
-      await cargarPlan(
-        estudianteActual.id,
-        carreraSeleccionadaId || null,
-        planSeleccionadoId || null
-      );
-    } catch (err) {
-      setImportError(err.message);
-    } finally {
-      setImportLoading(false);
-      e.target.value = '';
-    }
-  };
   // Mapear estados de UI a estados de base de datos
   const mapearEstadoUIaDB = (estadoUI) => {
     const mapeo = {
@@ -745,19 +714,45 @@ export const EstudianteMaterias = () => {
         </CardContent>
       </Card>
 
-      {/* Diálogo de importación desde Excel */}
-      <Dialog open={dialogImport} onClose={() => { setDialogImport(false); setImportResultado(null); setImportError(null); }} maxWidth="sm" fullWidth>
+      {/* Diálogo de importación desde Excel/CSV */}
+      <Dialog open={dialogImport} onClose={handleCloseImportDialog} maxWidth="sm" fullWidth>
         <DialogTitle display="flex" alignItems="center" gap={1}>
-          <UploadFileIcon /> Importar materias desde Excel
+          <UploadFileIcon /> Importar materias
         </DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
-            El archivo debe tener columnas <strong>nombre</strong> (nombre exacto de la materia) y <strong>estado</strong> (aprobada, regularizada o cursando).
+            Formatos soportados: <strong>.xlsx</strong>, <strong>.xls</strong>, <strong>.csv</strong>, <strong>.ods</strong>
           </Alert>
-          <Button variant="outlined" component="label" startIcon={importLoading ? <CircularProgress size={16} /> : <UploadFileIcon />} disabled={importLoading} fullWidth>
-            {importLoading ? 'Importando...' : 'Seleccionar archivo .xlsx'}
-            <input type="file" hidden accept=".xlsx,.xls,.csv" onChange={handleArchivoExcel} />
-          </Button>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Descargá el <strong>template</strong> con tus materias disponibles, completá la columna <strong>estado</strong> (aprobada, regularizada, cursando) e importalo.
+            <br />El archivo debe tener una columna <strong>id</strong> (ID de la materia, provisto por el template) y una columna <strong>estado</strong>.
+          </Alert>
+
+          <Box display="flex" gap={1} mb={2}>
+            <Button
+              variant="outlined"
+              component="label"
+              startIcon={importLoading ? <CircularProgress size={16} /> : <UploadFileIcon />}
+              disabled={importLoading}
+              fullWidth
+            >
+              {importLoading ? 'Importando...' : 'Seleccionar archivo'}
+              <input type="file" hidden accept=".xlsx,.xls,.csv,.ods" onChange={handleArchivoExcel} />
+            </Button>
+            <Button
+              variant="text"
+              onClick={() => {
+                const editables = (situacionAcademica?.materias || []).filter(
+                  (m) => m.estado !== 'Aprobada' && m.estado !== 'No Disponible'
+                );
+                handleDescargarTemplate(editables);
+              }}
+              disabled={!situacionAcademica?.materias}
+            >
+              Descargar template
+            </Button>
+          </Box>
+
           {importError && <Alert severity="error" sx={{ mt: 2 }}>{importError}</Alert>}
           {importResultado && (
             <Box mt={2}>
@@ -776,17 +771,24 @@ export const EstudianteMaterias = () => {
               </Alert>
               {importResultado.data?.ignoradas?.length > 0 && (
                 <Alert severity="warning" sx={{ mb: 1 }}>
-                  {importResultado.data.ignoradas.length} filas ignoradas (estado inválido o nombre vacío)
+                  {importResultado.data.ignoradas.length} filas ignoradas:
+                  <List dense>
+                    {importResultado.data.ignoradas.map((e, i) => (
+                      <ListItem key={i} disablePadding>
+                        <ListItemText primary={e.razon} secondary={e.fila.nombre ? `"${e.fila.nombre}"` : ''} />
+                      </ListItem>
+                    ))}
+                  </List>
                 </Alert>
               )}
               {importResultado.data?.errores?.length > 0 && (
                 <Alert severity="error">
-                  {importResultado.data.errores.length} materias no encontradas:
+                  {importResultado.data.errores.length} errores:
                   <List dense>
                     {importResultado.data.errores.map((e, i) => (
                       <ListItem key={i} disablePadding>
                         <ListItemIcon><BookIcon fontSize="small" /></ListItemIcon>
-                        <ListItemText primary={`"${e.fila.nombre}" — ${e.razon}`} />
+                        <ListItemText primary={e.razon} secondary={e.fila.nombre ? `"${e.fila.nombre}"` : ''} />
                       </ListItem>
                     ))}
                   </List>
@@ -796,7 +798,7 @@ export const EstudianteMaterias = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setDialogImport(false); setImportResultado(null); setImportError(null); }}>Cerrar</Button>
+          <Button onClick={handleCloseImportDialog}>Cerrar</Button>
         </DialogActions>
       </Dialog>
 
