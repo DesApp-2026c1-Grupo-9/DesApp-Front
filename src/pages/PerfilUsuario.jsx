@@ -88,26 +88,30 @@ export const PerfilUsuario = () => {
 
         const estudianteId = estudianteMatch.id;
 
-        const [estudianteData, situacionData] = await Promise.all([
-          EstudianteService.obtenerEstudiante(estudianteId),
-          EstudianteService.obtenerMateriasEstudiante(estudianteId),
-        ]);
-
-        const data = estudianteData.data;
-        const situacion = situacionData.data;
-
+        const estudianteResponse = await EstudianteService.obtenerEstudiante(estudianteId);
+        const data = estudianteResponse.data;
         setProfile(data);
 
-        if (situacion) {
-          setAcademicData({
-            carrera: situacion.carrera?.nombre,
-            estadisticas: {
-              aprobadas: situacion.resumen?.aprobadas || 0,
-              regularizadas: situacion.resumen?.regularizadas || 0,
-              cursando: situacion.resumen?.cursando || 0,
-              total: situacion.resumen?.total || 0,
-            },
-          });
+        try {
+          const situacionResponse = await EstudianteService.obtenerMateriasEstudiante(estudianteId);
+          const situacion = situacionResponse.data;
+          if (situacion) {
+            setAcademicData({
+              carrera: situacion.carrera?.nombre,
+              estadisticas: {
+                aprobadas: situacion.resumen?.aprobadas || 0,
+                regularizadas: situacion.resumen?.regularizadas || 0,
+                cursando: situacion.resumen?.cursando || 0,
+                total: situacion.resumen?.total || 0,
+              },
+            });
+          }
+        } catch (err) {
+          if (err?.response?.status === 403) {
+            console.log('Situación académica no disponible (privacidad)');
+          } else {
+            console.error('Error al cargar situación académica:', err);
+          }
         }
       } catch (err) {
         console.error('Error al cargar perfil:', err);
@@ -133,13 +137,13 @@ export const PerfilUsuario = () => {
     }
   };
 
-  const puedeVerEmail = esMiPerfil || profile?.perfilPublico === false
-    ? esContacto
-    : (profile?.mostrarEmail ?? false);
+  const puedeVerEmail = esContacto
+    ? true
+    : (profile?.perfilPublico === false ? false : (profile?.mostrarEmail ?? false));
 
-  const puedeVerSituacion = esMiPerfil || profile?.perfilPublico === false
-    ? esContacto
-    : (profile?.mostrarSituacionAcademica ?? false);
+  const puedeVerSituacion = esContacto
+    ? true
+    : (profile?.perfilPublico === false ? false : (profile?.mostrarSituacionAcademica ?? false));
 
   const puedeVerTodo = esMiPerfil || esContacto || profile?.perfilPublico !== false;
 
@@ -179,7 +183,11 @@ export const PerfilUsuario = () => {
   const avatarUrl = usuario.avatarUrl;
   const fechaNacimiento = usuario.fechaNacimiento;
   const edad = fechaNacimiento ? calcularEdad(fechaNacimiento) : null;
-  const carrera = academicData?.carrera || profile.carreras?.[0]?.nombre;
+  const carreras = profile.carreras?.filter(Boolean) || [];
+  const carreraActual = academicData?.carrera;
+  const carrerasParaMostrar = carreraActual
+    ? [carreraActual]
+    : carreras.map(c => c.nombre).filter(Boolean);
 
   return (
     <PageContainer maxWidth={800}>
@@ -199,9 +207,21 @@ export const PerfilUsuario = () => {
                   <Lock sx={{ fontSize: 16, color: 'text.disabled' }} />
                 )}
               </Box>
-              <Typography variant="body2" color="text.secondary">
-                Estudiante
-              </Typography>
+              {carrerasParaMostrar.length > 0 ? (
+                carrerasParaMostrar.map((c, i) => (
+                  <Chip
+                    key={i}
+                    label={c}
+                    size="small"
+                    icon={<SchoolIcon sx={{ fontSize: 14 }} />}
+                    sx={{ mr: 0.5, mb: 0.5 }}
+                  />
+                ))
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Estudiante
+                </Typography>
+              )}
             </Box>
             {!esMiPerfil && (
               <Button
@@ -241,7 +261,7 @@ export const PerfilUsuario = () => {
         </CardContent>
       </Card>
 
-      {puedeVerSituacion && carrera && (
+      {puedeVerSituacion && carreraActual && (
         <Card elevation={0} sx={{ mt: 3, border: 1, borderColor: 'divider', transition: 'none' }}>
           <CardContent>
             <Box display="flex" alignItems="center" mb={2}>
@@ -250,7 +270,7 @@ export const PerfilUsuario = () => {
             </Box>
 
             <Typography variant="h6" gutterBottom color="primary">
-              {carrera}
+              {carreraActual}
             </Typography>
 
             {academicData?.estadisticas && (

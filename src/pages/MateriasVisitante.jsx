@@ -7,6 +7,7 @@ import {
 } from '@mui/material';
 import {
   ArrowBack as ArrowBackIcon,
+  Lock,
 } from '@mui/icons-material';
 import { PageContainer, LoadingSpinner } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
@@ -17,8 +18,10 @@ export const MateriasVisitante = () => {
   const navigate = useNavigate();
   const { estudiantesDisponibles } = useAuth();
   const [data, setData] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [noAuth, setNoAuth] = useState(false);
 
   useEffect(() => {
     const cargar = async () => {
@@ -26,6 +29,8 @@ export const MateriasVisitante = () => {
       try {
         setLoading(true);
         setError(null);
+        setNoAuth(false);
+
         const estudianteMatch = estudiantesDisponibles.find(
           e => Number(e.usuario?.id) === Number(id)
         );
@@ -33,6 +38,11 @@ export const MateriasVisitante = () => {
           setError('No se encontró el usuario solicitado');
           return;
         }
+
+        const perfilData = await EstudianteService.obtenerEstudiante(estudianteMatch.id);
+        const perfil = perfilData.data;
+        setProfile(perfil);
+
         const situacion = await EstudianteService.obtenerMateriasEstudiante(estudianteMatch.id);
         setData({
           estudiante: estudianteMatch.usuario,
@@ -42,7 +52,11 @@ export const MateriasVisitante = () => {
           resumen: situacion.data?.resumen || {},
         });
       } catch (err) {
-        setError('Error al cargar las materias');
+        if (err?.response?.status === 403) {
+          setNoAuth(true);
+        } else {
+          setError('Error al cargar las materias');
+        }
       } finally {
         setLoading(false);
       }
@@ -52,6 +66,30 @@ export const MateriasVisitante = () => {
 
   if (loading) return <PageContainer centered padding={3}><LoadingSpinner message="Cargando materias..." /></PageContainer>;
   if (error) return <Box p={3}><Alert severity="error">{error}</Alert></Box>;
+
+  if (noAuth) {
+    return (
+      <PageContainer maxWidth={600}>
+        <Card elevation={0} sx={{ border: 1, borderColor: 'divider', mt: 4 }}>
+          <CardContent sx={{ textAlign: 'center', py: 6 }}>
+            <Lock sx={{ fontSize: 80, color: 'text.disabled', mb: 2 }} />
+            <Typography variant="h5" gutterBottom fontWeight="bold">
+              Información no disponible
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              {profile?.perfilPublico === false
+                ? 'Este perfil es privado. Tenés que conectarte con este estudiante para ver su situación académica.'
+                : 'Este estudiante eligió no mostrar su situación académica en su perfil público.'}
+            </Typography>
+            <Button variant="contained" onClick={() => navigate('/perfil/' + id)} size="large">
+              Volver al perfil
+            </Button>
+          </CardContent>
+        </Card>
+      </PageContainer>
+    );
+  }
+
   if (!data) return null;
 
   const { estudiante, carrera, materiasPorAnio, resumen } = data;
