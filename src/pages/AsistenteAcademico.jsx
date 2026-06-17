@@ -523,10 +523,6 @@ export default function AsistenteAcademico() {
 
   const carrerasDisponiblesAsistente = analisis?.carrerasDisponibles || [];
   const carrerasSeleccionadasAsistente = analisis?.carrerasSeleccionadas || [];
-  const subtituloAlcance =
-    analisis?.scope?.modo === 'intercalado'
-      ? ` ${carrerasSeleccionadasAsistente.map((c) => c.nombre).join(' + ')}`
-      : carrerasSeleccionadasAsistente[0]?.nombre || analisis?.carrera?.nombre || 'Sin carrera seleccionada';
 
   const {
     estudiante,
@@ -768,9 +764,17 @@ export default function AsistenteAcademico() {
           <Typography variant="subtitle1" color="text.secondary">
             {estudiante?.nombre} {estudiante?.apellido}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {subtituloAlcance}
-          </Typography>
+          <Box sx={{ mt: 0.5 }}>
+            {carrerasSeleccionadasAsistente.map((c) => (
+              <Chip
+                key={c.id}
+                label={c.nombre}
+                size="small"
+                icon={<School sx={{ fontSize: 14 }} />}
+                sx={{ mr: 0.5, mb: 0.5 }}
+              />
+            ))}
+          </Box>
         </Box>
         <FormControl size="small">
           <InputLabel id="modo-planificacion-label">Modo de planificación</InputLabel>
