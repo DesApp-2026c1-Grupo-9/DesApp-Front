@@ -74,27 +74,91 @@ const mapearEstadoExcel = (estado) => {
 const cumpleEstadoCorrelativa = (estado) =>
   estado === 'aprobada' || estado === 'regularizada';
 
+const normalizarTexto = (valor) =>
+  String(valor || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const agruparPrerequisitosPorCarrera = (materia, prerequisitosIds, materiasPorId) => {
+  const carrerasMateria = materia?.carreras || [];
+  if (!Array.isArray(carrerasMateria) || carrerasMateria.length <= 1) return [];
+
+  return carrerasMateria
+    .map((carreraNombre) => {
+      const prerequisitosCarrera = prerequisitosIds.filter((preId) => {
+        const pre = materiasPorId.get(preId);
+        return pre?.carreras?.includes(carreraNombre);
+      });
+      if (prerequisitosCarrera.length === 0) return null;
+      return [...new Set(prerequisitosCarrera)];
+    })
+    .filter((g) => Array.isArray(g) && g.length > 0);
+};
+
+const cumplePrerequisitosMateria = (materia, getEstado, materiasPorId) => {
+  const prerequisitosIds = materia?.prerrequisitos || [];
+  if (prerequisitosIds.length === 0) return true;
+
+  const gruposPorCarrera = agruparPrerequisitosPorCarrera(
+    materia,
+    prerequisitosIds,
+    materiasPorId
+  );
+
+  if (gruposPorCarrera.length > 1) {
+    return gruposPorCarrera.some((grupo) =>
+      grupo.every((preId) => cumpleEstadoCorrelativa(getEstado(preId)))
+    );
+  }
+
+  return prerequisitosIds.every((preId) =>
+    cumpleEstadoCorrelativa(getEstado(preId))
+  );
+};
+
 const obtenerDesbloqueosConSeleccion = (materias, regularizarIds) => {
   if (!Array.isArray(materias) || materias.length === 0) return [];
 
+  const materiasPorId = new Map(materias.map((m) => [m.id, m]));
   const estadosHipoteticos = new Map(materias.map((m) => [m.id, m.estado]));
+  const estadosHipoteticosPorCodigo = new Map(
+    materias
+      .map((m) => [normalizarTexto(m.codigo), m.estado])
+      .filter(([codigo]) => Boolean(codigo))
+  );
 
   regularizarIds.forEach((materiaId) => {
     const estadoActual = estadosHipoteticos.get(materiaId);
     if (estadoActual === 'cursando') {
       estadosHipoteticos.set(materiaId, 'regularizada');
+      const materiaRef = materiasPorId.get(materiaId);
+      const codigo = normalizarTexto(materiaRef?.codigo);
+      if (codigo) {
+        estadosHipoteticosPorCodigo.set(codigo, 'regularizada');
+      }
     }
   });
 
+  const getEstado = (materiaId) => {
+    const estadoPorId = estadosHipoteticos.get(materiaId);
+    const codigo = normalizarTexto(materiasPorId.get(materiaId)?.codigo);
+    const estadoPorCodigo = codigo ? estadosHipoteticosPorCodigo.get(codigo) : null;
+
+    if (cumpleEstadoCorrelativa(estadoPorId) || estadoPorId === 'cursando') {
+      return estadoPorId;
+    }
+    if (cumpleEstadoCorrelativa(estadoPorCodigo) || estadoPorCodigo === 'cursando') {
+      return estadoPorCodigo;
+    }
+
+    return estadoPorId || estadoPorCodigo || 'no_cursada';
+  };
+
   return materias
     .filter((m) => m.estado === 'no_cursada' && !m.disponible)
-    .filter((m) => {
-      const prerequisitos = m.prerrequisitos || [];
-      return prerequisitos.every((preId) => {
-        const estado = estadosHipoteticos.get(preId) || 'no_cursada';
-        return cumpleEstadoCorrelativa(estado);
-      });
-    })
+    .filter((m) => cumplePrerequisitosMateria(m, getEstado, materiasPorId))
     .sort((a, b) => {
       if ((a.anio || 0) !== (b.anio || 0)) return (a.anio || 0) - (b.anio || 0);
       return a.nombre.localeCompare(b.nombre);
