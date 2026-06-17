@@ -88,26 +88,30 @@ export const PerfilUsuario = () => {
 
         const estudianteId = estudianteMatch.id;
 
-        const [estudianteData, situacionData] = await Promise.all([
-          EstudianteService.obtenerEstudiante(estudianteId),
-          EstudianteService.obtenerMateriasEstudiante(estudianteId),
-        ]);
-
-        const data = estudianteData.data;
-        const situacion = situacionData.data;
-
+        const estudianteResponse = await EstudianteService.obtenerEstudiante(estudianteId);
+        const data = estudianteResponse.data;
         setProfile(data);
 
-        if (situacion) {
-          setAcademicData({
-            carrera: situacion.carrera?.nombre,
-            estadisticas: {
-              aprobadas: situacion.resumen?.aprobadas || 0,
-              regularizadas: situacion.resumen?.regularizadas || 0,
-              cursando: situacion.resumen?.cursando || 0,
-              total: situacion.resumen?.total || 0,
-            },
-          });
+        try {
+          const situacionResponse = await EstudianteService.obtenerMateriasEstudiante(estudianteId);
+          const situacion = situacionResponse.data;
+          if (situacion) {
+            setAcademicData({
+              carrera: situacion.carrera?.nombre,
+              estadisticas: {
+                aprobadas: situacion.resumen?.aprobadas || 0,
+                regularizadas: situacion.resumen?.regularizadas || 0,
+                cursando: situacion.resumen?.cursando || 0,
+                total: situacion.resumen?.total || 0,
+              },
+            });
+          }
+        } catch (err) {
+          if (err?.response?.status === 403) {
+            console.log('Situación académica no disponible (privacidad)');
+          } else {
+            console.error('Error al cargar situación académica:', err);
+          }
         }
       } catch (err) {
         console.error('Error al cargar perfil:', err);
