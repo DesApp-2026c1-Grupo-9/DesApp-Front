@@ -169,6 +169,7 @@ const SesionModal = ({ open, sesion, onSave, onCancel }) => {
               label="Fecha y Hora"
               value={formData.fechaHora}
               onChange={handleDateChange}
+              disablePast
               renderInput={(params) => <TextField {...params} fullWidth required />}
             />
 
