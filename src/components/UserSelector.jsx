@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { fetchStudents, switchStudent } from '../features/auth/slice';
 
-export function UserSelector({ sx }) {
+function UserSelector({ sx }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, students, loadingStudents } = useSelector((state) => state.auth);

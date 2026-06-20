@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import EstudianteService from '../services/EstudianteService';
+import { fetchMe, logout as logoutAction } from '../features/auth/slice';
 
 const AuthContext = createContext();
 
@@ -12,6 +14,8 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const dispatch = useDispatch();
+  const { user: authUser, isAuthenticated, token } = useSelector((state) => state.auth);
   const [estudianteActual, setEstudianteActual] = useState(null);
   const [estudiantesDisponibles, setEstudiantesDisponibles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,65 +33,41 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    // Cargar estudiante por defecto y cachear lista para cambios globales de contexto
-    const cargarEstudianteActual = async () => {
+    const inicializar = async () => {
       try {
         setLoading(true);
-        const estudiantes = await cargarEstudiantesDisponibles();
-        const usuarioSeleccionadoId = Number(localStorage.getItem('mockStudentId'));
 
-        let estudiante = null;
-
-        if (usuarioSeleccionadoId) {
-          estudiante = estudiantes.find(
-            (e) => Number(e?.usuario?.id) === usuarioSeleccionadoId
-          ) || null;
-        }
-
-        if (!usuarioSeleccionadoId) {
-          estudiante =
-            estudiantes.find(
-              (e) =>
-                e?.usuario?.nombre?.toLowerCase() === 'diego' &&
-                e?.usuario?.apellido?.toLowerCase() === 'fernández'
-            ) || estudiantes[0] || null;
-        }
-
-        if (usuarioSeleccionadoId && !estudiante) {
-          // Caso administrador u otro usuario sin estudiante asociado.
+        if (!isAuthenticated) {
           setEstudianteActual(null);
           return;
         }
 
-        if (!estudiante) {
-          throw new Error('No hay estudiantes disponibles');
+        try {
+          await dispatch(fetchMe()).unwrap();
+        } catch {
+          // Token inválido, continuar con datos almacenados
         }
 
-        setEstudianteActual(estudiante);
-        console.log('Estudiante cargado:', estudiante.usuario?.nombre, estudiante.usuario?.apellido);
+        const estudiantes = await cargarEstudiantesDisponibles();
+        const usuarioId = authUser?.id || JSON.parse(localStorage.getItem('user') || '{}')?.id;
+
+        if (usuarioId) {
+          const estudiante = estudiantes.find(
+            (e) => Number(e?.usuario?.id) === Number(usuarioId)
+          );
+          if (estudiante) {
+            setEstudianteActual(estudiante);
+          }
+        }
       } catch (error) {
-        console.error('Error al cargar estudiante actual:', error);
-        // Si hay error, usar datos de backup actualizados
-        setEstudianteActual({
-          id: 6,
-          usuario: {
-            id: 10,
-            nombre: 'Diego',
-            apellido: 'Fernández',
-            email: 'diego.fernandez@estudiante.unahur.edu.ar'
-          },
-          carreras: [{
-            id: 4,
-            nombre: 'Tecnicatura en Inteligencia Artificial'
-          }]
-        });
+        console.error('Error al inicializar auth context:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    cargarEstudianteActual();
-  }, []);
+    inicializar();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -148,12 +128,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const cerrarSesion = useCallback(() => {
+    dispatch(logoutAction());
+    setEstudianteActual(null);
+  }, [dispatch]);
+
   const value = {
     estudianteActual,
     estudiantesDisponibles,
     loading,
     cambiarEstudiante,
-    cambiarEstudiantePorUsuarioId
+    cambiarEstudiantePorUsuarioId,
+    cerrarSesion,
+    isAuthenticated,
   };
 
   return (
