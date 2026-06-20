@@ -1,5 +1,48 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../api/axiosConfig';
+import * as authService from './service';
+
+export const loginUser = createAsyncThunk(
+  'auth/loginUser',
+  async (credentials, { rejectWithValue }) => {
+    try {
+      const response = await authService.login(credentials);
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      return { token, user };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: error.message });
+    }
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  'auth/registerUser',
+  async (userData, { rejectWithValue }) => {
+    try {
+      const response = await authService.register(userData);
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      return { token, user };
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: error.message });
+    }
+  }
+);
+
+export const fetchMe = createAsyncThunk(
+  'auth/fetchMe',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await authService.getMe();
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 
 export const fetchStudents = createAsyncThunk(
   'auth/fetchStudents',
@@ -62,15 +105,16 @@ export const updatePreferencias = createAsyncThunk(
   }
 );
 
-const storedStudentId = localStorage.getItem('mockStudentId');
-
-const authSlice = createSlice({
-  name: 'auth',
-  initialState: {
-    user: null,
+function getInitialState() {
+  const storedToken = localStorage.getItem('token');
+  const storedUser = localStorage.getItem('user');
+  return {
+    user: storedUser ? JSON.parse(storedUser) : null,
     students: [],
-    token: null,
-    isAuthenticated: false,
+    token: storedToken || null,
+    isAuthenticated: !!storedToken,
+    loading: false,
+    error: null,
     loadingStudents: false,
     preferencias: null,
     loadingPreferencias: false,
@@ -78,7 +122,12 @@ const authSlice = createSlice({
     conexiones: [],
     loadingConexiones: false,
     errorConexiones: null,
-  },
+  };
+}
+
+const authSlice = createSlice({
+  name: 'auth',
+  initialState: getInitialState(),
   reducers: {
     setCredentials: (state, action) => {
       state.user = action.payload.user;
@@ -91,6 +140,7 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
     },
     switchStudent: (state, action) => {
       const student = state.students.find(s => s.id === action.payload);
@@ -127,24 +177,50 @@ const authSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload.user;
+        state.token = action.payload.token;
+        state.isAuthenticated = true;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchMe.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchMe.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
+      .addCase(fetchMe.rejected, (state) => {
+        state.loading = false;
+      })
       .addCase(fetchStudents.pending, (state) => {
         state.loadingStudents = true;
       })
       .addCase(fetchStudents.fulfilled, (state, action) => {
         state.loadingStudents = false;
         state.students = action.payload;
-        const storedId = parseInt(localStorage.getItem('mockStudentId'), 10);
-        const found = action.payload.find(s => s.id === storedId);
-        if (found) {
-          state.user = found;
-        } else {
-          state.user = action.payload[0] || null;
-          if (state.user) {
-            localStorage.setItem('mockStudentId', state.user.id);
-          } else {
-            localStorage.removeItem('mockStudentId');
-          }
-        }
       })
       .addCase(fetchStudents.rejected, (state, action) => {
         state.loadingStudents = false;

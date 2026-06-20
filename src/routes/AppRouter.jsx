@@ -1,8 +1,10 @@
 import { Suspense, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { Box } from '@mui/material';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
+import Register from '../pages/Register';
 import Sesiones from '../pages/Sesiones';
 import SocialPage from '../pages/SocialPage';
 import AcademicoPage from '../pages/AcademicoPage';
@@ -30,6 +32,12 @@ import AdminLayout from '../layouts/AdminLayout';
 import { fetchStudents } from '../features/auth/slice';
 import { LoadingSpinner } from '../components/ui';
 
+const AuthLayout = () => (
+  <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
+    <Outlet />
+  </Box>
+);
+
 const AppRouter = () => {
   const dispatch = useDispatch();
 
@@ -43,9 +51,12 @@ const AppRouter = () => {
         <Suspense fallback={<LoadingSpinner fullScreen message="Cargando módulo..." />}>
           <Routes>
             <Route path="/error" element={<AppErrorPage />} />
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<Login />} />
+              <Route path="/registro" element={<Register />} />
+            </Route>
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
               <Route path="/sesiones" element={<Sesiones />} />
               <Route path="/materiales" element={<Materiales />} />
               <Route path="/social" element={<SocialPage />}>

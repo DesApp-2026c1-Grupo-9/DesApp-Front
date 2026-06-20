@@ -1,12 +1,28 @@
+import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Box, Tabs, Tab } from '@mui/material';
-import { Person, AdminPanelSettings, PersonAdd, School, Gavel, DynamicFeed } from '@mui/icons-material';
-import { UserSelector } from './UserSelector';
+import {
+  AppBar, Toolbar, Typography, Box, Tabs, Tab, IconButton,
+  Menu, MenuItem, ListItemIcon,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button,
+} from '@mui/material';
+import { AdminPanelSettings, PersonAdd, School, Gavel, DynamicFeed, Logout, Menu as MenuIcon } from '@mui/icons-material';
+import { useAuth } from '../context/AuthContext';
 
 export function AdminAppBar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { cerrarSesion } = useAuth();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   const tab = location.pathname.includes('/academico') ? 1 : location.pathname.includes('/moderacion') ? 2 : location.pathname === '/mi-perfil' ? 3 : 0;
+
+  const handleLogout = () => {
+    setConfirmOpen(false);
+    setAnchorEl(null);
+    cerrarSesion();
+    navigate('/login');
+  };
 
   return (
     <AppBar position="static" sx={{ mb: 3, bgcolor: 'warning.dark', borderRadius: 0 }}>
@@ -43,9 +59,34 @@ export function AdminAppBar() {
           <Tab icon={<Gavel />} label="Moderación" iconPosition="start" />
           <Tab icon={<DynamicFeed />} label="Mi Perfil" iconPosition="start" />
         </Tabs>
-        <Box sx={{ ml: 2 }}>
-          <UserSelector />
-        </Box>
+
+        <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 1 }}>
+          <MenuIcon />
+        </IconButton>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem onClick={() => { setAnchorEl(null); setConfirmOpen(true); }}>
+            <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+            Cerrar sesión
+          </MenuItem>
+        </Menu>
+
+        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+          <DialogTitle>Cerrar sesión</DialogTitle>
+          <DialogContent>
+            <DialogContentText>¿Estás seguro de que querés cerrar la sesión?</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+            <Button onClick={handleLogout} color="primary" variant="contained">Cerrar sesión</Button>
+          </DialogActions>
+        </Dialog>
       </Toolbar>
     </AppBar>
   );

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -8,19 +8,30 @@ import {
   Tab,
   Alert,
   AlertTitle,
+  IconButton,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Button,
+  ListItemIcon,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Person, Book, Home, People, Groups, LibraryBooks, AdminPanelSettings, Block, MenuBook, DynamicFeed } from '@mui/icons-material';
+import { School, Home, Groups, LibraryBooks, AdminPanelSettings, Block, MenuBook, DynamicFeed, Logout, Menu as MenuIcon } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
-import { UserSelector } from './UserSelector';
 import NotificacionesPopover from './NotificacionesPopover';
 
 export function TopMenu() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
-  const { estudianteActual } = useAuth();
+  const { estudianteActual, cerrarSesion } = useAuth();
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const showAdmin = user?.rol === 'administrador';
 
@@ -40,6 +51,13 @@ export function TopMenu() {
       (item.label === 'Académico' && location.pathname.startsWith('/academico/')) ||
       (item.label === 'Social' && location.pathname.startsWith('/social/'))
   );
+
+  const handleLogout = () => {
+    setConfirmOpen(false);
+    setAnchorEl(null);
+    cerrarSesion();
+    navigate('/login');
+  };
 
   return (
     <AppBar position="static" sx={{ mb: 3, borderRadius: 0 }}>
@@ -78,7 +96,34 @@ export function TopMenu() {
         </Tabs>
 
         <NotificacionesPopover />
-        <UserSelector />
+
+        <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 1 }}>
+          <MenuIcon />
+        </IconButton>
+
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={() => setAnchorEl(null)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <MenuItem onClick={() => { setAnchorEl(null); setConfirmOpen(true); }}>
+            <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+            Cerrar sesión
+          </MenuItem>
+        </Menu>
+
+        <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+          <DialogTitle>Cerrar sesión</DialogTitle>
+          <DialogContent>
+            <DialogContentText>¿Estás seguro de que querés cerrar la sesión?</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+            <Button onClick={handleLogout} color="primary" variant="contained">Cerrar sesión</Button>
+          </DialogActions>
+        </Dialog>
       </Toolbar>
       {estudianteActual?.usuario?.activo === false && (
         <Alert severity="warning" sx={{ borderRadius: 0, justifyContent: 'center', '& .MuiAlert-message': { textAlign: 'center', width: '100%' } }} icon={false}>

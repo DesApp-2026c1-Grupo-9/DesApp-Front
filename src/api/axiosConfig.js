@@ -67,8 +67,17 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const user = JSON.parse(storedUser);
+        config.headers['X-User-Id'] = user.id;
+      } catch {
+        // ignore
+      }
+    }
     const mockStudentId = localStorage.getItem('mockStudentId');
-    if (mockStudentId) {
+    if (mockStudentId && !storedUser) {
       config.headers['X-User-Id'] = mockStudentId;
     }
     return config;
