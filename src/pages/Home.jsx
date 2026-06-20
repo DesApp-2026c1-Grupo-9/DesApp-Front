@@ -87,6 +87,12 @@ const Home = () => {
     }
   }, [estudianteActual]);
 
+  useEffect(() => {
+    if (estudianteActual && user?.rol !== 'administrador' && estudianteActual.carreras?.length === 0) {
+      navigate('/academico/carreras', { replace: true });
+    }
+  }, [estudianteActual, user, navigate]);
+
   const esAdmin =
     user?.rol === 'administrador' ||
     String(user?.nombre || '').toLowerCase().includes('admin') ||

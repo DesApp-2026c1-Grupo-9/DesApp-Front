@@ -2,27 +2,31 @@ import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
   AppBar, Toolbar, Typography, Box, Tabs, Tab, IconButton,
-  Menu, MenuItem, ListItemIcon,
+  Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Divider,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button,
 } from '@mui/material';
-import { AdminPanelSettings, PersonAdd, School, Gavel, DynamicFeed, Logout, Menu as MenuIcon } from '@mui/icons-material';
+import { AdminPanelSettings, PersonAdd, School, Gavel, DynamicFeed, Logout, Menu as MenuIcon, Person } from '@mui/icons-material';
+import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 
 export function AdminAppBar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { cerrarSesion } = useAuth();
-  const [anchorEl, setAnchorEl] = useState(null);
+  const { user } = useSelector((state) => state.auth);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const tab = location.pathname.includes('/academico') ? 1 : location.pathname.includes('/moderacion') ? 2 : location.pathname === '/mi-perfil' ? 3 : 0;
 
   const handleLogout = () => {
     setConfirmOpen(false);
-    setAnchorEl(null);
+    setDrawerOpen(false);
     cerrarSesion();
     navigate('/login');
   };
+
+  const drawerWidth = 280;
 
   return (
     <AppBar position="static" sx={{ mb: 3, bgcolor: 'warning.dark', borderRadius: 0 }}>
@@ -60,22 +64,30 @@ export function AdminAppBar() {
           <Tab icon={<DynamicFeed />} label="Mi Perfil" iconPosition="start" />
         </Tabs>
 
-        <IconButton color="inherit" onClick={(e) => setAnchorEl(e.currentTarget)} sx={{ ml: 1 }}>
+        <IconButton color="inherit" onClick={() => setDrawerOpen(true)} sx={{ ml: 1 }}>
           <MenuIcon />
         </IconButton>
 
-        <Menu
-          anchorEl={anchorEl}
-          open={Boolean(anchorEl)}
-          onClose={() => setAnchorEl(null)}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-          transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <MenuItem onClick={() => { setAnchorEl(null); setConfirmOpen(true); }}>
-            <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
-            Cerrar sesión
-          </MenuItem>
-        </Menu>
+        <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+          <Box sx={{ width: drawerWidth, pt: 2 }}>
+            <Box sx={{ px: 2, pb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Person />
+              <Box>
+                <Typography variant="subtitle2">{user?.nombre} {user?.apellido}</Typography>
+                <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
+              </Box>
+            </Box>
+            <Divider />
+            <List>
+              <ListItem disablePadding>
+                <ListItemButton onClick={() => { setDrawerOpen(false); setConfirmOpen(true); }}>
+                  <ListItemIcon><Logout /></ListItemIcon>
+                  <ListItemText primary="Cerrar sesión" />
+                </ListItemButton>
+              </ListItem>
+            </List>
+          </Box>
+        </Drawer>
 
         <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
           <DialogTitle>Cerrar sesión</DialogTitle>

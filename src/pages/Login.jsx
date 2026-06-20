@@ -60,6 +60,8 @@ const Login = () => {
               margin="normal"
               required
               autoFocus
+              onInvalid={(e) => e.target.setCustomValidity('Ingresá tu email')}
+              onInput={(e) => e.target.setCustomValidity('')}
             />
             <TextField
               fullWidth
@@ -70,6 +72,8 @@ const Login = () => {
               onChange={handleChange}
               margin="normal"
               required
+              onInvalid={(e) => e.target.setCustomValidity('Ingresá tu contraseña')}
+              onInput={(e) => e.target.setCustomValidity('')}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
