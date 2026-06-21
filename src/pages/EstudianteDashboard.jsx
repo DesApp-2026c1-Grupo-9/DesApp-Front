@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { updateAvatar } from '../features/auth/slice';
 import {
   Box,
   Typography,
@@ -27,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+import { PhotoCamera } from '@mui/icons-material';
 
 const adminTheme = createTheme({
   palette: {
@@ -36,7 +38,10 @@ const adminTheme = createTheme({
 
 export const EstudianteDashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { estudianteActual } = useAuth();
+  const fileInputRef = useRef(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const { user, students } = useSelector(state => state.auth);
   const esAdmin = user?.rol === 'administrador';
   const totalUsuarios = students?.length || 0;
@@ -254,6 +259,29 @@ export const EstudianteDashboard = () => {
     );
   }
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setAvatarUploading(true);
+    try {
+      const usuarioId = user?.id;
+      if (!usuarioId) return;
+
+      const result = await dispatch(updateAvatar({ id: usuarioId, file })).unwrap();
+      setEstudiante((prev) => ({ ...prev, avatarUrl: result }));
+    } catch {
+      console.error('Error al subir avatar');
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const generoLabel = estudiante.genero
     ? estudiante.genero.charAt(0).toUpperCase() + estudiante.genero.slice(1)
     : null;
@@ -277,16 +305,51 @@ export const EstudianteDashboard = () => {
           }}
         />
         <CardContent sx={{ mt: -6, textAlign: 'center' }}>
-          <Avatar
-            src={estudiante.avatarUrl || `https://ui-avatars.com/api/?name=${estudiante.nombre}+${estudiante.apellido}&background=random&bold=true`}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            style={{ display: 'none' }}
+            onChange={handleAvatarChange}
+          />
+          <Box
             sx={{
+              position: 'relative',
               width: 96,
               height: 96,
               mx: 'auto',
-              border: '4px solid white',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              cursor: 'pointer',
+              '&:hover .avatar-overlay': { opacity: 1 },
             }}
-          />
+            onClick={handleAvatarClick}
+          >
+            <Avatar
+              src={estudiante.avatarUrl || `https://ui-avatars.com/api/?name=${estudiante.nombre}+${estudiante.apellido}&background=random&bold=true`}
+              sx={{
+                width: 96,
+                height: 96,
+                boxSizing: 'border-box',
+                border: '4px solid white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              }}
+            />
+            <Box
+              className="avatar-overlay"
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                borderRadius: '50%',
+                bgcolor: 'rgba(0,0,0,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: avatarUploading ? 1 : 0,
+                transition: 'opacity 0.2s',
+              }}
+            >
+              <PhotoCamera sx={{ color: 'white', fontSize: 28 }} />
+            </Box>
+          </Box>
           <Typography variant="h5" fontWeight="bold" mt={1}>
             {estudiante.nombre} {estudiante.apellido}
           </Typography>
