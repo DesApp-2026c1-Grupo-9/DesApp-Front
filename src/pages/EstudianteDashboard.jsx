@@ -19,7 +19,6 @@ import { calcularEdad } from '../utils';
 import {
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
-  Settings as SettingsIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
@@ -58,30 +57,36 @@ export const EstudianteDashboard = () => {
       try {
         setLoading(true);
         setError(null);
-        const [estudianteData, situacionData] = await Promise.all([
-          EstudianteService.obtenerEstudiante(estudianteActual.id),
-          EstudianteService.obtenerMateriasEstudiante(estudianteActual.id)
-        ]);
+        
+        const estudianteData = await EstudianteService.obtenerEstudiante(estudianteActual.id);
         
         const estudianteInfo = {
           ...estudianteData.data,
           ...estudianteData.data.usuario,
-          carreras: estudianteData.data.carreras
-        };
-        
-        const situacionProcesada = {
-          carrera: situacionData.data?.carrera?.nombre,
-          estadisticas: {
-            materiasAprobadas: situacionData.data?.resumen?.aprobadas || 0,
-            materiasRegularizaciones: situacionData.data?.resumen?.regularizadas || 0,
-            materiasCursando: situacionData.data?.resumen?.cursando || 0,
-            totalMaterias: situacionData.data?.resumen?.total || 0
-          },
-          situacionAcademica: Object.values(situacionData.data?.materiasPorAnio || {}).flat() || []
+          carreras: estudianteData.data.carreras,
         };
         
         setEstudiante(estudianteInfo);
-        setSituacionAcademica(situacionProcesada);
+        
+        try {
+          const situacionData = await EstudianteService.obtenerMateriasEstudiante(estudianteActual.id);
+          setSituacionAcademica({
+            carrera: situacionData.data?.carrera?.nombre,
+            estadisticas: {
+              materiasAprobadas: situacionData.data?.resumen?.aprobadas || 0,
+              materiasRegularizaciones: situacionData.data?.resumen?.regularizadas || 0,
+              materiasCursando: situacionData.data?.resumen?.cursando || 0,
+              totalMaterias: situacionData.data?.resumen?.total || 0,
+            },
+            situacionAcademica: Object.values(situacionData.data?.materiasPorAnio || {}).flat() || [],
+          });
+        } catch {
+          setSituacionAcademica({
+            carrera: null,
+            estadisticas: { materiasAprobadas: 0, materiasRegularizaciones: 0, materiasCursando: 0, totalMaterias: 0 },
+            situacionAcademica: [],
+          });
+        }
       } catch (err) {
         console.error('Error al cargar datos del estudiante:', err);
         setError('Error al cargar la información del estudiante');
@@ -234,18 +239,12 @@ export const EstudianteDashboard = () => {
               <Typography variant="body2">
                 <strong>Edad:</strong> {calcularEdad(estudiante.fechaNacimiento)} años
               </Typography>
+              {estudiante.genero && (
+                <Typography variant="body2" sx={{ mt: 0.5 }}>
+                  <strong>Género:</strong> {estudiante.genero.charAt(0).toUpperCase() + estudiante.genero.slice(1)}
+                </Typography>
+              )}
 
-              <Box mt={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={<SettingsIcon />}
-                  onClick={() => navigate('/configuracion')}
-                  size="large"
-                  fullWidth
-                >
-                  Configuración del Perfil
-                </Button>
-              </Box>
             </CardContent>
           </Card>
         </Grid>
@@ -260,7 +259,7 @@ export const EstudianteDashboard = () => {
               </Box>
               
               <Typography variant="h6" gutterBottom color="primary">
-                {situacionAcademica?.carrera || 'Cargando...'}
+                {situacionAcademica?.carrera || 'Sin carrera asignada'}
               </Typography>
 
               <Grid container spacing={2} sx={{ mt: 1 }}>

@@ -24,7 +24,7 @@ import { useAuth } from '../context/AuthContext';
 import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 import { useSnackbar } from '../hooks';
 
-export const ConfiguracionPerfil = () => {
+export const PrivacidadPerfil = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { estudianteActual } = useAuth();
@@ -85,7 +85,7 @@ export const ConfiguracionPerfil = () => {
     <PageContainer maxWidth={600}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5" fontWeight="bold">
-          Configuración del Perfil
+          Privacidad
         </Typography>
         <Button
           startIcon={<ArrowBack />}
