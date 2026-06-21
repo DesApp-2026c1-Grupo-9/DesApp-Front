@@ -38,7 +38,7 @@ Todos los usuarios comparten la misma contraseña por defecto, excepto el admin.
 | Camila Torres | camila.torres@estudiante.unahur.edu.ar | `password123` |
 | José Artigas | jose.artigas@example.com | `password123` |
 
-### Sin carrera asignada
+### Sin carrera asignada ni datos actualizados
 
 | Nombre | Email | Contraseña |
 |--------|-------|------------|

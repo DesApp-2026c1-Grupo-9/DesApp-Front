@@ -21,6 +21,8 @@ import {
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
   AdminPanelSettings as AdminPanelSettingsIcon,
+  Email as EmailIcon,
+  Cake as CakeIcon,
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
@@ -218,14 +220,16 @@ export const EstudianteDashboard = () => {
           <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
             <CardContent>
               <Box display="flex" alignItems="center" mb={2}>
-                <Avatar 
+                <Avatar
                   src={estudiante.avatarUrl || `https://ui-avatars.com/api/?name=${estudiante.nombre}+${estudiante.apellido}&background=random`}
                   sx={{ width: 80, height: 80, mr: 2 }}
-                ></Avatar>
-                <Box>
-                  <Typography variant="h5" fontWeight="bold">
-                    {estudiante.nombre} {estudiante.apellido}
-                  </Typography>
+                />
+                <Box flex={1}>
+                  <Box display="flex" alignItems="center" gap={0.5}>
+                    <Typography variant="h5" fontWeight="bold">
+                      {estudiante.nombre} {estudiante.apellido}
+                    </Typography>
+                  </Box>
                   {estudiante.carreras?.length > 0 ? (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
                       {estudiante.carreras.map((c, i) => (
@@ -239,21 +243,27 @@ export const EstudianteDashboard = () => {
                   )}
                 </Box>
               </Box>
+
+              <Divider sx={{ my: 2 }} />
+
               <Typography variant="body2" gutterBottom>
-                <strong>Email:</strong> {estudiante.email}
+                <EmailIcon sx={{ mr: 0.5, verticalAlign: 'middle', fontSize: 16 }} />
+                {estudiante.email}
               </Typography>
-              <Typography variant="body2" gutterBottom>
-                <strong>Fecha de Nacimiento:</strong> {estudiante.fechaNacimiento}
-              </Typography>
-              <Typography variant="body2">
-                <strong>Edad:</strong> {calcularEdad(estudiante.fechaNacimiento)} años
-              </Typography>
-              {estudiante.genero && (
-                <Typography variant="body2" sx={{ mt: 0.5 }}>
-                  <strong>Género:</strong> {estudiante.genero.charAt(0).toUpperCase() + estudiante.genero.slice(1)}
+
+              {estudiante.fechaNacimiento && (
+                <Typography variant="body2" gutterBottom>
+                  <CakeIcon sx={{ mr: 0.5, verticalAlign: 'middle', fontSize: 16 }} />
+                  {estudiante.fechaNacimiento}
+                  {` (${calcularEdad(estudiante.fechaNacimiento)} años)`}
                 </Typography>
               )}
 
+              {estudiante.genero && (
+                <Typography variant="body2">
+                  <strong>Género:</strong> {estudiante.genero.charAt(0).toUpperCase() + estudiante.genero.slice(1)}
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Grid>
