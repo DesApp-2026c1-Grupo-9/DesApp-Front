@@ -179,12 +179,14 @@ function PersonasTab() {
   const handleToggleEstadoConfirm = async () => {
     if (!userToToggle) return;
     try {
-      const res = await api.put(`/api/usuarios/${userToToggle.id}`, { activo: !userToToggle.activo });
+      const nuevoActivo = !userToToggle.activo;
+      const res = await api.put(`/api/usuarios/${userToToggle.id}`, { activo: nuevoActivo });
       showSuccess(`Usuario ${userToToggle.activo ? 'desactivado' : 'activado'} exitosamente`);
       setUserToToggle(null);
+      dispatch(updateStudentActiveStatus({ studentId: userToToggle.id, activo: res.data.data?.activo ?? nuevoActivo }));
       dispatch(fetchStudents());
       cargarUsuarios();
-      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: userToToggle.id, activo: res.data.data?.activo ?? !userToToggle.activo } }));
+      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: userToToggle.id, activo: res.data.data?.activo ?? nuevoActivo } }));
     } catch (err) {
       showError(err.response?.data?.message || 'Error al cambiar estado');
     }
@@ -354,6 +356,11 @@ function PersonasTab() {
           <Typography>¿Estás seguro de que deseas {userToToggle?.activo ? 'desactivar' : 'activar'} a <strong>{userToToggle?.apellido}, {userToToggle?.nombre}</strong>?</Typography>
           {userToToggle?.activo && (
             <Alert severity="warning" sx={{ mt: 2 }}>El usuario no podrá realizar operaciones en el sistema hasta que sea activado nuevamente.</Alert>
+          )}
+          {userToToggle?.activo && userToToggle.id === currentUserId && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              <strong>¡Te estás desactivando a vos mismo!</strong> No vas a poder realizar ninguna operación hasta que otro administrador te reactive.
+            </Alert>
           )}
         </DialogContent>
         <DialogActions>
