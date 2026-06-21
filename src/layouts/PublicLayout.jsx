@@ -35,6 +35,10 @@ export default function PublicLayout() {
     return <LoadingSpinner fullScreen message="Inicializando sesión..." />;
   }
 
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   if (esAdmin && location.pathname !== '/mi-perfil') {
     return <Navigate to="/admin" replace />;
   }
