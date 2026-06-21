@@ -126,7 +126,7 @@ export function TopMenu() {
                   <ListItem disablePadding>
                     <ListItemButton onClick={() => { setDrawerOpen(false); navigate('/configuracion'); }}>
                       <ListItemIcon><Settings /></ListItemIcon>
-                      <ListItemText primary="Editar datos personales" />
+                      <ListItemText primary="Editar perfil" />
                     </ListItemButton>
                   </ListItem>
                   <ListItem disablePadding>

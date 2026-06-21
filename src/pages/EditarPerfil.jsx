@@ -10,7 +10,7 @@ import {
   Snackbar,
   MenuItem,
 } from '@mui/material';
-import { ArrowBack, Save } from '@mui/icons-material';
+import { Save } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { updateUserData } from '../features/auth/slice';
@@ -81,13 +81,10 @@ export const EditarPerfil = () => {
 
   return (
     <PageContainer maxWidth={600}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box mb={3}>
         <Typography variant="h5" fontWeight="bold">
           Editar Datos Personales
         </Typography>
-        <Button startIcon={<ArrowBack />} onClick={() => navigate('/mi-perfil')} size="small">
-          Volver al perfil
-        </Button>
       </Box>
 
       <Card>

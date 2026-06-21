@@ -14,6 +14,7 @@ import {
   Divider,
   Chip,
   Snackbar,
+  LinearProgress,
 } from '@mui/material';
 import { PageContainer, LoadingSpinner } from '../components/ui';
 import {
@@ -189,72 +190,118 @@ export const PerfilUsuario = () => {
     ? [carreraActual]
     : carreras.map(c => c.nombre).filter(Boolean);
 
+  const stats = academicData?.estadisticas || {};
+  const totalStats = stats.aprobadas + stats.regularizadas + stats.cursando || 1;
+  const progreso = Math.round((stats.aprobadas / totalStats) * 100);
+
   return (
     <PageContainer maxWidth={800}>
-      <Card sx={{ '&:hover': { boxShadow: (theme) => theme.shadows[2] } }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
+      <Card
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            height: 100,
+            background: theme =>
+              `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
+          }}
+        />
+        <CardContent sx={{ mt: -6, textAlign: 'center' }}>
+          <Box position="relative" display="inline-block">
             <Avatar
-              src={avatarUrl || `https://ui-avatars.com/api/?name=${nombre}+${apellido}&background=random`}
-              sx={{ width: 80, height: 80, mr: 2 }}
+              src={avatarUrl || `https://ui-avatars.com/api/?name=${nombre}+${apellido}&background=random&bold=true`}
+              sx={{
+                width: 96,
+                height: 96,
+                mx: 'auto',
+                border: '4px solid white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              }}
             />
-            <Box flex={1}>
-              <Box display="flex" alignItems="center" gap={0.5}>
-                <Typography variant="h5" fontWeight="bold">
-                  {nombre} {apellido}
-                </Typography>
-                {!profile.perfilPublico && !esMiPerfil && (
-                  <Lock sx={{ fontSize: 16, color: 'text.disabled' }} />
-                )}
-              </Box>
-              {carrerasParaMostrar.length > 0 ? (
-                carrerasParaMostrar.map((c, i) => (
-                  <Chip
-                    key={i}
-                    label={c}
-                    size="small"
-                    icon={<SchoolIcon sx={{ fontSize: 14 }} />}
-                    sx={{ mr: 0.5, mb: 0.5 }}
-                  />
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Estudiante
-                </Typography>
-              )}
-            </Box>
-            {!esMiPerfil && (
+            {!profile.perfilPublico && !esMiPerfil && (
+              <Lock
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  fontSize: 20,
+                  bgcolor: 'background.paper',
+                  borderRadius: '50%',
+                  p: 0.3,
+                  border: '2px solid white',
+                  color: 'text.disabled',
+                }}
+              />
+            )}
+          </Box>
+
+          <Box display="flex" alignItems="center" justifyContent="center" gap={1} mt={1}>
+            <Typography variant="h5" fontWeight="bold">
+              {nombre} {apellido}
+            </Typography>
+          </Box>
+
+          <Box display="flex" justifyContent="center" flexWrap="wrap" gap={0.5} mt={0.5}>
+            {carrerasParaMostrar.length > 0 ? (
+              carrerasParaMostrar.map((c, i) => (
+                <Chip
+                  key={i}
+                  label={c}
+                  size="small"
+                  icon={<SchoolIcon sx={{ fontSize: 14 }} />}
+                  variant="outlined"
+                  color="primary"
+                />
+              ))
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Estudiante
+              </Typography>
+            )}
+          </Box>
+
+          {!esMiPerfil && (
+            <Box mt={1.5}>
               <Button
                 variant="contained"
                 size="small"
                 startIcon={<PersonAdd />}
                 onClick={handleInvite}
                 disabled={esContacto}
+                sx={{ borderRadius: 2 }}
               >
                 {esContacto ? 'Conectado' : 'Agregar contacto'}
               </Button>
-            )}
-          </Box>
+            </Box>
+          )}
 
           <Divider sx={{ my: 2 }} />
 
-          {puedeVerEmail && email && (
-            <Typography variant="body2" gutterBottom>
-              <EmailIcon sx={{ mr: 0.5, verticalAlign: 'middle', fontSize: 16 }} />
-              {email}
-            </Typography>
-          )}
-
-          {puedeVerEmail && fechaNacimiento && (
-            <Typography variant="body2" gutterBottom>
-              <CakeIcon sx={{ mr: 0.5, verticalAlign: 'middle', fontSize: 16 }} />
-              {fechaNacimiento}
-              {edad ? ` (${edad} años)` : ''}
-            </Typography>
-          )}
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            {puedeVerEmail && email && (
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <EmailIcon fontSize="small" color="action" />
+                <Typography variant="body2">{email}</Typography>
+              </Box>
+            )}
+            {puedeVerEmail && fechaNacimiento && (
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <CakeIcon fontSize="small" color="action" />
+                <Typography variant="body2">
+                  {new Date(fechaNacimiento).toLocaleDateString('es-AR')}
+                  {edad ? ` (${edad} años)` : ''}
+                </Typography>
+              </Box>
+            )}
+          </Box>
 
           {!puedeVerTodo && (
-            <Alert severity="info" sx={{ mt: 2 }}>
+            <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
               Este perfil es privado. Conectate con {nombre} para ver más detalles.
             </Alert>
           )}
@@ -262,51 +309,112 @@ export const PerfilUsuario = () => {
       </Card>
 
       {puedeVerSituacion && carreraActual && (
-        <Card elevation={0} sx={{ mt: 3, border: 1, borderColor: 'divider', transition: 'none' }}>
+        <Card
+          sx={{
+            borderRadius: 3,
+            overflow: 'hidden',
+            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+            mb: 3,
+          }}
+        >
           <CardContent>
-            <Box display="flex" alignItems="center" mb={2}>
-              <SchoolIcon sx={{ mr: 1 }} />
-              <Typography variant="h6">Información Académica</Typography>
+            <Box display="flex" alignItems="center" gap={1} mb={1}>
+              <SchoolIcon color="primary" />
+              <Typography variant="h6" fontWeight="bold">
+                Información Académica
+              </Typography>
             </Box>
 
-            <Typography variant="h6" gutterBottom color="primary">
+            <Typography variant="subtitle1" color="primary.main" gutterBottom>
               {carreraActual}
             </Typography>
 
             {academicData?.estadisticas && (
-              <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant="h4" color="success.main">
-                      {academicData.estadisticas.aprobadas ?? 0}
+              <>
+                <Box mt={2} mb={3}>
+                  <Box display="flex" justifyContent="space-between" mb={0.5}>
+                    <Typography variant="caption" color="text.secondary">
+                      Progreso general
                     </Typography>
-                    <Typography variant="caption">Aprobadas</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={4}>
-                  <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant="h4" color="warning.main">
-                      {academicData.estadisticas.regularizadas ?? 0}
+                    <Typography variant="caption" fontWeight="bold" color="success.main">
+                      {progreso}%
                     </Typography>
-                    <Typography variant="caption">Regularizadas</Typography>
-                  </Paper>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={progreso}
+                    sx={{ height: 8, borderRadius: 4 }}
+                  />
+                </Box>
+
+                <Grid container spacing={2}>
+                  <Grid item xs={4}>
+                    <Paper
+                      sx={{
+                        p: 2,
+                        textAlign: 'center',
+                        bgcolor: 'success.50',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'success.200',
+                      }}
+                    >
+                      <Typography variant="h4" fontWeight="bold" color="success.main">
+                        {stats.aprobadas ?? 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Aprobadas
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Paper
+                      sx={{
+                        p: 2,
+                        textAlign: 'center',
+                        bgcolor: 'warning.50',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'warning.200',
+                      }}
+                    >
+                      <Typography variant="h4" fontWeight="bold" color="warning.main">
+                        {stats.regularizadas ?? 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Regularizadas
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={4}>
+                    <Paper
+                      sx={{
+                        p: 2,
+                        textAlign: 'center',
+                        bgcolor: 'info.50',
+                        borderRadius: 2,
+                        border: '1px solid',
+                        borderColor: 'info.200',
+                      }}
+                    >
+                      <Typography variant="h4" fontWeight="bold" color="info.main">
+                        {stats.cursando ?? 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Cursando
+                      </Typography>
+                    </Paper>
+                  </Grid>
                 </Grid>
-                <Grid item xs={4}>
-                  <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant="h4" color="info.main">
-                      {academicData.estadisticas.cursando ?? 0}
-                    </Typography>
-                    <Typography variant="caption">Cursando</Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
+              </>
             )}
-            <Box display="flex" justifyContent="center" mt={2}>
+            <Box display="flex" justifyContent="center" mt={3}>
               <Button
-                variant="outlined"
-                size="small"
+                variant="contained"
+                size="large"
                 startIcon={<VisibilityIcon />}
                 onClick={() => navigate('/perfil/' + id + '/materias')}
+                sx={{ borderRadius: 2, px: 4 }}
               >
                 Ver detalle de materias
               </Button>
@@ -321,7 +429,7 @@ export const PerfilUsuario = () => {
         onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled">
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
