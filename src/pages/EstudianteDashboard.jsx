@@ -11,6 +11,7 @@ import {
   Grid,
   Alert,
   Paper,
+  Chip,
   Divider,
 } from '@mui/material';
 import { PageContainer, LoadingSpinner } from '../components/ui';
@@ -225,9 +226,17 @@ export const EstudianteDashboard = () => {
                   <Typography variant="h5" fontWeight="bold">
                     {estudiante.nombre} {estudiante.apellido}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Estudiante
-                  </Typography>
+                  {estudiante.carreras?.length > 0 ? (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 0.5 }}>
+                      {estudiante.carreras.map((c, i) => (
+                        <Chip key={i} label={c.nombre} size="small" icon={<SchoolIcon sx={{ fontSize: 14 }} />} />
+                      ))}
+                    </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      Estudiante
+                    </Typography>
+                  )}
                 </Box>
               </Box>
               <Typography variant="body2" gutterBottom>
