@@ -18,6 +18,7 @@ import {
   Lock,
   Notifications,
   Visibility,
+  Email,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
