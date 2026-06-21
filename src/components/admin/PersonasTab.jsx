@@ -231,6 +231,9 @@ function PersonasTab() {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell sx={{ width: 70 }}>
+                <TableSortLabel active={sortField === 'id'} direction={sortField === 'id' ? sortDir : 'asc'} onClick={() => handleSort('id')}>ID</TableSortLabel>
+              </TableCell>
               <TableCell>
                 <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
               </TableCell>
@@ -249,13 +252,14 @@ function PersonasTab() {
           <TableBody>
             {usuarios.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
             ) : (
               usuarios.map((u) => (
                 <TableRow key={u.id} sx={{ transition: 'background-color 0.5s', backgroundColor: u.id === highlightId ? 'action.selected' : 'inherit' }}>
+                  <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{u.id}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 28, height: 28, fontSize: 14 }}>
