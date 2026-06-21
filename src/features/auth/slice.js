@@ -93,6 +93,22 @@ export const fetchPreferencias = createAsyncThunk(
   }
 );
 
+export const updateUserData = createAsyncThunk(
+  'auth/updateUserData',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      const response = await authService.updateUser(id, data);
+      const updatedUser = response.data.data;
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const newUser = { ...storedUser, ...updatedUser };
+      localStorage.setItem('user', JSON.stringify(newUser));
+      return newUser;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: error.message });
+    }
+  }
+);
+
 export const updatePreferencias = createAsyncThunk(
   'auth/updatePreferencias',
   async ({ estudianteId, preferencias }, { rejectWithValue }) => {
@@ -249,6 +265,9 @@ const authSlice = createSlice({
       .addCase(fetchPreferencias.rejected, (state, action) => {
         state.loadingPreferencias = false;
         state.errorPreferencias = action.payload;
+      })
+      .addCase(updateUserData.fulfilled, (state, action) => {
+        state.user = action.payload;
       })
       .addCase(updatePreferencias.pending, (state) => {
         state.loadingPreferencias = true;

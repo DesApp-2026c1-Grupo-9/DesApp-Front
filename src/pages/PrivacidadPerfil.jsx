@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -9,7 +9,6 @@ import {
   Switch,
   FormControlLabel,
   Divider,
-  Button,
   Snackbar,
   Alert,
 } from '@mui/material';
@@ -17,16 +16,15 @@ import { PageContainer, LoadingSpinner } from '../components/ui';
 import {
   Public,
   Lock,
-  ArrowBack,
-  Email,
+  Notifications,
+  Visibility,
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 import { useSnackbar } from '../hooks';
 
-export const ConfiguracionPerfil = () => {
+export const PrivacidadPerfil = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { estudianteActual } = useAuth();
   const { preferencias, loadingPreferencias } = useSelector(state => state.auth);
 
@@ -83,17 +81,10 @@ export const ConfiguracionPerfil = () => {
 
   return (
     <PageContainer maxWidth={600}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+      <Box mb={3}>
         <Typography variant="h5" fontWeight="bold">
-          Configuración del Perfil
+          Privacidad
         </Typography>
-        <Button
-          startIcon={<ArrowBack />}
-          onClick={() => navigate('/mi-perfil')}
-          size="small"
-        >
-          Volver al perfil
-        </Button>
       </Box>
 
       <Card sx={{ mb: 3 }}>

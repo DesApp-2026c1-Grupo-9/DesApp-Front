@@ -24,7 +24,7 @@ import {
   Divider,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { School, Home, Groups, LibraryBooks, AdminPanelSettings, Block, MenuBook, DynamicFeed, Logout, Menu as MenuIcon, Person } from '@mui/icons-material';
+import { School, Home, Groups, LibraryBooks, AdminPanelSettings, Block, MenuBook, DynamicFeed, Logout, Menu as MenuIcon, Person, Settings, Lock } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 import NotificacionesPopover from './NotificacionesPopover';
@@ -116,6 +116,28 @@ export function TopMenu() {
                 <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
               </Box>
             </Box>
+            {!showAdmin && (
+              <>
+                <Divider />
+                <Typography variant="caption" color="text.secondary" sx={{ px: 2, pt: 1, pb: 0.5, display: 'block' }}>
+                  Configuración
+                </Typography>
+                <List dense>
+                  <ListItem disablePadding>
+                    <ListItemButton onClick={() => { setDrawerOpen(false); navigate('/configuracion'); }}>
+                      <ListItemIcon><Settings /></ListItemIcon>
+                      <ListItemText primary="Editar perfil" />
+                    </ListItemButton>
+                  </ListItem>
+                  <ListItem disablePadding>
+                    <ListItemButton onClick={() => { setDrawerOpen(false); navigate('/privacidad'); }}>
+                      <ListItemIcon><Lock /></ListItemIcon>
+                      <ListItemText primary="Privacidad" />
+                    </ListItemButton>
+                  </ListItem>
+                </List>
+              </>
+            )}
             <Divider />
             <List>
               <ListItem disablePadding>

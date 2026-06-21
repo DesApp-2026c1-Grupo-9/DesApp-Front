@@ -14,6 +14,7 @@ import {
   Divider,
   Chip,
   Snackbar,
+  LinearProgress,
 } from '@mui/material';
 import { PageContainer, LoadingSpinner } from '../components/ui';
 import {
@@ -54,7 +55,7 @@ export const PerfilUsuario = () => {
   }, [esMiPerfil, navigate]);
 
   const [profile, setProfile] = useState(null);
-  const [academicData, setAcademicData] = useState(null);
+  const [academicData, setAcademicData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -92,27 +93,33 @@ export const PerfilUsuario = () => {
         const data = estudianteResponse.data;
         setProfile(data);
 
-        try {
-          const situacionResponse = await EstudianteService.obtenerMateriasEstudiante(estudianteId);
-          const situacion = situacionResponse.data;
-          if (situacion) {
-            setAcademicData({
-              carrera: situacion.carrera?.nombre,
-              estadisticas: {
-                aprobadas: situacion.resumen?.aprobadas || 0,
-                regularizadas: situacion.resumen?.regularizadas || 0,
-                cursando: situacion.resumen?.cursando || 0,
-                total: situacion.resumen?.total || 0,
-              },
-            });
-          }
-        } catch (err) {
-          if (err?.response?.status === 403) {
-            console.log('Situación académica no disponible (privacidad)');
-          } else {
-            console.error('Error al cargar situación académica:', err);
+        const carreras = data.carreras || [];
+        const resultados = [];
+        for (const carrera of carreras) {
+          try {
+            const situacionResponse = await EstudianteService.obtenerMateriasEstudiante(estudianteId, carrera.id);
+            const situacion = situacionResponse.data;
+            if (situacion) {
+              resultados.push({
+                carreraId: carrera.id,
+                carrera: situacion.carrera?.nombre || carrera.nombre,
+                estadisticas: {
+                  aprobadas: situacion.resumen?.aprobadas || 0,
+                  regularizadas: situacion.resumen?.regularizadas || 0,
+                  cursando: situacion.resumen?.cursando || 0,
+                  total: situacion.resumen?.total || 0,
+                },
+              });
+            }
+          } catch (err) {
+            if (err?.response?.status === 403) {
+              console.log('Situación académica no disponible (privacidad)');
+            } else {
+              console.error('Error al cargar situación académica:', err);
+            }
           }
         }
+        setAcademicData(resultados);
       } catch (err) {
         console.error('Error al cargar perfil:', err);
         setError('Error al cargar la información del perfil');
@@ -184,129 +191,227 @@ export const PerfilUsuario = () => {
   const fechaNacimiento = usuario.fechaNacimiento;
   const edad = fechaNacimiento ? calcularEdad(fechaNacimiento) : null;
   const carreras = profile.carreras?.filter(Boolean) || [];
-  const carreraActual = academicData?.carrera;
-  const carrerasParaMostrar = carreraActual
-    ? [carreraActual]
-    : carreras.map(c => c.nombre).filter(Boolean);
 
   return (
     <PageContainer maxWidth={800}>
-      <Card sx={{ '&:hover': { boxShadow: (theme) => theme.shadows[2] } }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
+      <Card
+        sx={{
+          borderRadius: 3,
+          overflow: 'hidden',
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+          mb: 3,
+        }}
+      >
+        <Box
+          sx={{
+            height: 100,
+            background: theme =>
+              `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})`,
+          }}
+        />
+        <CardContent sx={{ mt: -6, textAlign: 'center' }}>
+          <Box position="relative" display="inline-block">
             <Avatar
-              src={avatarUrl || `https://ui-avatars.com/api/?name=${nombre}+${apellido}&background=random`}
-              sx={{ width: 80, height: 80, mr: 2 }}
+              src={avatarUrl || `https://ui-avatars.com/api/?name=${nombre}+${apellido}&background=random&bold=true`}
+              sx={{
+                width: 96,
+                height: 96,
+                mx: 'auto',
+                border: '4px solid white',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+              }}
             />
-            <Box flex={1}>
-              <Box display="flex" alignItems="center" gap={0.5}>
-                <Typography variant="h5" fontWeight="bold">
-                  {nombre} {apellido}
-                </Typography>
-                {!profile.perfilPublico && !esMiPerfil && (
-                  <Lock sx={{ fontSize: 16, color: 'text.disabled' }} />
-                )}
-              </Box>
-              {carrerasParaMostrar.length > 0 ? (
-                carrerasParaMostrar.map((c, i) => (
-                  <Chip
-                    key={i}
-                    label={c}
-                    size="small"
-                    icon={<SchoolIcon sx={{ fontSize: 14 }} />}
-                    sx={{ mr: 0.5, mb: 0.5 }}
-                  />
-                ))
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Estudiante
-                </Typography>
-              )}
-            </Box>
-            {!esMiPerfil && (
+            {!profile.perfilPublico && !esMiPerfil && (
+              <Lock
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  right: 0,
+                  fontSize: 20,
+                  bgcolor: 'background.paper',
+                  borderRadius: '50%',
+                  p: 0.3,
+                  border: '2px solid white',
+                  color: 'text.disabled',
+                }}
+              />
+            )}
+          </Box>
+
+          <Box display="flex" alignItems="center" justifyContent="center" gap={1} mt={1}>
+            <Typography variant="h5" fontWeight="bold">
+              {nombre} {apellido}
+            </Typography>
+          </Box>
+
+          <Box display="flex" justifyContent="center" flexWrap="wrap" gap={0.5} mt={0.5}>
+            {carreras.length > 0 ? (
+              carreras.map((c, i) => (
+                <Chip
+                  key={i}
+                  label={c.nombre}
+                  size="small"
+                  icon={<SchoolIcon sx={{ fontSize: 14 }} />}
+                  variant="outlined"
+                  color="primary"
+                />
+              ))
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                Estudiante
+              </Typography>
+            )}
+          </Box>
+
+          {!esMiPerfil && (
+            <Box mt={1.5}>
               <Button
                 variant="contained"
                 size="small"
                 startIcon={<PersonAdd />}
                 onClick={handleInvite}
                 disabled={esContacto}
+                sx={{ borderRadius: 2 }}
               >
                 {esContacto ? 'Conectado' : 'Agregar contacto'}
               </Button>
-            )}
-          </Box>
+            </Box>
+          )}
 
           <Divider sx={{ my: 2 }} />
 
-          {puedeVerEmail && email && (
-            <Typography variant="body2" gutterBottom>
-              <EmailIcon sx={{ mr: 0.5, verticalAlign: 'middle', fontSize: 16 }} />
-              {email}
-            </Typography>
-          )}
-
-          {puedeVerEmail && fechaNacimiento && (
-            <Typography variant="body2" gutterBottom>
-              <CakeIcon sx={{ mr: 0.5, verticalAlign: 'middle', fontSize: 16 }} />
-              {fechaNacimiento}
-              {edad ? ` (${edad} años)` : ''}
-            </Typography>
-          )}
+          <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+            {puedeVerEmail && email && (
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <EmailIcon fontSize="small" color="action" />
+                <Typography variant="body2">{email}</Typography>
+              </Box>
+            )}
+            {puedeVerEmail && fechaNacimiento && (
+              <Box display="flex" alignItems="center" gap={0.5}>
+                <CakeIcon fontSize="small" color="action" />
+                <Typography variant="body2">
+                  {new Date(fechaNacimiento).toLocaleDateString('es-AR')}
+                  {edad ? ` (${edad} años)` : ''}
+                </Typography>
+              </Box>
+            )}
+          </Box>
 
           {!puedeVerTodo && (
-            <Alert severity="info" sx={{ mt: 2 }}>
+            <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
               Este perfil es privado. Conectate con {nombre} para ver más detalles.
             </Alert>
           )}
         </CardContent>
       </Card>
 
-      {puedeVerSituacion && carreraActual && (
-        <Card elevation={0} sx={{ mt: 3, border: 1, borderColor: 'divider', transition: 'none' }}>
+      {puedeVerSituacion && academicData.length > 0 && (
+        <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', mb: 3 }}>
           <CardContent>
-            <Box display="flex" alignItems="center" mb={2}>
-              <SchoolIcon sx={{ mr: 1 }} />
-              <Typography variant="h6">Información Académica</Typography>
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <SchoolIcon color="primary" />
+              <Typography variant="h6" fontWeight="bold">
+                Información Académica
+              </Typography>
             </Box>
 
-            <Typography variant="h6" gutterBottom color="primary">
-              {carreraActual}
-            </Typography>
+            {academicData.map((acad, idx) => {
+              const stats = acad.estadisticas || {};
+              const total = stats.aprobadas + stats.regularizadas + stats.cursando || 1;
+              const progreso = Math.round((stats.aprobadas / total) * 100);
 
-            {academicData?.estadisticas && (
-              <Grid container spacing={2}>
-                <Grid item xs={4}>
-                  <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant="h4" color="success.main">
-                      {academicData.estadisticas.aprobadas ?? 0}
-                    </Typography>
-                    <Typography variant="caption">Aprobadas</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={4}>
-                  <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant="h4" color="warning.main">
-                      {academicData.estadisticas.regularizadas ?? 0}
-                    </Typography>
-                    <Typography variant="caption">Regularizadas</Typography>
-                  </Paper>
-                </Grid>
-                <Grid item xs={4}>
-                  <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant="h4" color="info.main">
-                      {academicData.estadisticas.cursando ?? 0}
-                    </Typography>
-                    <Typography variant="caption">Cursando</Typography>
-                  </Paper>
-                </Grid>
-              </Grid>
-            )}
-            <Box display="flex" justifyContent="center" mt={2}>
+              return (
+                <Box key={idx}>
+                  {idx > 0 && <Divider sx={{ my: 3 }} />}
+                  <Typography variant="subtitle1" fontWeight="bold" color="primary.main" gutterBottom>
+                    {acad.carrera}
+                  </Typography>
+                  <Box mb={2}>
+                    <Box display="flex" justifyContent="space-between" mb={0.5}>
+                      <Typography variant="caption" color="text.secondary">
+                        Progreso general
+                      </Typography>
+                      <Typography variant="caption" fontWeight="bold" color="success.main">
+                        {progreso}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={progreso}
+                      sx={{ height: 8, borderRadius: 4 }}
+                    />
+                  </Box>
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'success.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'success.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="success.main">
+                          {stats.aprobadas ?? 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Aprobadas
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'warning.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'warning.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="warning.main">
+                          {stats.regularizadas ?? 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Regularizadas
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'info.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'info.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="info.main">
+                          {stats.cursando ?? 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Cursando
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                </Box>
+              );
+            })}
+
+            <Box display="flex" justifyContent="center" mt={3}>
               <Button
-                variant="outlined"
-                size="small"
+                variant="contained"
+                size="large"
                 startIcon={<VisibilityIcon />}
                 onClick={() => navigate('/perfil/' + id + '/materias')}
+                sx={{ borderRadius: 2, px: 4 }}
               >
                 Ver detalle de materias
               </Button>
@@ -321,7 +426,7 @@ export const PerfilUsuario = () => {
         onClose={closeSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled">
+        <Alert onClose={closeSnackbar} severity={snackbar.severity} variant="filled" sx={{ borderRadius: 2 }}>
           {snackbar.message}
         </Alert>
       </Snackbar>
