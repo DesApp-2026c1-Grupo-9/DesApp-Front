@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Box, Alert, AlertTitle } from '@mui/material';
 import { Block } from '@mui/icons-material';
@@ -13,7 +13,7 @@ const MENSAJE_ERROR_GENERAL =
   'Ocurrió un error inesperado. Podés continuar navegando y reintentar la última acción.';
 
 export default function AdminLayout() {
-  const { estudianteActual, loading: authLoading } = useAuth();
+  const { estudianteActual, loading: authLoading, isAuthenticated } = useAuth();
   const location = useLocation();
   const [errorGeneral, setErrorGeneral] = useState(null);
 
@@ -29,6 +29,10 @@ export default function AdminLayout() {
 
   if (authLoading) {
     return <LoadingSpinner fullScreen message="Inicializando sesión..." />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
   }
 
   return (

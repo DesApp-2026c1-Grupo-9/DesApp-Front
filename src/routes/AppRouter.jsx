@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Box } from '@mui/material';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
@@ -19,7 +19,6 @@ import { PrivacidadPerfil } from '../pages/PrivacidadPerfil';
 import { PerfilUsuario } from '../pages/PerfilUsuario';
 import { MateriasVisitante } from '../pages/MateriasVisitante';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
-import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
 import AdminAcademicoPage from '../pages/AdminAcademicoPage';
@@ -33,11 +32,17 @@ import AdminLayout from '../layouts/AdminLayout';
 import { fetchStudents } from '../features/auth/slice';
 import { LoadingSpinner } from '../components/ui';
 
-const AuthLayout = () => (
-  <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
-    <Outlet />
-  </Box>
-);
+const AuthLayout = () => {
+  const { user } = useSelector((state) => state.auth);
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
+      <Outlet />
+    </Box>
+  );
+};
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -77,7 +82,6 @@ const AppRouter = () => {
               </Route>
               <Route path="/asistente" element={<AsistenteAcademico />} />
               <Route path="/materias" element={<SubjectManagementPage />} />
-              <Route path="/demo-selector" element={<SelectorEstudiante />} />
               <Route path="/notificaciones" element={<Notificaciones />} />
             </Route>
             <Route element={<AdminLayout />}>
