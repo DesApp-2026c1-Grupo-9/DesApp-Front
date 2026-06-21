@@ -72,25 +72,30 @@ export const EstudianteDashboard = () => {
         
         setEstudiante(estudianteInfo);
         
-        try {
-          const situacionData = await EstudianteService.obtenerMateriasEstudiante(estudianteActual.id);
-          setSituacionAcademica({
-            carrera: situacionData.data?.carrera?.nombre,
-            estadisticas: {
-              materiasAprobadas: situacionData.data?.resumen?.aprobadas || 0,
-              materiasRegularizaciones: situacionData.data?.resumen?.regularizadas || 0,
-              materiasCursando: situacionData.data?.resumen?.cursando || 0,
-              totalMaterias: situacionData.data?.resumen?.total || 0,
-            },
-            situacionAcademica: Object.values(situacionData.data?.materiasPorAnio || {}).flat() || [],
-          });
-        } catch {
-          setSituacionAcademica({
-            carrera: null,
-            estadisticas: { materiasAprobadas: 0, materiasRegularizaciones: 0, materiasCursando: 0, totalMaterias: 0 },
-            situacionAcademica: [],
-          });
+        const carreras = estudianteInfo.carreras || [];
+        const resultados = [];
+        for (const carrera of carreras) {
+          try {
+            const data = await EstudianteService.obtenerMateriasEstudiante(estudianteActual.id, carrera.id);
+            resultados.push({
+              carreraId: carrera.id,
+              carrera: data.data?.carrera?.nombre || carrera.nombre,
+              estadisticas: {
+                materiasAprobadas: data.data?.resumen?.aprobadas || 0,
+                materiasRegularizaciones: data.data?.resumen?.regularizadas || 0,
+                materiasCursando: data.data?.resumen?.cursando || 0,
+                totalMaterias: data.data?.resumen?.total || 0,
+              },
+            });
+          } catch {
+            resultados.push({
+              carreraId: carrera.id,
+              carrera: carrera.nombre,
+              estadisticas: { materiasAprobadas: 0, materiasRegularizaciones: 0, materiasCursando: 0, totalMaterias: 0 },
+            });
+          }
         }
+        setSituacionAcademica(resultados);
       } catch (err) {
         console.error('Error al cargar datos del estudiante:', err);
         setError('Error al cargar la información del estudiante');
@@ -253,10 +258,6 @@ export const EstudianteDashboard = () => {
     ? estudiante.genero.charAt(0).toUpperCase() + estudiante.genero.slice(1)
     : null;
 
-  const stats = situacionAcademica?.estadisticas || {};
-  const total = stats.materiasAprobadas + stats.materiasRegularizaciones + stats.materiasCursando || 1;
-  const progreso = Math.round((stats.materiasAprobadas / total) * 100);
-
   return (
     <PageContainer maxWidth={800}>
       {/* Información Personal */}
@@ -334,106 +335,119 @@ export const EstudianteDashboard = () => {
       </Card>
 
       {/* Información Académica */}
-      <Card
-        sx={{
-          borderRadius: 3,
-          overflow: 'hidden',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-          mb: 3,
-        }}
-      >
-        <CardContent>
-          <Box display="flex" alignItems="center" gap={1} mb={1}>
-            <SchoolIcon color="primary" />
-            <Typography variant="h6" fontWeight="bold">
+      {situacionAcademica.length === 0 && (
+        <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', mb: 3 }}>
+          <CardContent sx={{ textAlign: 'center', py: 4 }}>
+            <SchoolIcon sx={{ fontSize: 48, color: 'text.disabled', mb: 1 }} />
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
               Información Académica
             </Typography>
-          </Box>
+            <Typography variant="body2" color="text.secondary">
+              Sin carrera asignada
+            </Typography>
+          </CardContent>
+        </Card>
+      )}
 
-          <Typography variant="subtitle1" color="primary.main" gutterBottom>
-            {situacionAcademica?.carrera || 'Sin carrera asignada'}
-          </Typography>
-
-          {/* Barra de progreso global */}
-          {situacionAcademica?.carrera && (
-            <Box mt={2} mb={3}>
-              <Box display="flex" justifyContent="space-between" mb={0.5}>
-                <Typography variant="caption" color="text.secondary">
-                  Progreso general
-                </Typography>
-                <Typography variant="caption" fontWeight="bold" color="success.main">
-                  {progreso}%
-                </Typography>
-              </Box>
-              <LinearProgress
-                variant="determinate"
-                value={progreso}
-                sx={{ height: 8, borderRadius: 4 }}
-              />
+      {situacionAcademica.length > 0 && (
+        <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', mb: 3 }}>
+          <CardContent>
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
+              <SchoolIcon color="primary" />
+              <Typography variant="h6" fontWeight="bold">
+                Información Académica
+              </Typography>
             </Box>
-          )}
 
-          <Grid container spacing={2}>
-            <Grid item xs={4}>
-              <Paper
-                sx={{
-                  p: 2,
-                  textAlign: 'center',
-                  bgcolor: 'success.50',
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'success.200',
-                }}
-              >
-                <Typography variant="h4" fontWeight="bold" color="success.main">
-                  {stats.materiasAprobadas || 0}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Aprobadas
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={4}>
-              <Paper
-                sx={{
-                  p: 2,
-                  textAlign: 'center',
-                  bgcolor: 'warning.50',
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'warning.200',
-                }}
-              >
-                <Typography variant="h4" fontWeight="bold" color="warning.main">
-                  {stats.materiasRegularizaciones || 0}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Regularizadas
-                </Typography>
-              </Paper>
-            </Grid>
-            <Grid item xs={4}>
-              <Paper
-                sx={{
-                  p: 2,
-                  textAlign: 'center',
-                  bgcolor: 'info.50',
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'info.200',
-                }}
-              >
-                <Typography variant="h4" fontWeight="bold" color="info.main">
-                  {stats.materiasCursando || 0}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Cursando
-                </Typography>
-              </Paper>
-            </Grid>
-          </Grid>
+            {situacionAcademica.map((acad, idx) => {
+              const stats = acad.estadisticas || {};
+              const total = stats.materiasAprobadas + stats.materiasRegularizaciones + stats.materiasCursando || 1;
+              const progreso = Math.round((stats.materiasAprobadas / total) * 100);
 
-          {situacionAcademica?.carrera && (
+              return (
+                <Box key={idx}>
+                  {idx > 0 && <Divider sx={{ my: 3 }} />}
+                  <Typography variant="subtitle1" fontWeight="bold" color="primary.main" gutterBottom>
+                    {acad.carrera}
+                  </Typography>
+                  <Box mb={2}>
+                    <Box display="flex" justifyContent="space-between" mb={0.5}>
+                      <Typography variant="caption" color="text.secondary">
+                        Progreso general
+                      </Typography>
+                      <Typography variant="caption" fontWeight="bold" color="success.main">
+                        {progreso}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={progreso}
+                      sx={{ height: 8, borderRadius: 4 }}
+                    />
+                  </Box>
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'success.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'success.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="success.main">
+                          {stats.materiasAprobadas || 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Aprobadas
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'warning.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'warning.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="warning.main">
+                          {stats.materiasRegularizaciones || 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Regularizadas
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'info.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'info.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="info.main">
+                          {stats.materiasCursando || 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Cursando
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  </Grid>
+                </Box>
+              );
+            })}
+
             <Box mt={3} textAlign="center">
               <Button
                 variant="contained"
@@ -445,9 +459,9 @@ export const EstudianteDashboard = () => {
                 Ver Detalle de Materias
               </Button>
             </Box>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </PageContainer>
   );
 };

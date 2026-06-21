@@ -55,7 +55,7 @@ export const PerfilUsuario = () => {
   }, [esMiPerfil, navigate]);
 
   const [profile, setProfile] = useState(null);
-  const [academicData, setAcademicData] = useState(null);
+  const [academicData, setAcademicData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -93,27 +93,33 @@ export const PerfilUsuario = () => {
         const data = estudianteResponse.data;
         setProfile(data);
 
-        try {
-          const situacionResponse = await EstudianteService.obtenerMateriasEstudiante(estudianteId);
-          const situacion = situacionResponse.data;
-          if (situacion) {
-            setAcademicData({
-              carrera: situacion.carrera?.nombre,
-              estadisticas: {
-                aprobadas: situacion.resumen?.aprobadas || 0,
-                regularizadas: situacion.resumen?.regularizadas || 0,
-                cursando: situacion.resumen?.cursando || 0,
-                total: situacion.resumen?.total || 0,
-              },
-            });
-          }
-        } catch (err) {
-          if (err?.response?.status === 403) {
-            console.log('Situación académica no disponible (privacidad)');
-          } else {
-            console.error('Error al cargar situación académica:', err);
+        const carreras = data.carreras || [];
+        const resultados = [];
+        for (const carrera of carreras) {
+          try {
+            const situacionResponse = await EstudianteService.obtenerMateriasEstudiante(estudianteId, carrera.id);
+            const situacion = situacionResponse.data;
+            if (situacion) {
+              resultados.push({
+                carreraId: carrera.id,
+                carrera: situacion.carrera?.nombre || carrera.nombre,
+                estadisticas: {
+                  aprobadas: situacion.resumen?.aprobadas || 0,
+                  regularizadas: situacion.resumen?.regularizadas || 0,
+                  cursando: situacion.resumen?.cursando || 0,
+                  total: situacion.resumen?.total || 0,
+                },
+              });
+            }
+          } catch (err) {
+            if (err?.response?.status === 403) {
+              console.log('Situación académica no disponible (privacidad)');
+            } else {
+              console.error('Error al cargar situación académica:', err);
+            }
           }
         }
+        setAcademicData(resultados);
       } catch (err) {
         console.error('Error al cargar perfil:', err);
         setError('Error al cargar la información del perfil');
@@ -185,14 +191,6 @@ export const PerfilUsuario = () => {
   const fechaNacimiento = usuario.fechaNacimiento;
   const edad = fechaNacimiento ? calcularEdad(fechaNacimiento) : null;
   const carreras = profile.carreras?.filter(Boolean) || [];
-  const carreraActual = academicData?.carrera;
-  const carrerasParaMostrar = carreraActual
-    ? [carreraActual]
-    : carreras.map(c => c.nombre).filter(Boolean);
-
-  const stats = academicData?.estadisticas || {};
-  const totalStats = stats.aprobadas + stats.regularizadas + stats.cursando || 1;
-  const progreso = Math.round((stats.aprobadas / totalStats) * 100);
 
   return (
     <PageContainer maxWidth={800}>
@@ -247,11 +245,11 @@ export const PerfilUsuario = () => {
           </Box>
 
           <Box display="flex" justifyContent="center" flexWrap="wrap" gap={0.5} mt={0.5}>
-            {carrerasParaMostrar.length > 0 ? (
-              carrerasParaMostrar.map((c, i) => (
+            {carreras.length > 0 ? (
+              carreras.map((c, i) => (
                 <Chip
                   key={i}
-                  label={c}
+                  label={c.nombre}
                   size="small"
                   icon={<SchoolIcon sx={{ fontSize: 14 }} />}
                   variant="outlined"
@@ -308,106 +306,105 @@ export const PerfilUsuario = () => {
         </CardContent>
       </Card>
 
-      {puedeVerSituacion && carreraActual && (
-        <Card
-          sx={{
-            borderRadius: 3,
-            overflow: 'hidden',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
-            mb: 3,
-          }}
-        >
+      {puedeVerSituacion && academicData.length > 0 && (
+        <Card sx={{ borderRadius: 3, boxShadow: '0 2px 12px rgba(0,0,0,0.08)', mb: 3 }}>
           <CardContent>
-            <Box display="flex" alignItems="center" gap={1} mb={1}>
+            <Box display="flex" alignItems="center" gap={1} mb={2}>
               <SchoolIcon color="primary" />
               <Typography variant="h6" fontWeight="bold">
                 Información Académica
               </Typography>
             </Box>
 
-            <Typography variant="subtitle1" color="primary.main" gutterBottom>
-              {carreraActual}
-            </Typography>
+            {academicData.map((acad, idx) => {
+              const stats = acad.estadisticas || {};
+              const total = stats.aprobadas + stats.regularizadas + stats.cursando || 1;
+              const progreso = Math.round((stats.aprobadas / total) * 100);
 
-            {academicData?.estadisticas && (
-              <>
-                <Box mt={2} mb={3}>
-                  <Box display="flex" justifyContent="space-between" mb={0.5}>
-                    <Typography variant="caption" color="text.secondary">
-                      Progreso general
-                    </Typography>
-                    <Typography variant="caption" fontWeight="bold" color="success.main">
-                      {progreso}%
-                    </Typography>
+              return (
+                <Box key={idx}>
+                  {idx > 0 && <Divider sx={{ my: 3 }} />}
+                  <Typography variant="subtitle1" fontWeight="bold" color="primary.main" gutterBottom>
+                    {acad.carrera}
+                  </Typography>
+                  <Box mb={2}>
+                    <Box display="flex" justifyContent="space-between" mb={0.5}>
+                      <Typography variant="caption" color="text.secondary">
+                        Progreso general
+                      </Typography>
+                      <Typography variant="caption" fontWeight="bold" color="success.main">
+                        {progreso}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress
+                      variant="determinate"
+                      value={progreso}
+                      sx={{ height: 8, borderRadius: 4 }}
+                    />
                   </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={progreso}
-                    sx={{ height: 8, borderRadius: 4 }}
-                  />
+                  <Grid container spacing={2}>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'success.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'success.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="success.main">
+                          {stats.aprobadas ?? 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Aprobadas
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'warning.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'warning.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="warning.main">
+                          {stats.regularizadas ?? 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Regularizadas
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                    <Grid item xs={4}>
+                      <Paper
+                        sx={{
+                          p: 2,
+                          textAlign: 'center',
+                          bgcolor: 'info.50',
+                          borderRadius: 2,
+                          border: '1px solid',
+                          borderColor: 'info.200',
+                        }}
+                      >
+                        <Typography variant="h4" fontWeight="bold" color="info.main">
+                          {stats.cursando ?? 0}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Cursando
+                        </Typography>
+                      </Paper>
+                    </Grid>
+                  </Grid>
                 </Box>
+              );
+            })}
 
-                <Grid container spacing={2}>
-                  <Grid item xs={4}>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        textAlign: 'center',
-                        bgcolor: 'success.50',
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'success.200',
-                      }}
-                    >
-                      <Typography variant="h4" fontWeight="bold" color="success.main">
-                        {stats.aprobadas ?? 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Aprobadas
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        textAlign: 'center',
-                        bgcolor: 'warning.50',
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'warning.200',
-                      }}
-                    >
-                      <Typography variant="h4" fontWeight="bold" color="warning.main">
-                        {stats.regularizadas ?? 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Regularizadas
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Paper
-                      sx={{
-                        p: 2,
-                        textAlign: 'center',
-                        bgcolor: 'info.50',
-                        borderRadius: 2,
-                        border: '1px solid',
-                        borderColor: 'info.200',
-                      }}
-                    >
-                      <Typography variant="h4" fontWeight="bold" color="info.main">
-                        {stats.cursando ?? 0}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        Cursando
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                </Grid>
-              </>
-            )}
             <Box display="flex" justifyContent="center" mt={3}>
               <Button
                 variant="contained"
