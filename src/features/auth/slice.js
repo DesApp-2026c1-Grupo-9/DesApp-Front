@@ -109,6 +109,22 @@ export const updateUserData = createAsyncThunk(
   }
 );
 
+export const updateAvatar = createAsyncThunk(
+  'auth/updateAvatar',
+  async ({ id, file }, { rejectWithValue }) => {
+    try {
+      const response = await authService.uploadAvatar(id, file);
+      const { avatarUrl } = response.data.data;
+      const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      storedUser.avatarUrl = avatarUrl;
+      localStorage.setItem('user', JSON.stringify(storedUser));
+      return avatarUrl;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || { message: error.message });
+    }
+  }
+);
+
 export const updatePreferencias = createAsyncThunk(
   'auth/updatePreferencias',
   async ({ estudianteId, preferencias }, { rejectWithValue }) => {
@@ -268,6 +284,11 @@ const authSlice = createSlice({
       })
       .addCase(updateUserData.fulfilled, (state, action) => {
         state.user = action.payload;
+      })
+      .addCase(updateAvatar.fulfilled, (state, action) => {
+        if (state.user) {
+          state.user.avatarUrl = action.payload;
+        }
       })
       .addCase(updatePreferencias.pending, (state) => {
         state.loadingPreferencias = true;
