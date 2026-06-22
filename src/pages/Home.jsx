@@ -187,7 +187,7 @@ const Home = () => {
       </Box>
 
       {/* Métricas Rápidas */}
-      <Grid container spacing={2} sx={{ mb: 4 }}>
+      <Grid container spacing={4} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ height: '100%' }}>
             <CardContent sx={{ textAlign: 'center' }}>
@@ -248,11 +248,11 @@ const Home = () => {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={6}>
         {/* Mi Cursada Actual */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 Mi Cursada Actual (2026-1)
               </Typography>
@@ -298,8 +298,8 @@ const Home = () => {
 
         {/* Próximas Fechas Importantes */}
         <Grid item xs={12} md={6}>
-          <Card sx={{ height: '100%' }}>
-            <CardContent>
+          <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 Próximas Fechas Importantes
               </Typography>
@@ -322,7 +322,7 @@ const Home = () => {
 
         {/* Progreso de Carrera */}
         <Grid item xs={12}>
-          <Card>
+          <Card sx={{ height: '100%' }}>
             <CardContent>
               <Typography variant="h6" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
                 Progreso de Carrera
