@@ -179,12 +179,14 @@ function PersonasTab() {
   const handleToggleEstadoConfirm = async () => {
     if (!userToToggle) return;
     try {
-      const res = await api.put(`/api/usuarios/${userToToggle.id}`, { activo: !userToToggle.activo });
+      const nuevoActivo = !userToToggle.activo;
+      const res = await api.put(`/api/usuarios/${userToToggle.id}`, { activo: nuevoActivo });
       showSuccess(`Usuario ${userToToggle.activo ? 'desactivado' : 'activado'} exitosamente`);
       setUserToToggle(null);
+      dispatch(updateStudentActiveStatus({ studentId: userToToggle.id, activo: res.data.data?.activo ?? nuevoActivo }));
       dispatch(fetchStudents());
       cargarUsuarios();
-      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: userToToggle.id, activo: res.data.data?.activo ?? !userToToggle.activo } }));
+      window.dispatchEvent(new CustomEvent('usuario-estado-cambiado', { detail: { usuarioId: userToToggle.id, activo: res.data.data?.activo ?? nuevoActivo } }));
     } catch (err) {
       showError(err.response?.data?.message || 'Error al cambiar estado');
     }
@@ -231,6 +233,9 @@ function PersonasTab() {
         <Table size="small">
           <TableHead>
             <TableRow>
+              <TableCell sx={{ width: 70 }}>
+                <TableSortLabel active={sortField === 'id'} direction={sortField === 'id' ? sortDir : 'asc'} onClick={() => handleSort('id')}>ID</TableSortLabel>
+              </TableCell>
               <TableCell>
                 <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
               </TableCell>
@@ -249,13 +254,14 @@ function PersonasTab() {
           <TableBody>
             {usuarios.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                   No hay usuarios registrados
                 </TableCell>
               </TableRow>
             ) : (
               usuarios.map((u) => (
                 <TableRow key={u.id} sx={{ transition: 'background-color 0.5s', backgroundColor: u.id === highlightId ? 'action.selected' : 'inherit' }}>
+                  <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{u.id}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Avatar sx={{ width: 28, height: 28, fontSize: 14 }}>
@@ -350,6 +356,11 @@ function PersonasTab() {
           <Typography>¿Estás seguro de que deseas {userToToggle?.activo ? 'desactivar' : 'activar'} a <strong>{userToToggle?.apellido}, {userToToggle?.nombre}</strong>?</Typography>
           {userToToggle?.activo && (
             <Alert severity="warning" sx={{ mt: 2 }}>El usuario no podrá realizar operaciones en el sistema hasta que sea activado nuevamente.</Alert>
+          )}
+          {userToToggle?.activo && userToToggle.id === currentUserId && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              <strong>¡Te estás desactivando a vos mismo!</strong> No vas a poder realizar ninguna operación hasta que otro administrador te reactive.
+            </Alert>
           )}
         </DialogContent>
         <DialogActions>
