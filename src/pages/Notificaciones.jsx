@@ -18,6 +18,7 @@ import {
 import {
   fetchNotificaciones,
   fetchContador,
+  readAllNotificaciones,
 } from '../features/notificaciones/slice';
 
 export default function Notificaciones() {
@@ -38,6 +39,10 @@ export default function Notificaciones() {
   useEffect(() => {
     cargar(1);
     if (userId) dispatch(fetchContador(userId));
+
+    return () => {
+      if (userId) dispatch(readAllNotificaciones(userId));
+    };
   }, [userId, dispatch, cargar]);
 
   const handleCambiarPagina = (_, pagina) => {

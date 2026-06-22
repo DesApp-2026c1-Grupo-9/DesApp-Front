@@ -2,7 +2,7 @@ import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { Box, Alert, AlertTitle } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { TopMenu } from '../components/TopMenu';
+import { Sidebar } from '../components/Sidebar';
 import { AdminAppBar } from '../components/AdminAppBar';
 import { useAuth } from '../context/AuthContext';
 import { PageTransition, LoadingSpinner } from '../components/ui';
@@ -39,41 +39,71 @@ export default function PublicLayout() {
     return <Navigate to="/login" replace />;
   }
 
-  if (esAdmin && location.pathname !== '/mi-perfil') {
+  if (esAdmin && location.pathname !== '/configuracion') {
     return <Navigate to="/admin" replace />;
   }
 
+  if (esAdmin) {
+    return (
+      <>
+        <AdminAppBar />
+        {errorGeneral && (
+          <Alert severity="error" sx={{ borderRadius: 0 }} onClose={() => setErrorGeneral(null)}>
+            <AlertTitle>Error general</AlertTitle>
+            {MENSAJE_ERROR_GENERAL}
+          </Alert>
+        )}
+        <Box sx={{ p: { xs: 2, md: 3 }, minHeight: 'calc(100vh - 64px)' }}>
+          <PageTransition key={routeKey}>
+            <AppErrorBoundary
+              fallback={(
+                <Box sx={{ p: 3 }}>
+                  <Alert severity="error"><AlertTitle>Error general</AlertTitle>{MENSAJE_ERROR_GENERAL}</Alert>
+                </Box>
+              )}
+            >
+              <Outlet />
+            </AppErrorBoundary>
+          </PageTransition>
+        </Box>
+      </>
+    );
+  }
+
   return (
-    <>
-      {esAdmin ? <AdminAppBar /> : <TopMenu />}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50' }}>
+      <Sidebar />
 
-      {errorGeneral && (
-        <Alert
-          severity="error"
-          sx={{ borderRadius: 0 }}
-          onClose={() => setErrorGeneral(null)}
-        >
-          <AlertTitle>Error general</AlertTitle>
-          {MENSAJE_ERROR_GENERAL}
-        </Alert>
-      )}
+      <Box
+        sx={{
+          flexGrow: 1,
+          ml: '260px',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+        }}
+      >
+        {errorGeneral && (
+          <Alert severity="error" sx={{ borderRadius: 0 }} onClose={() => setErrorGeneral(null)}>
+            <AlertTitle>Error general</AlertTitle>
+            {MENSAJE_ERROR_GENERAL}
+          </Alert>
+        )}
 
-      <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
-        <PageTransition key={routeKey}>
-          <AppErrorBoundary
-            fallback={(
-              <Box sx={{ p: 3 }}>
-                <Alert severity="error">
-                  <AlertTitle>Error general</AlertTitle>
-                  {MENSAJE_ERROR_GENERAL}
-                </Alert>
-              </Box>
-            )}
-          >
-            <Outlet />
-          </AppErrorBoundary>
-        </PageTransition>
+        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 } }}>
+          <PageTransition key={routeKey}>
+            <AppErrorBoundary
+              fallback={(
+                <Box sx={{ p: 3 }}>
+                  <Alert severity="error"><AlertTitle>Error general</AlertTitle>{MENSAJE_ERROR_GENERAL}</Alert>
+                </Box>
+              )}
+            >
+              <Outlet />
+            </AppErrorBoundary>
+          </PageTransition>
+        </Box>
       </Box>
-    </>
+    </Box>
   );
 }
