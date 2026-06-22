@@ -447,7 +447,7 @@ export default function ConfiguracionPage() {
   const [tab, setTab] = useState(0);
 
   return (
-    <PageContainer maxWidth={900}>
+    <PageContainer maxWidth={1200}>
       <Box sx={{ display: 'flex', gap: 3 }}>
         <Tabs
           orientation="vertical"

@@ -100,7 +100,7 @@ const Home = () => {
 
   if (esAdmin) {
     return (
-      <PageContainer maxWidth={800}>
+      <PageContainer maxWidth={1200}>
         <Box sx={{ mb: 4 }}>
           <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
             <Box display="flex" alignItems="center">
@@ -127,7 +127,7 @@ const Home = () => {
   // Loading state
   if (loading) {
     return (
-      <PageContainer centered padding={3}>
+      <PageContainer>
         <LoadingSpinner message="Cargando datos del estudiante..." />
       </PageContainer>
     );
@@ -135,7 +135,7 @@ const Home = () => {
 
   if (!estudianteInfo) {
     return (
-      <PageContainer centered padding={3}>
+      <PageContainer>
         <Typography color="error">Error al cargar datos del estudiante</Typography>
       </PageContainer>
     );
@@ -163,7 +163,7 @@ const Home = () => {
   };
 
   return (
-    <PageContainer maxWidth={800}>
+    <PageContainer maxWidth={1200}>
       {/* Header de Bienvenida */}
       <Box sx={{ mb: 4 }}>
         <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>

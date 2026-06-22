@@ -499,7 +499,7 @@ export const EstudianteMaterias = () => {
 
   if (authLoading || loading) {
     return (
-      <PageContainer centered padding={3}>
+      <PageContainer>
         <LoadingSpinner message="Cargando información académica..." />
       </PageContainer>
     );
@@ -507,7 +507,7 @@ export const EstudianteMaterias = () => {
 
   if (error) {
     return (
-      <PageContainer padding={3}>
+    <PageContainer>
         <EmptyState
           title="Error al cargar"
           message={error}
@@ -521,10 +521,10 @@ export const EstudianteMaterias = () => {
 
   if (!estudiante || !situacionAcademica) {
     return (
-      <PageContainer padding={3}>
+      <PageContainer>
         <EmptyState
-          title="Sin información"
-          message="No se encontró información del estudiante"
+          title="Sin informaci\u00F3n"
+          message="No se encontraron datos acad\u00E9micos para esta carrera."
           icon="inbox"
         />
       </PageContainer>

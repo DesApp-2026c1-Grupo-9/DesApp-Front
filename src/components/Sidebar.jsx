@@ -245,7 +245,7 @@ export function Sidebar() {
           </Box>
         </Box>
 
-        <List sx={{ flexGrow: 1, overflowY: 'auto', py: 1 }}>
+        <List sx={{ flexGrow: 1, overflowY: 'auto', pt: 0, pb: 1 }}>
           {menuGroups.map(renderNavItem)}
         </List>
 

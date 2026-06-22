@@ -77,7 +77,6 @@ export default function PublicLayout() {
       <Box
         sx={{
           flexGrow: 1,
-          ml: '260px',
           display: 'flex',
           flexDirection: 'column',
           minHeight: '100vh',
@@ -90,7 +89,7 @@ export default function PublicLayout() {
           </Alert>
         )}
 
-        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 } }}>
+        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, maxWidth: 1100 }}>
           <PageTransition key={routeKey}>
             <AppErrorBoundary
               fallback={(
