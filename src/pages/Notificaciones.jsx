@@ -1,7 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Container,
   Typography,
   Box,
   List,
@@ -18,7 +17,9 @@ import {
 import {
   fetchNotificaciones,
   fetchContador,
+  readAllNotificaciones,
 } from '../features/notificaciones/slice';
+import { PageContainer } from '../components/ui';
 
 export default function Notificaciones() {
   const dispatch = useDispatch();
@@ -38,6 +39,10 @@ export default function Notificaciones() {
   useEffect(() => {
     cargar(1);
     if (userId) dispatch(fetchContador(userId));
+
+    return () => {
+      if (userId) dispatch(readAllNotificaciones(userId));
+    };
   }, [userId, dispatch, cargar]);
 
   const handleCambiarPagina = (_, pagina) => {
@@ -56,7 +61,7 @@ export default function Notificaciones() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 3 }}>
+    <PageContainer maxWidth={1200}>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
         <BellIcon sx={{ mr: 1.5, fontSize: 32 }} />
         <Typography variant="h5" fontWeight={600} sx={{ flexGrow: 1 }}>
@@ -117,6 +122,6 @@ export default function Notificaciones() {
           />
         </Box>
       )}
-    </Container>
+    </PageContainer>
   );
 }

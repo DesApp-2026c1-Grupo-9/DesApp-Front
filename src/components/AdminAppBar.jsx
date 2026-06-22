@@ -17,7 +17,7 @@ export function AdminAppBar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const tab = location.pathname === '/mi-perfil' ? 0
+  const tab = location.pathname === '/configuracion' ? 0
     : location.pathname.includes('/usuarios') ? 1
     : location.pathname.includes('/academico') ? 2
     : location.pathname.includes('/moderacion') ? 3
@@ -58,11 +58,11 @@ export function AdminAppBar() {
         <Box sx={{ flexGrow: 1 }} />
         <Tabs
           value={tab}
-          onChange={(_, v) => navigate(v === 0 ? '/mi-perfil' : v === 1 ? '/admin/usuarios' : v === 2 ? '/admin/academico' : '/admin/moderacion')}
+          onChange={(_, v) => navigate(v === 0 ? '/configuracion' : v === 1 ? '/admin/usuarios' : v === 2 ? '/admin/academico' : '/admin/moderacion')}
           textColor="inherit"
           indicatorColor="secondary"
         >
-          <Tab icon={<DynamicFeed />} label="Mi Perfil" iconPosition="start" />
+          <Tab icon={<DynamicFeed />} label="Configuración" iconPosition="start" />
           <Tab icon={<PersonAdd />} label="Usuarios" iconPosition="start" />
           <Tab icon={<School />} label="Académico" iconPosition="start" />
           <Tab icon={<Gavel />} label="Moderación" iconPosition="start" />

@@ -155,7 +155,7 @@ export default function Conexiones() {
   };
 
   return (
-    <PageContainer maxWidth={800}>
+    <PageContainer maxWidth={1200}>
       <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4">
           Conexiones
