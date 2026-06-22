@@ -89,7 +89,7 @@ export default function PublicLayout() {
           </Alert>
         )}
 
-        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, maxWidth: 1100 }}>
+        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, maxWidth: 1100, mx: 'auto' }}>
           <PageTransition key={routeKey}>
             <AppErrorBoundary
               fallback={(
