@@ -21,6 +21,7 @@ import { MateriasVisitante } from '../pages/MateriasVisitante';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
 import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
+import AdminDashboardPage from '../pages/AdminDashboardPage';
 import AdminAcademicoPage from '../pages/AdminAcademicoPage';
 import AdminModeracionPage from '../pages/AdminModeracionPage';
 import AppErrorPage from '../pages/AppErrorPage';
@@ -88,7 +89,7 @@ const AppRouter = () => {
               <Route path="/admin/usuarios" element={<AdminPage />} />
               <Route path="/admin/academico" element={<AdminAcademicoPage />} />
               <Route path="/admin/moderacion" element={<AdminModeracionPage />} />
-              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin" element={<AdminDashboardPage />} />
             </Route>
             <Route path="*" element={<AppErrorPage />} />
           </Routes>
