@@ -271,30 +271,22 @@ export default function ConfiguracionPage() {
 
   return (
     <PageContainer maxWidth={1200}>
-      <Box sx={{ display: 'flex', gap: 3 }}>
+      <Box>
         <Tabs
-          orientation="vertical"
           value={tab}
           onChange={(_, v) => setTab(v)}
-          sx={{
-            minWidth: 180,
-            borderRight: 1,
-            borderColor: 'divider',
-            '& .MuiTab-root': { alignItems: 'flex-start', minHeight: 48, pl: 2 },
-          }}
+          sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
         >
           <Tab icon={<Person />} label="Perfil" iconPosition="start" />
           <Tab icon={<Lock />} label="Privacidad" iconPosition="start" />
         </Tabs>
 
-        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-          <TabPanel value={tab} index={0}>
-            <ProfileSection />
-          </TabPanel>
-          <TabPanel value={tab} index={1}>
-            <PrivacySection />
-          </TabPanel>
-        </Box>
+        <TabPanel value={tab} index={0}>
+          <ProfileSection />
+        </TabPanel>
+        <TabPanel value={tab} index={1}>
+          <PrivacySection />
+        </TabPanel>
       </Box>
     </PageContainer>
   );
