@@ -1,6 +1,6 @@
 import { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Box } from '@mui/material';
 import Home from '../pages/Home';
 import Login from '../pages/Login';
@@ -13,6 +13,7 @@ import Conexiones from '../pages/Conexiones';
 import { StudentProfilePage } from '../pages/StudentProfilePage';
 import { CareerManagementPage } from '../pages/CareerManagementPage';
 import { SubjectManagementPage } from '../pages/SubjectManagementPage';
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 import { EstudianteDashboard } from '../pages/EstudianteDashboard';
 import { EditarPerfil } from '../pages/EditarPerfil';
@@ -21,12 +22,15 @@ import { PrivacidadPerfil } from '../pages/PrivacidadPerfil';
 import ConfiguracionPage from '../pages/ConfiguracionPage';
 import MiPerfilPage from '../pages/MiPerfilPage';
 >>>>>>> Stashed changes
+=======
+import ConfiguracionPage from '../pages/ConfiguracionPage';
+>>>>>>> d64fd50cf25e7f997db7bad0e9e75a421a1a72f1
 import { PerfilUsuario } from '../pages/PerfilUsuario';
 import { MateriasVisitante } from '../pages/MateriasVisitante';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
-import { SelectorEstudiante } from '../pages/SelectorEstudiante';
 import Materiales from '../pages/Materiales';
 import AdminPage from '../pages/AdminPage';
+import AdminDashboardPage from '../pages/AdminDashboardPage';
 import AdminAcademicoPage from '../pages/AdminAcademicoPage';
 import AdminModeracionPage from '../pages/AdminModeracionPage';
 import AppErrorPage from '../pages/AppErrorPage';
@@ -38,11 +42,17 @@ import AdminLayout from '../layouts/AdminLayout';
 import { fetchStudents } from '../features/auth/slice';
 import { LoadingSpinner } from '../components/ui';
 
-const AuthLayout = () => (
-  <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
-    <Outlet />
-  </Box>
-);
+const AuthLayout = () => {
+  const { user } = useSelector((state) => state.auth);
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+  return (
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'grey.100' }}>
+      <Outlet />
+    </Box>
+  );
+};
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -70,6 +80,7 @@ const AppRouter = () => {
                 <Route path="feed" element={<Feed />} />
                 <Route path="conexiones" element={<Conexiones />} />
               </Route>
+<<<<<<< HEAD
 <<<<<<< Updated upstream
               <Route path="/mi-perfil" element={<EstudianteDashboard />} />
               <Route path="/configuracion" element={<EditarPerfil />} />
@@ -79,6 +90,11 @@ const AppRouter = () => {
               <Route path="/mi-perfil" element={<MiPerfilPage />} />
               <Route path="/privacidad" element={<Navigate to="/configuracion" replace />} />
 >>>>>>> Stashed changes
+=======
+              <Route path="/configuracion" element={<ConfiguracionPage />} />
+              <Route path="/mi-perfil" element={<Navigate to="/configuracion" replace />} />
+              <Route path="/privacidad" element={<Navigate to="/configuracion" replace />} />
+>>>>>>> d64fd50cf25e7f997db7bad0e9e75a421a1a72f1
               <Route path="/perfil/:id" element={<PerfilUsuario />} />
               <Route path="/perfil/:id/materias" element={<MateriasVisitante />} />
               <Route path="/academico" element={<AcademicoPage />}>
@@ -88,14 +104,13 @@ const AppRouter = () => {
               </Route>
               <Route path="/asistente" element={<AsistenteAcademico />} />
               <Route path="/materias" element={<SubjectManagementPage />} />
-              <Route path="/demo-selector" element={<SelectorEstudiante />} />
               <Route path="/notificaciones" element={<Notificaciones />} />
             </Route>
             <Route element={<AdminLayout />}>
               <Route path="/admin/usuarios" element={<AdminPage />} />
               <Route path="/admin/academico" element={<AdminAcademicoPage />} />
               <Route path="/admin/moderacion" element={<AdminModeracionPage />} />
-              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin" element={<AdminDashboardPage />} />
             </Route>
             <Route path="*" element={<AppErrorPage />} />
           </Routes>

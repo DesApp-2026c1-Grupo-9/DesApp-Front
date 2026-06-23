@@ -30,6 +30,7 @@ import {
   Card,
   CardContent,
   CardActions,
+  Collapse,
   Divider,
   Tooltip,
   CircularProgress,
@@ -44,6 +45,8 @@ import {
   Gavel,
   Flag,
   Settings,
+  FilterList,
+  Search,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
@@ -68,9 +71,19 @@ function ListaDenuncias({ showSuccess, showError }) {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [filtroEstado, setFiltroEstado] = useState('pendiente');
+  const [filtroMaterial, setFiltroMaterial] = useState('');
+  const [filtroMotivo, setFiltroMotivo] = useState('todos');
+  const [motivos, setMotivos] = useState([]);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [selectedDenuncia, setSelectedDenuncia] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const rowsPerPage = 15;
+
+  useEffect(() => {
+    api.get('/api/admin/motivos-denuncia').then((res) => {
+      setMotivos(res.data.data || []);
+    }).catch(() => {});
+  }, []);
 
   const cargarDenuncias = useCallback(async () => {
     try {
@@ -81,6 +94,8 @@ function ListaDenuncias({ showSuccess, showError }) {
         dir: 'DESC',
       };
       if (filtroEstado !== 'todas') params.estado = filtroEstado;
+      if (filtroMaterial.trim()) params.materialSearch = filtroMaterial.trim();
+      if (filtroMotivo !== 'todos') params.motivoId = filtroMotivo;
 
       const res = await api.get('/api/admin/denuncias', { params });
       setDenuncias(res.data.data || []);
@@ -88,7 +103,7 @@ function ListaDenuncias({ showSuccess, showError }) {
     } catch {
       showError('Error al cargar denuncias');
     }
-  }, [page, filtroEstado, showError]);
+  }, [page, filtroEstado, filtroMaterial, filtroMotivo, showError]);
 
   useEffect(() => {
     cargarDenuncias();
@@ -96,7 +111,7 @@ function ListaDenuncias({ showSuccess, showError }) {
 
   useEffect(() => {
     setPage(0);
-  }, [filtroEstado]);
+  }, [filtroEstado, filtroMaterial, filtroMotivo]);
 
   useEffect(() => {
     const maxPage = Math.max(0, Math.ceil(total / rowsPerPage) - 1);
@@ -104,6 +119,12 @@ function ListaDenuncias({ showSuccess, showError }) {
       setPage(maxPage);
     }
   }, [total, rowsPerPage]);
+
+  const limpiarFiltros = () => {
+    setFiltroEstado('pendiente');
+    setFiltroMaterial('');
+    setFiltroMotivo('todos');
+  };
 
   const openDetail = async (denuncia) => {
     try {
@@ -160,18 +181,63 @@ function ListaDenuncias({ showSuccess, showError }) {
         <Typography variant="h6">Denuncias ({total})</Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <FormControl size="small" sx={{ minWidth: 180 }}>
-          <InputLabel>Estado</InputLabel>
-          <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
-            <MenuItem value="todas">Todas</MenuItem>
-            <MenuItem value="pendiente">Pendientes</MenuItem>
-            <MenuItem value="confirmada">Confirmadas</MenuItem>
-            <MenuItem value="rechazada">Rechazadas</MenuItem>
-            <MenuItem value="revocada">Revocadas</MenuItem>
-          </Select>
-        </FormControl>
+      <Box sx={{ display: 'flex', gap: 1, mb: filterOpen ? 0 : 2 }}>
+        <TextField
+          fullWidth
+          size="small"
+          placeholder="Buscar por material..."
+          value={filtroMaterial}
+          onChange={(e) => setFiltroMaterial(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: <Search fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />,
+            },
+          }}
+        />
+        <Button
+          variant={filterOpen ? 'contained' : 'outlined'}
+          startIcon={<FilterList />}
+          onClick={() => setFilterOpen(!filterOpen)}
+          sx={{ whiteSpace: 'nowrap' }}
+        >
+          Filtrar
+        </Button>
       </Box>
+
+      <Collapse in={filterOpen}>
+        <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Estado</InputLabel>
+                <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
+                  <MenuItem value="todas">Todas</MenuItem>
+                  <MenuItem value="pendiente">Pendientes</MenuItem>
+                  <MenuItem value="confirmada">Confirmadas</MenuItem>
+                  <MenuItem value="rechazada">Rechazadas</MenuItem>
+                  <MenuItem value="revocada">Revocadas</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth size="small">
+                <InputLabel>Motivo</InputLabel>
+                <Select value={filtroMotivo} label="Motivo" onChange={(e) => setFiltroMotivo(e.target.value)}>
+                  <MenuItem value="todos">Todos</MenuItem>
+                  {motivos.map((m) => (
+                    <MenuItem key={m.id} value={m.id}>{m.nombre}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Button variant="text" onClick={limpiarFiltros}>
+                Limpiar filtros
+              </Button>
+            </Grid>
+          </Grid>
+        </Card>
+      </Collapse>
 
       <TableContainer component={Paper} variant="outlined">
         <Table size="small">

@@ -22,7 +22,7 @@ function Feed() {
   }, [user, dispatch]);
 
   return (
-    <PageContainer maxWidth={800}>
+    <PageContainer maxWidth={1200}>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
         <Typography variant="h4">
           Novedades

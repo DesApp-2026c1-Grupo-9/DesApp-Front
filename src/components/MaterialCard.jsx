@@ -169,7 +169,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
           }}
         >
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            {isOwner && (
+            {isOwner && isActive && (
               <>
                 <IconButton size="small" onClick={() => onEdit(material)}>
                   <Edit fontSize="small" />
@@ -220,7 +220,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               </Button>
             )}
 
-            {!isOwner && onDenunciar && (
+            {!isOwner && isActive && onDenunciar && (
               <>
                 <IconButton
                   size="small"
@@ -254,6 +254,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               size="small"
               onClick={() => handleRate(1)}
               color={material.userRating === 1 ? 'primary' : 'default'}
+              disabled={!isActive}
             >
               <ThumbUp fontSize="small" />
             </IconButton>
@@ -264,6 +265,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               size="small"
               onClick={() => handleRate(-1)}
               color={material.userRating === -1 ? 'error' : 'default'}
+              disabled={!isActive}
             >
               <ThumbDown fontSize="small" />
             </IconButton>

@@ -46,7 +46,7 @@ const theme = createTheme({
     divider: 'rgba(0, 0, 0, 0.12)',
   },
   typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
     h1: {
       fontSize: '2.5rem',
       fontWeight: 500,

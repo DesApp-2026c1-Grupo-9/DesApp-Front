@@ -362,7 +362,7 @@ const Sesiones = () => {
           onAction={clearFilters}
         />
       ) : !showLoading && (
-        <Box>
+        <Grid container spacing={2}>
           {filteredSesiones.map(sesion => {
             const creator = students.find(st => st.id === sesion.creadorId);
             const creatorPublico = creator?.perfilPublico ?? true;
@@ -374,22 +374,23 @@ const Sesiones = () => {
             }
 
             return (
-              <SesionCard
-                key={sesion.id}
-                sesion={sesion}
-                currentUser={user}
-                materias={materias}
-                operationLoading={operationLoading}
-                visibilidad={visibilidad}
-                onEdit={handleEdit}
-                onJoin={handleJoin}
-                onLeave={handleLeave}
-                onViewParticipantes={handleViewParticipantes}
-                onDelete={handleDeleteClick}
-              />
+              <Grid item xs={12} md={6} key={sesion.id}>
+                <SesionCard
+                  sesion={sesion}
+                  currentUser={user}
+                  materias={materias}
+                  operationLoading={operationLoading}
+                  visibilidad={visibilidad}
+                  onEdit={handleEdit}
+                  onJoin={handleJoin}
+                  onLeave={handleLeave}
+                  onViewParticipantes={handleViewParticipantes}
+                  onDelete={handleDeleteClick}
+                />
+              </Grid>
             );
           })}
-        </Box>
+        </Grid>
       )}
 
       {/* Create/Edit Modal */}

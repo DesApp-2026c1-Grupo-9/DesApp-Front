@@ -6,7 +6,7 @@ export { default as SesionCard } from './SesionCard';
 export { default as SesionModal } from './SesionModal';
 export { default as AprobacionModal } from './AprobacionModal';
 export { default as CommentSection } from './CommentSection';
-export { default as TopMenu } from './TopMenu';
+export { Sidebar } from './Sidebar';
 export { default as AppErrorBoundary } from './AppErrorBoundary';
 export { default as DashboardAcademicoCompleto } from './DashboardAcademicoCompleto';
 export { default as ProfileViewCard } from './ProfileViewCard';
