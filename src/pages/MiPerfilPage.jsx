@@ -15,6 +15,7 @@ import {
   Chip,
   Alert,
   Snackbar,
+  IconButton,
 } from '@mui/material';
 import {
   School as SchoolIcon,
@@ -23,6 +24,7 @@ import {
   Email,
   Cake,
   Wc,
+  Settings,
 } from '@mui/icons-material';
 import { PageContainer, LoadingSpinner } from '../components/ui';
 import { updateAvatar } from '../features/auth/slice';
@@ -119,7 +121,13 @@ export default function MiPerfilPage() {
         <Typography variant="h5" fontWeight="bold">Mi Perfil</Typography>
       </Box>
 
-      <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', mb: 3, '&:hover': { boxShadow: '0 2px 12px rgba(0,0,0,0.08)' } }}>
+      <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 2px 12px rgba(0,0,0,0.08)', mb: 3, '&:hover': { boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }, position: 'relative' }}>
+        <IconButton
+          onClick={() => navigate('/configuracion')}
+          sx={{ position: 'absolute', top: 8, right: 8, color: 'white', zIndex: 1, bgcolor: 'rgba(0,0,0,0.2)', '&:hover': { bgcolor: 'rgba(0,0,0,0.4)' } }}
+        >
+          <Settings />
+        </IconButton>
         <Box sx={{ height: 100, background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.dark}, ${theme.palette.primary.light})` }} />
         <CardContent sx={{ mt: -6, textAlign: 'center' }}>
           <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" style={{ display: 'none' }} onChange={handleAvatarChange} />

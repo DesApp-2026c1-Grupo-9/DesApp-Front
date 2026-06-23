@@ -23,6 +23,7 @@ import {
   Save,
   Email as EmailIcon,
   Public,
+  ArrowBack,
 } from '@mui/icons-material';
 import { PageContainer, TabPanel } from '../components/ui';
 import { updateUserData, fetchPreferencias, updatePreferencias } from '../features/auth/slice';
@@ -267,19 +268,28 @@ function PrivacySection() {
 }
 
 export default function ConfiguracionPage() {
+  const navigate = useNavigate();
   const [tab, setTab] = useState(0);
 
   return (
     <PageContainer maxWidth={1200}>
       <Box>
-        <Tabs
-          value={tab}
-          onChange={(_, v) => setTab(v)}
-          sx={{ mb: 2, borderBottom: 1, borderColor: 'divider' }}
-        >
-          <Tab icon={<Person />} label="Perfil" iconPosition="start" />
-          <Tab icon={<Lock />} label="Privacidad" iconPosition="start" />
-        </Tabs>
+        <Box display="flex" alignItems="center" justifyContent="space-between" sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs
+            value={tab}
+            onChange={(_, v) => setTab(v)}
+          >
+            <Tab icon={<Person />} label="Perfil" iconPosition="start" />
+            <Tab icon={<Lock />} label="Privacidad" iconPosition="start" />
+          </Tabs>
+          <Button
+            startIcon={<ArrowBack />}
+            onClick={() => navigate('/mi-perfil')}
+            size="small"
+          >
+            Volver a Mi Perfil
+          </Button>
+        </Box>
 
         <TabPanel value={tab} index={0}>
           <ProfileSection />

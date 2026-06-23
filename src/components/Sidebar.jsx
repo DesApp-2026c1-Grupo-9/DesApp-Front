@@ -32,7 +32,6 @@ import {
   Book,
   AccessTime,
   LibraryBooks,
-  Settings,
   AdminPanelSettings,
   ExpandLess,
   ExpandMore,
@@ -142,12 +141,6 @@ export function Sidebar() {
       path: '/notificaciones',
       icon: <Notifications />,
       badge: noLeidas,
-    },
-    {
-      type: 'link',
-      label: 'Configuración',
-      path: '/configuracion',
-      icon: <Settings />,
     },
     ...(showAdmin
       ? [{ type: 'link', label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> }]
