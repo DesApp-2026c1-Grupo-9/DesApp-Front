@@ -41,6 +41,7 @@ export const EstudianteMaterias = () => {
   const [error, setError] = useState(null);
   
   const inicializado = useRef(false);
+  const skipNextCarreraChange = useRef(false);
 
   // Hook compartido para importar materias desde Excel/CSV
   const {
@@ -298,8 +299,9 @@ export const EstudianteMaterias = () => {
     }
   };
 
-  // Reset plan al cambiar carrera
+  // Reset plan al cambiar carrera (saltea la carga inicial)
   useEffect(() => {
+    if (skipNextCarreraChange.current) return;
     setPlanSeleccionadoId('');
   }, [carreraSeleccionadaId]);
 
@@ -328,6 +330,8 @@ export const EstudianteMaterias = () => {
           setSituacionAcademica(reconstruirSituacionAcademica(response.data));
           setCarrerasDisponibles(response.data.carrerasDisponibles || []);
           setPlanesDisponibles(response.data.planesDisponibles || []);
+          inicializado.current = true;
+          skipNextCarreraChange.current = true;
           if (response.data.carrera?.id) setCarreraSeleccionadaId(String(response.data.carrera.id));
           if (response.data.planDeEstudio?.id) setPlanSeleccionadoId(String(response.data.planDeEstudio.id));
         }
@@ -336,7 +340,6 @@ export const EstudianteMaterias = () => {
         setError('Error al cargar los datos del estudiante');
       } finally {
         setLoading(false);
-        inicializado.current = true;
       }
     };
     init();
@@ -346,6 +349,12 @@ export const EstudianteMaterias = () => {
   useEffect(() => {
     if (!inicializado.current) return;
     if (!estudianteActual?.id || !carreraSeleccionadaId) return;
+
+    // Saltea la primera vez que se setea desde la carga inicial
+    if (skipNextCarreraChange.current) {
+      skipNextCarreraChange.current = false;
+      return;
+    }
 
     const reload = async () => {
       setLoading(true);
