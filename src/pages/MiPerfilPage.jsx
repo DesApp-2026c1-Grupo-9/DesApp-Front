@@ -20,6 +20,9 @@ import {
   School as SchoolIcon,
   MenuBook as MenuBookIcon,
   PhotoCamera,
+  Email,
+  Cake,
+  Wc,
 } from '@mui/icons-material';
 import { PageContainer, LoadingSpinner } from '../components/ui';
 import { updateAvatar } from '../features/auth/slice';
@@ -142,6 +145,20 @@ export default function MiPerfilPage() {
           ) : (
             <Typography variant="body2" color="text.secondary" mt={0.5}>Estudiante</Typography>
           )}
+          <Box mt={2} display="flex" flexDirection="column" alignItems="center">
+            <Box display="flex" alignItems="center" gap={0.5}>
+              <Email sx={{ fontSize: 18, color: 'text.secondary' }} />
+              <Typography variant="body2">{usuario.email || '-'}</Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
+              <Cake sx={{ fontSize: 18, color: 'text.secondary' }} />
+              <Typography variant="body2">{usuario.fechaNacimiento || '-'}</Typography>
+            </Box>
+            <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
+              <Wc sx={{ fontSize: 18, color: 'text.secondary' }} />
+              <Typography variant="body2" textTransform="capitalize">{usuario.genero || 'sin especificar'}</Typography>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
 

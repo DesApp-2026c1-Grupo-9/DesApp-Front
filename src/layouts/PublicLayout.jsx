@@ -89,28 +89,7 @@ export default function PublicLayout() {
           </Alert>
         )}
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-      <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
-        <PageTransition key={routeKey}>
-          <AppErrorBoundary
-            fallback={(
-              <Box sx={{ p: 3 }}>
-                <Alert severity="error">
-                  <AlertTitle>Error general</AlertTitle>
-                  {MENSAJE_ERROR_GENERAL}
-                </Alert>
-              </Box>
-            )}
-          >
-            <Outlet />
-          </AppErrorBoundary>
-        </PageTransition>
-=======
         <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, width: '100%' }}>
-=======
-        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, maxWidth: 1100, mx: 'auto' }}>
->>>>>>> d64fd50cf25e7f997db7bad0e9e75a421a1a72f1
           <PageTransition key={routeKey}>
             <AppErrorBoundary
               fallback={(
@@ -123,10 +102,6 @@ export default function PublicLayout() {
             </AppErrorBoundary>
           </PageTransition>
         </Box>
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
->>>>>>> d64fd50cf25e7f997db7bad0e9e75a421a1a72f1
       </Box>
     </Box>
   );

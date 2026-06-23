@@ -39,10 +39,7 @@ import {
   Logout,
   Block,
   Notifications,
-<<<<<<< HEAD
   Person,
-=======
->>>>>>> d64fd50cf25e7f997db7bad0e9e75a421a1a72f1
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
@@ -97,7 +94,6 @@ export function Sidebar() {
       exact: true,
     },
     {
-<<<<<<< HEAD
       type: 'link',
       label: 'Mi Perfil',
       path: '/mi-perfil',
@@ -105,8 +101,6 @@ export function Sidebar() {
       exact: true,
     },
     {
-=======
->>>>>>> d64fd50cf25e7f997db7bad0e9e75a421a1a72f1
       type: 'expandable',
       label: 'Académico',
       icon: <School />,
