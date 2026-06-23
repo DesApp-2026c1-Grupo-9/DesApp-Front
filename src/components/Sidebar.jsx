@@ -32,13 +32,13 @@ import {
   Book,
   AccessTime,
   LibraryBooks,
-  Settings,
   AdminPanelSettings,
   ExpandLess,
   ExpandMore,
   Logout,
   Block,
   Notifications,
+  Person,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
@@ -93,6 +93,13 @@ export function Sidebar() {
       exact: true,
     },
     {
+      type: 'link',
+      label: 'Mi Perfil',
+      path: '/mi-perfil',
+      icon: <Person />,
+      exact: true,
+    },
+    {
       type: 'expandable',
       label: 'Académico',
       icon: <School />,
@@ -134,12 +141,6 @@ export function Sidebar() {
       path: '/notificaciones',
       icon: <Notifications />,
       badge: noLeidas,
-    },
-    {
-      type: 'link',
-      label: 'Configuración',
-      path: '/configuracion',
-      icon: <Settings />,
     },
     ...(showAdmin
       ? [{ type: 'link', label: 'Admin', path: '/admin', icon: <AdminPanelSettings /> }]

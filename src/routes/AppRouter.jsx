@@ -14,6 +14,7 @@ import { StudentProfilePage } from '../pages/StudentProfilePage';
 import { CareerManagementPage } from '../pages/CareerManagementPage';
 import { SubjectManagementPage } from '../pages/SubjectManagementPage';
 import ConfiguracionPage from '../pages/ConfiguracionPage';
+import MiPerfilPage from '../pages/MiPerfilPage';
 import { PerfilUsuario } from '../pages/PerfilUsuario';
 import { MateriasVisitante } from '../pages/MateriasVisitante';
 import { EstudianteMaterias } from '../pages/EstudianteMaterias';
@@ -70,7 +71,7 @@ const AppRouter = () => {
                 <Route path="conexiones" element={<Conexiones />} />
               </Route>
               <Route path="/configuracion" element={<ConfiguracionPage />} />
-              <Route path="/mi-perfil" element={<Navigate to="/configuracion" replace />} />
+              <Route path="/mi-perfil" element={<MiPerfilPage />} />
               <Route path="/privacidad" element={<Navigate to="/configuracion" replace />} />
               <Route path="/perfil/:id" element={<PerfilUsuario />} />
               <Route path="/perfil/:id/materias" element={<MateriasVisitante />} />
