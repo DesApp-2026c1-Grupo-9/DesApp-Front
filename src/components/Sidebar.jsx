@@ -262,7 +262,7 @@ export function Sidebar() {
         <Divider />
         <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Avatar
-            src={`https://ui-avatars.com/api/?name=${user?.nombre || ''}+${user?.apellido || ''}&background=1976d2&color=fff&bold=true`}
+            src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.nombre || ''}+${user?.apellido || ''}&background=1976d2&color=fff&bold=true`}
             sx={{ width: 36, height: 36, fontSize: 14 }}
           >
             {user?.nombre?.charAt(0)}
