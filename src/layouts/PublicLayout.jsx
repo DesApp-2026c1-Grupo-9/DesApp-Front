@@ -71,7 +71,7 @@ export default function PublicLayout() {
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50', overflowX: 'hidden' }}>
       <Sidebar />
 
       <Box
@@ -89,7 +89,7 @@ export default function PublicLayout() {
           </Alert>
         )}
 
-        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, width: '100%' }}>
+        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, width: '100%', boxSizing: 'border-box' }}>
           <PageTransition key={routeKey}>
             <AppErrorBoundary
               fallback={(

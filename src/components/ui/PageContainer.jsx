@@ -17,6 +17,7 @@ const PageContainer = ({
     backgroundColor,
     minHeight,
     width: '100%',
+    boxSizing: 'border-box',
   }), [maxWidth, padding, centered, backgroundColor, minHeight, disablePadding]);
 
   return (

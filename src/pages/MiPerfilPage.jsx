@@ -137,7 +137,7 @@ export default function MiPerfilPage() {
           >
             <Avatar
               src={`https://ui-avatars.com/api/?name=${usuario.nombre}+${usuario.apellido}&background=random&bold=true`}
-              sx={{ width: 96, height: 96, border: '4px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
+              sx={{ width: 96, height: 96, border: '4px solid white', boxSizing: 'content-box', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
             />
             <Box className="avatar-overlay" sx={{ position: 'absolute', top: 4, left: 4, width: 96, height: 96, borderRadius: '50%', bgcolor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: avatarUploading ? 1 : 0, transition: 'opacity 0.2s' }}>
               <PhotoCamera sx={{ color: 'white', fontSize: 28 }} />

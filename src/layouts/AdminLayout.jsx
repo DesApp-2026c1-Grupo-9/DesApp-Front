@@ -58,7 +58,7 @@ export default function AdminLayout() {
         </Alert>
       )}
 
-      <Box sx={{ minHeight: 'calc(100vh - 64px)' }}>
+      <Box sx={{ minHeight: 'calc(100vh - 64px)', overflowX: 'hidden', boxSizing: 'border-box' }}>
         <PageTransition key={location.pathname}>
           <AppErrorBoundary
             fallback={(
