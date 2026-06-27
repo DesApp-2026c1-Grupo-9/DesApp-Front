@@ -16,7 +16,8 @@ export const fetchMateriales = createAsyncThunk(
       const data = await getMateriales(params);
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
@@ -28,7 +29,8 @@ export const fetchMaterias = createAsyncThunk(
       const data = await getMaterias();
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
@@ -39,7 +41,8 @@ export const addMaterial = createAsyncThunk(
     try {
       return await createMaterial(materialData);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
@@ -50,7 +53,8 @@ export const editMaterial = createAsyncThunk(
     try {
       return await updateMaterial(id, data, estudianteId);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
@@ -61,7 +65,8 @@ export const removeMaterial = createAsyncThunk(
     try {
       return await deleteMaterial(id, estudianteId);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
@@ -72,7 +77,8 @@ export const rateMaterialThunk = createAsyncThunk(
     try {
       return await rateMaterial(id, value, estudianteId);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );

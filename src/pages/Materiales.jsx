@@ -53,6 +53,7 @@ const Materiales = () => {
   const [editingMaterial, setEditingMaterial] = useState(null);
   const [denunciaMaterial, setDenunciaMaterial] = useState(null);
   const [denunciaDialogOpen, setDenunciaDialogOpen] = useState(false);
+  const [operationError, setOperationError] = useState(null);
 
   useEffect(() => {
     dispatch(fetchMaterias());
@@ -87,15 +88,20 @@ const Materiales = () => {
     }
   };
 
-  const handleDialogSave = (data) => {
+  const handleDialogSave = async (data) => {
     if (editingMaterial) {
-      dispatch(
-        editMaterial({
-          id: data.id,
-          data: { titulo: data.titulo, descripcion: data.descripcion, tags: data.tags },
-          estudianteId: currentUserId,
-        })
-      );
+      try {
+        await dispatch(
+          editMaterial({
+            id: data.id,
+            data: { titulo: data.titulo, descripcion: data.descripcion, tags: data.tags },
+            estudianteId: currentUserId,
+          })
+        ).unwrap();
+      } catch (err) {
+        setOperationError(typeof err === 'string' ? err : err.response?.data?.message || err.message || 'Error al editar el material');
+        return;
+      }
     } else {
       dispatch(
         addMaterial({
@@ -109,8 +115,13 @@ const Materiales = () => {
     setEditingMaterial(null);
   };
 
-  const handleDeleteMaterial = (id) => {
-    dispatch(removeMaterial({ id, estudianteId: currentUserId }));
+  const handleDeleteMaterial = async (id) => {
+    try {
+      await dispatch(removeMaterial({ id, estudianteId: currentUserId })).unwrap();
+    } catch (err) {
+      const message = typeof err === 'string' ? err : err.response?.data?.message || err.message || 'Error al eliminar el material';
+      setOperationError(message);
+    }
   };
 
   const handleEditMaterial = (material) => {
@@ -201,6 +212,12 @@ const Materiales = () => {
           </Select>
         </FormControl>
       </Box>
+
+      {operationError && (
+        <Alert severity="error" onClose={() => setOperationError(null)} sx={{ mb: 2 }}>
+          {operationError}
+        </Alert>
+      )}
 
       {loading && materiales.length === 0 ? (
         <LoadingSpinner message="Cargando materiales..." />

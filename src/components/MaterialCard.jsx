@@ -31,6 +31,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
   const [menuAnchor, setMenuAnchor] = useState(null);
   const creadorId = material.creadorId ?? material.estudianteId;
   const isOwner = currentUserId === creadorId;
+  const tieneDenunciasActivas = material.denunciasPendientes > 0 || material.denunciasConfirmadas > 0;
   const isDiscord = material.tipoLink === LINK_TIPO.DISCORD;
 
   const handleRate = (value) => {
@@ -170,7 +171,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
           }}
         >
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            {isOwner && isActive && (
+            {isOwner && isActive && !tieneDenunciasActivas && (
               <>
                 <IconButton size="small" onClick={() => onEdit(material)}>
                   <Edit fontSize="small" />
