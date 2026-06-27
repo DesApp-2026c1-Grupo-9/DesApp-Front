@@ -80,25 +80,25 @@ const transformBackendList = (responseData, currentUserId) => {
 
 export const fetchFeed = createAsyncThunk(
   'feed/fetchFeed',
-  async (usuarioId, { getState }) => {
-    const currentUserId = usuarioId || getState().feed.currentUserId;
-    const response = await getFeed({ usuarioId: currentUserId, feed: 'contactos' });
+  async (estudianteId, { getState }) => {
+    const currentUserId = estudianteId || getState().feed.currentUserId;
+    const response = await getFeed({ estudianteId: currentUserId, feed: 'contactos' });
     return { novedades: transformBackendList(response.data, currentUserId) };
   }
 );
 
 export const addPost = createAsyncThunk(
   'feed/addPost',
-  async ({ postData, autorId }, { rejectWithValue }) => {
-    const response = await createPost({ ...postData, autorId });
+  async ({ postData, autorId, estudianteId }, { rejectWithValue }) => {
+    const response = await createPost({ ...postData, estudianteId: estudianteId || autorId });
     return response.data.data;
   }
 );
 
 export const removePost = createAsyncThunk(
   'feed/removePost',
-  async ({ postId, usuarioId }, { getState, rejectWithValue }) => {
-    const userId = usuarioId || getState().auth.user?.id || getState().feed.currentUserId;
+  async ({ postId, estudianteId }, { getState, rejectWithValue }) => {
+    const userId = estudianteId || getState().auth.user?.id || getState().feed.currentUserId;
     try {
       await deletePost(postId, userId);
       return postId;
@@ -110,10 +110,10 @@ export const removePost = createAsyncThunk(
 
 export const editPost = createAsyncThunk(
   'feed/editPost',
-  async ({ postId, postData, usuarioId }, { getState, rejectWithValue }) => {
-    const userId = usuarioId || getState().auth.user?.id || getState().feed.currentUserId;
+  async ({ postId, postData, estudianteId }, { getState, rejectWithValue }) => {
+    const userId = estudianteId || getState().auth.user?.id || getState().feed.currentUserId;
     try {
-      const response = await updatePost(postId, postData, { usuarioId: userId });
+      const response = await updatePost(postId, postData, { estudianteId: userId });
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al editar la publicación');
@@ -123,12 +123,12 @@ export const editPost = createAsyncThunk(
 
 export const toggleLike = createAsyncThunk(
   'feed/toggleLike',
-  async ({ postId, currentlyLiked, usuarioId }, { rejectWithValue }) => {
+  async ({ postId, currentlyLiked, estudianteId }, { rejectWithValue }) => {
     if (currentlyLiked) {
-      const response = await unlikePost(postId, usuarioId);
+      const response = await unlikePost(postId, estudianteId);
       return { postId, likesCount: response.data.data.likesCount, liked: false };
     } else {
-      const response = await likePost(postId, usuarioId);
+      const response = await likePost(postId, estudianteId);
       return { postId, likesCount: response.data.data.likesCount, liked: true };
     }
   }

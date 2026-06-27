@@ -14,12 +14,13 @@ function Feed() {
   const dispatch = useDispatch();
   const { posts, loadingFeed, posting } = useSelector((state) => state.feed);
   const { user } = useSelector((state) => state.auth);
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
 
   useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchFeed(user.id));
+    if (estudianteId) {
+      dispatch(fetchFeed(estudianteId));
     }
-  }, [user, dispatch]);
+  }, [estudianteId, dispatch]);
 
   return (
     <PageContainer maxWidth={1200}>
@@ -31,7 +32,7 @@ function Feed() {
 
       {user?.id && (
         <CreatePostForm
-          onSubmit={(data) => dispatch(addPost({ postData: data, autorId: user.id }))}
+          onSubmit={(data) => dispatch(addPost({ postData: data, estudianteId }))}
           loading={posting}
           currentStudent={user}
         />
@@ -50,13 +51,13 @@ function Feed() {
         <PostCard
           key={post.id}
           post={post}
-          currentUserId={user?.id}
-          onDelete={(id) => user?.id && dispatch(removePost({ postId: id, usuarioId: user.id }))}
+          currentUserId={estudianteId}
+          onDelete={(id) => user?.id && dispatch(removePost({ postId: id, estudianteId }))}
           onEdit={(id, data) =>
-            user?.id && dispatch(editPost({ postId: id, postData: data, usuarioId: user.id }))
+            user?.id && dispatch(editPost({ postId: id, postData: data, estudianteId }))
           }
           onToggleLike={(id, liked) =>
-            user?.id && dispatch(toggleLike({ postId: id, currentlyLiked: liked, usuarioId: user.id }))
+            user?.id && dispatch(toggleLike({ postId: id, currentlyLiked: liked, estudianteId }))
           }
         />
       )))}

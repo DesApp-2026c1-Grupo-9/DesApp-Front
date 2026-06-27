@@ -13,9 +13,9 @@ const avatarFallback = (autor) => {
 
 export const fetchComentarios = createAsyncThunk(
   'comentarios/fetchComentarios',
-  async ({ novedadId, usuarioId }, { rejectWithValue }) => {
+  async ({ novedadId, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await api.get(`/api/novedades/${novedadId}/comentarios?usuarioId=${usuarioId}`);
+      const response = await api.get(`/api/novedades/${novedadId}/comentarios?estudianteId=${estudianteId}`);
       return { novedadId, comentarios: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al cargar comentarios');
@@ -25,9 +25,9 @@ export const fetchComentarios = createAsyncThunk(
 
 export const addComentario = createAsyncThunk(
   'comentarios/addComentario',
-  async ({ novedadId, contenido, usuarioId, comentarioPadreId }, { rejectWithValue }) => {
+  async ({ novedadId, contenido, estudianteId, comentarioPadreId }, { rejectWithValue }) => {
     try {
-      const response = await api.post(`/api/novedades/${novedadId}/comentarios`, { contenido, usuarioId, comentarioPadreId });
+      const response = await api.post(`/api/novedades/${novedadId}/comentarios`, { contenido, estudianteId, comentarioPadreId });
       return { novedadId, comentario: response.data.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al crear comentario');
@@ -37,9 +37,9 @@ export const addComentario = createAsyncThunk(
 
 export const removeComentario = createAsyncThunk(
   'comentarios/removeComentario',
-  async ({ comentarioId, usuarioId, novedadId }, { rejectWithValue }) => {
+  async ({ comentarioId, estudianteId, novedadId }, { rejectWithValue }) => {
     try {
-      await api.delete(`/api/novedades/${novedadId}/comentarios/${comentarioId}`, { data: { usuarioId } });
+      await api.delete(`/api/novedades/${novedadId}/comentarios/${comentarioId}`, { data: { estudianteId } });
       return { comentarioId, novedadId };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al eliminar comentario');
@@ -49,11 +49,11 @@ export const removeComentario = createAsyncThunk(
 
 export const editComentario = createAsyncThunk(
   'comentarios/editComentario',
-  async ({ novedadId, comentarioId, contenido, usuarioId }, { rejectWithValue }) => {
+  async ({ novedadId, comentarioId, contenido, estudianteId }, { rejectWithValue }) => {
     try {
       const response = await api.put(`/api/novedades/${novedadId}/comentarios/${comentarioId}`, {
         contenido,
-        usuarioId,
+        estudianteId,
       });
       return { novedadId, comentario: response.data.data };
     } catch (error) {
@@ -64,9 +64,9 @@ export const editComentario = createAsyncThunk(
 
 export const likeComentario = createAsyncThunk(
   'comentarios/likeComentario',
-  async ({ novedadId, comentarioId, usuarioId }, { rejectWithValue }) => {
+  async ({ novedadId, comentarioId, estudianteId }, { rejectWithValue }) => {
     try {
-      await likeService(novedadId, comentarioId, usuarioId);
+      await likeService(novedadId, comentarioId, estudianteId);
       return { novedadId, comentarioId, liked: true };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al dar like al comentario');
@@ -76,9 +76,9 @@ export const likeComentario = createAsyncThunk(
 
 export const unlikeComentario = createAsyncThunk(
   'comentarios/unlikeComentario',
-  async ({ novedadId, comentarioId, usuarioId }, { rejectWithValue }) => {
+  async ({ novedadId, comentarioId, estudianteId }, { rejectWithValue }) => {
     try {
-      await unlikeService(novedadId, comentarioId, usuarioId);
+      await unlikeService(novedadId, comentarioId, estudianteId);
       return { novedadId, comentarioId, liked: false };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al quitar like al comentario');

@@ -28,11 +28,12 @@ import {
   Public,
   Block,
   PersonSearch as PersonSearchIcon,
+  HourglassEmpty,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
-import { fetchConexiones, inviteContact } from '../features/conexiones/slice';
+import { fetchConexiones, fetchPendientes, inviteContact } from '../features/conexiones/slice';
 import { calcularEdad } from '../utils';
 import { useSnackbar } from '../hooks';
 
@@ -42,7 +43,7 @@ export const PerfilUsuario = () => {
   const dispatch = useDispatch();
   const { estudianteActual, estudiantesDisponibles } = useAuth();
   const { user } = useSelector(state => state.auth);
-  const { list: conexiones, loading: loadingConex } = useSelector(state => state.conexiones);
+  const { list: conexiones, requests, loading: loadingConex } = useSelector(state => state.conexiones);
   const { showSuccess, showError, snackbar, closeSnackbar } = useSnackbar();
 
   const usuarioIdActual = estudianteActual?.usuario?.id;
@@ -59,14 +60,28 @@ export const PerfilUsuario = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const profileEstudianteId = useMemo(() => {
+    const match = estudiantesDisponibles.find(e => Number(e.usuario?.id) === Number(id));
+    return match?.id;
+  }, [estudiantesDisponibles, id]);
+
   const esContacto = useMemo(() => {
     if (!conexiones?.length || !id) return false;
     return conexiones.some(c => Number(c.contacto?.id) === Number(id));
   }, [conexiones, id]);
 
+  const esPendiente = useMemo(() => {
+    if (!requests?.length || !profileEstudianteId) return false;
+    return requests.some(r =>
+      Number(r.usuarioId) === Number(profileEstudianteId) ||
+      Number(r.contactoId) === Number(profileEstudianteId)
+    );
+  }, [requests, profileEstudianteId]);
+
   useEffect(() => {
     if (usuarioIdActual && !esMiPerfil) {
-      dispatch(fetchConexiones(usuarioIdActual));
+      dispatch(fetchConexiones(estudianteActual?.id));
+      dispatch(fetchPendientes(estudianteActual?.id));
     }
   }, [usuarioIdActual, esMiPerfil, dispatch]);
 
@@ -136,7 +151,7 @@ export const PerfilUsuario = () => {
     try {
       await dispatch(inviteContact({
         email: profile.usuario.email,
-        usuarioId: usuarioIdActual,
+        estudianteId: estudianteActual?.id,
       })).unwrap();
       showSuccess('Invitación enviada exitosamente');
     } catch (err) {
@@ -268,12 +283,14 @@ export const PerfilUsuario = () => {
               <Button
                 variant="contained"
                 size="small"
-                startIcon={<PersonAdd />}
+                startIcon={esPendiente ? <HourglassEmpty /> : <PersonAdd />}
                 onClick={handleInvite}
-                disabled={esContacto}
+                disabled={esContacto || esPendiente}
+                color={esPendiente ? 'warning' : 'primary'}
+                variant={esContacto || esPendiente ? 'outlined' : 'contained'}
                 sx={{ borderRadius: 2 }}
               >
-                {esContacto ? 'Conectado' : 'Agregar contacto'}
+                {esContacto ? 'Conectado' : esPendiente ? 'Pendiente' : 'Agregar contacto'}
               </Button>
             </Box>
           )}

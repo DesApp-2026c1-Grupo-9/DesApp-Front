@@ -9,9 +9,9 @@ import {
 
 export const fetchConexiones = createAsyncThunk(
   'conexiones/fetchConexiones',
-  async (usuarioId, { rejectWithValue }) => {
+  async (estudianteId, { rejectWithValue }) => {
     try {
-      const response = await getConexiones(usuarioId);
+      const response = await getConexiones(estudianteId);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -23,9 +23,9 @@ export const fetchConexiones = createAsyncThunk(
 
 export const fetchPendientes = createAsyncThunk(
   'conexiones/fetchPendientes',
-  async (usuarioId, { rejectWithValue }) => {
+  async (estudianteId, { rejectWithValue }) => {
     try {
-      const response = await getPendientes(usuarioId);
+      const response = await getPendientes(estudianteId);
       return response.data.data;
     } catch (error) {
       return rejectWithValue(
@@ -37,9 +37,9 @@ export const fetchPendientes = createAsyncThunk(
 
 export const inviteContact = createAsyncThunk(
   'conexiones/inviteContact',
-  async ({ email, usuarioId }, { rejectWithValue }) => {
+  async ({ email, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await sendInvitation(email, usuarioId);
+      const response = await sendInvitation(email, estudianteId);
       return response.data;
     } catch (error) {
       return rejectWithValue(
@@ -51,9 +51,9 @@ export const inviteContact = createAsyncThunk(
 
 export const respondToInvitation = createAsyncThunk(
   'conexiones/respondToInvitation',
-  async ({ id, estado, usuarioId }, { rejectWithValue }) => {
+  async ({ id, estado, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await respondInvitation(id, estado, usuarioId);
+      const response = await respondInvitation(id, estado, estudianteId);
       return { data: response.data, id, estado };
     } catch (error) {
       return rejectWithValue(
@@ -65,9 +65,9 @@ export const respondToInvitation = createAsyncThunk(
 
 export const deleteConexion = createAsyncThunk(
   'conexiones/deleteConexion',
-  async ({ id, usuarioId }, { rejectWithValue }) => {
+  async ({ id, estudianteId }, { rejectWithValue }) => {
     try {
-      await removeConexion(id, usuarioId);
+      await removeConexion(id, estudianteId);
       return id;
     } catch (error) {
       return rejectWithValue(

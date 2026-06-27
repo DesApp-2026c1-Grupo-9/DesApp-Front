@@ -70,7 +70,7 @@ export const EditarPerfil = () => {
 
     setLoading(true);
     try {
-      await dispatch(updateUserData({ id: usuario.id, data })).unwrap();
+      await dispatch(updateUserData({ data })).unwrap();
       setSnackbar({ open: true, message: 'Datos actualizados correctamente', severity: 'success' });
     } catch (err) {
       setSnackbar({ open: true, message: err?.message || 'Error al actualizar', severity: 'error' });

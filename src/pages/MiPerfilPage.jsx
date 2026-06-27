@@ -103,7 +103,7 @@ export default function MiPerfilPage() {
     if (!file) return;
     setAvatarUploading(true);
     try {
-      await dispatch(updateAvatar({ id: user?.id, file })).unwrap();
+      await dispatch(updateAvatar({ file })).unwrap();
       showSuccess('Avatar actualizado correctamente');
     } catch {
       showError('Error al subir avatar');

@@ -16,7 +16,8 @@ export const fetchMateriales = createAsyncThunk(
       const data = await getMateriales(params);
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
@@ -28,7 +29,8 @@ export const fetchMaterias = createAsyncThunk(
       const data = await getMaterias();
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
@@ -39,40 +41,44 @@ export const addMaterial = createAsyncThunk(
     try {
       return await createMaterial(materialData);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
 
 export const editMaterial = createAsyncThunk(
   'materiales/editMaterial',
-  async ({ id, data, usuarioId }, { rejectWithValue }) => {
+  async ({ id, data, estudianteId }, { rejectWithValue }) => {
     try {
-      return await updateMaterial(id, data, usuarioId);
+      return await updateMaterial(id, data, estudianteId);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
 
 export const removeMaterial = createAsyncThunk(
   'materiales/removeMaterial',
-  async ({ id, usuarioId }, { rejectWithValue }) => {
+  async ({ id, estudianteId }, { rejectWithValue }) => {
     try {
-      return await deleteMaterial(id, usuarioId);
+      return await deleteMaterial(id, estudianteId);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );
 
 export const rateMaterialThunk = createAsyncThunk(
   'materiales/rateMaterial',
-  async ({ id, value, usuarioId }, { rejectWithValue }) => {
+  async ({ id, value, estudianteId }, { rejectWithValue }) => {
     try {
-      return await rateMaterial(id, value, usuarioId);
+      return await rateMaterial(id, value, estudianteId);
     } catch (error) {
-      return rejectWithValue(error.message);
+      const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+      return rejectWithValue(msg);
     }
   }
 );

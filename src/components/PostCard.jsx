@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 import {
   Card,
@@ -81,11 +82,12 @@ const formatFechaComentario = (fecha) => formatFechaRelative(fecha);
 
 function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth);
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.contenido || '');
-  const isOwner = String(post.autor?.id) === String(currentUserId);
+  const isOwner = Boolean(post.autor?.id && user?.id && String(post.autor?.id) === String(user?.id));
 
   const {
     comentarios,

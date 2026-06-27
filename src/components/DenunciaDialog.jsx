@@ -18,7 +18,7 @@ import {
 import { Flag, Warning } from '@mui/icons-material';
 import { getMotivosDenuncia, createDenuncia, verificarDenunciaExistente } from '../features/materiales/service';
 
-const DenunciaDialog = ({ open, onClose, material, usuarioId }) => {
+const DenunciaDialog = ({ open, onClose, material, estudianteId }) => {
   const [motivos, setMotivos] = useState([]);
   const [motivoId, setMotivoId] = useState('');
   const [detalle, setDetalle] = useState('');
@@ -42,7 +42,7 @@ const DenunciaDialog = ({ open, onClose, material, usuarioId }) => {
 
   const verificarYaDenuncio = async () => {
     try {
-      const result = await verificarDenunciaExistente(material.id, usuarioId);
+      const result = await verificarDenunciaExistente(material.id, estudianteId);
       setYaDenuncio(result);
     } catch {
     }
@@ -73,7 +73,7 @@ const DenunciaDialog = ({ open, onClose, material, usuarioId }) => {
         materialId: material.id,
         motivoId,
         detalle: detalle.trim() || undefined,
-        usuarioId,
+        estudianteId,
       });
       setSuccess(result.message || 'Denuncia creada exitosamente');
       setTimeout(() => {
