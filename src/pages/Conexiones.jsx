@@ -116,14 +116,18 @@ export default function Conexiones() {
     setConfirmDelete({ open: false, conexionId: null, contacto: null });
   };
 
-  const conexionIds = new Set(list.map((c) => c.contacto?.estudianteId));
+  const acceptedIds = new Set(list.map((c) => c.contacto?.estudianteId).filter(Boolean));
+  const pendingIds = new Set([
+    ...requests.filter((r) => r.usuarioId === estudianteId).map((r) => r.contacto?.estudianteId),
+    ...requests.filter((r) => r.contactoId === estudianteId).map((r) => r.usuario?.estudianteId),
+  ].filter(Boolean));
 
   const usuariosDescubribles = students.filter(
     (s) =>
       s.id !== estudianteId &&
       s.activo !== false &&
       s.visibleEnDescubrir !== false &&
-      !conexionIds.has(s.id) &&
+      !acceptedIds.has(s.id) &&
       s.rol !== 'administrador'
   );
 
@@ -147,7 +151,6 @@ export default function Conexiones() {
     try {
       await dispatch(inviteContact({ email: target.email, estudianteId })).unwrap();
       showSuccess('Invitación enviada exitosamente');
-      setInvitedUserIds((prev) => new Set(prev).add(targetId));
       dispatch(fetchPendientes(estudianteId));
     } catch (err) {
       showError(err || 'Error al enviar invitación');
@@ -176,7 +179,7 @@ export default function Conexiones() {
           <Tab
             icon={<HourglassEmpty />}
             iconPosition="start"
-            label={`Pendientes (${requests.length})`}
+            label={`Pendientes (${requests.filter((r) => r.contactoId === estudianteId).length})`}
           />
           <Tab icon={<Search />} iconPosition="start" label="Descubrir" />
         </Tabs>
@@ -205,14 +208,14 @@ export default function Conexiones() {
       <TabPanel value={tabValue} index={1}>
         {loading ? (
           <LoadingSpinner message="Cargando solicitudes..." />
-        ) : requests.length === 0 ? (
+        ) : requests.filter((r) => r.contactoId === estudianteId).length === 0 ? (
           <EmptyState
             title="Sin solicitudes pendientes"
             message="No tienes solicitudes de conexión pendientes."
             icon="inbox"
           />
         ) : (
-          requests.map((req) => (
+          requests.filter((r) => r.contactoId === estudianteId).map((req) => (
             <RequestCard
               key={req.id}
               request={req}
@@ -255,7 +258,7 @@ export default function Conexiones() {
               student={s}
               onInvite={handleInviteFromDiscover}
               isInviting={invitingUserId === s.id}
-              isInvited={invitedUserIds.has(s.id)}
+              isPending={pendingIds.has(s.id)}
             />
           ))
         )}
