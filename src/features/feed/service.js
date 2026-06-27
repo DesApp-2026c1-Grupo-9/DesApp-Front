@@ -4,16 +4,16 @@ export const getFeed = (params = {}) => api.get('/api/novedades', { params });
 
 export const createPost = (data) => api.post('/api/novedades', data);
 
-export const deletePost = (postId, usuarioId) => {
-  return api.delete(`/api/novedades/${postId}?usuarioId=${usuarioId}`);
+export const deletePost = (postId, estudianteId) => {
+  return api.delete(`/api/novedades/${postId}?estudianteId=${estudianteId}`);
 };
 
-export const likePost = (postId, usuarioId) => {
-  return api.post(`/api/novedades/${postId}/like`, { usuarioId });
+export const likePost = (postId, estudianteId) => {
+  return api.post(`/api/novedades/${postId}/like`, { estudianteId });
 };
 
-export const unlikePost = (postId, usuarioId) => {
-  return api.post(`/api/novedades/${postId}/unlike`, { usuarioId });
+export const unlikePost = (postId, estudianteId) => {
+  return api.post(`/api/novedades/${postId}/unlike`, { estudianteId });
 };
 
 export const getPostById = (postId) => api.get(`/api/novedades/${postId}`);

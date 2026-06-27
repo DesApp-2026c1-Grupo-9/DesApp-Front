@@ -24,16 +24,16 @@ const DiscoverCard = ({ student, onInvite, isInviting, isInvited }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Avatar
-              src={student.avatar || `https://ui-avatars.com/api/?name=${student.nombre}+${student.apellido}&background=random`}
+              src={student.avatarUrl || `https://ui-avatars.com/api/?name=${student.nombre}+${student.apellido}&background=random`}
               sx={{ width: 45, height: 45, cursor: 'pointer' }}
-              onClick={() => navigate('/perfil/' + student.id)}
+              onClick={() => navigate('/perfil/' + student.usuarioId)}
             />
             <Box>
               <Typography
                 variant="subtitle1"
                 fontWeight="bold"
                 sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
-                onClick={() => navigate('/perfil/' + student.id)}
+                onClick={() => navigate('/perfil/' + student.usuarioId)}
               >
                 {student.nombre} {student.apellido}
               </Typography>

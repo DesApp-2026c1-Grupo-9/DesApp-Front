@@ -60,22 +60,24 @@ export default function Conexiones() {
   const [invitedUserIds, setInvitedUserIds] = useState(new Set());
   const [confirmDelete, setConfirmDelete] = useState({ open: false, conexionId: null, contacto: null });
 
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id;
+
   useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchConexiones(user.id));
-      dispatch(fetchPendientes(user.id));
+    if (estudianteId) {
+      dispatch(fetchConexiones(estudianteId));
+      dispatch(fetchPendientes(estudianteId));
     }
-  }, [user, dispatch]);
+  }, [estudianteId, dispatch]);
 
   const handleInvite = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
     setInviteLoading(true);
     try {
-      await dispatch(inviteContact({ email, usuarioId: user.id })).unwrap();
+      await dispatch(inviteContact({ email, estudianteId })).unwrap();
       setEmail('');
       showSuccess('Invitación enviada exitosamente');
-      dispatch(fetchPendientes(user.id));
+      dispatch(fetchPendientes(estudianteId));
     } catch (err) {
       showError(err || 'Error al enviar invitación');
     } finally {
@@ -85,10 +87,10 @@ export default function Conexiones() {
 
   const handleRespond = async (id, estado) => {
     try {
-      await dispatch(respondToInvitation({ id, estado, usuarioId: user.id })).unwrap();
+      await dispatch(respondToInvitation({ id, estado, estudianteId })).unwrap();
       showSuccess(`Solicitud ${estado} exitosamente`);
-      dispatch(fetchPendientes(user.id));
-      dispatch(fetchConexiones(user.id));
+      dispatch(fetchPendientes(estudianteId));
+      dispatch(fetchConexiones(estudianteId));
     } catch (err) {
       showError(err || 'Error al responder solicitud');
     }
@@ -102,9 +104,9 @@ export default function Conexiones() {
     const { conexionId } = confirmDelete;
     setConfirmDelete({ open: false, conexionId: null, contacto: null });
     try {
-      await dispatch(deleteConexion({ id: conexionId, usuarioId: user.id })).unwrap();
+      await dispatch(deleteConexion({ id: conexionId, estudianteId })).unwrap();
       showSuccess('Conexión eliminada exitosamente');
-      dispatch(fetchConexiones(user.id));
+      dispatch(fetchConexiones(estudianteId));
     } catch (err) {
       showError(err || 'Error al eliminar conexión');
     }
@@ -114,11 +116,11 @@ export default function Conexiones() {
     setConfirmDelete({ open: false, conexionId: null, contacto: null });
   };
 
-  const conexionIds = new Set(list.map((c) => c.contacto?.id));
+  const conexionIds = new Set(list.map((c) => c.contacto?.estudianteId));
 
   const usuariosDescubribles = students.filter(
     (s) =>
-      s.id !== user?.id &&
+      s.id !== estudianteId &&
       s.activo !== false &&
       s.visibleEnDescubrir !== false &&
       !conexionIds.has(s.id) &&
@@ -143,10 +145,10 @@ export default function Conexiones() {
       return;
     }
     try {
-      await dispatch(inviteContact({ email: target.email, usuarioId: user.id })).unwrap();
+      await dispatch(inviteContact({ email: target.email, estudianteId })).unwrap();
       showSuccess('Invitación enviada exitosamente');
       setInvitedUserIds((prev) => new Set(prev).add(targetId));
-      dispatch(fetchPendientes(user.id));
+      dispatch(fetchPendientes(estudianteId));
     } catch (err) {
       showError(err || 'Error al enviar invitación');
     } finally {

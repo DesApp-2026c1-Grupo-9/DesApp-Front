@@ -47,9 +47,9 @@ export const fetchSesiones = createAsyncThunk(
 
 export const addSesion = createAsyncThunk(
   'sesiones/addSesion',
-  async ({ sesionData, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionData, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await createSesion({ ...sesionData, usuarioId });
+      const response = await createSesion({ ...sesionData, estudianteId });
       return transformBackendSesion(response.data);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -59,9 +59,9 @@ export const addSesion = createAsyncThunk(
 
 export const editSesion = createAsyncThunk(
   'sesiones/editSesion',
-  async ({ sesionId, sesionData, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionId, sesionData, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await updateSesion(sesionId, { ...sesionData, usuarioId });
+      const response = await updateSesion(sesionId, { ...sesionData, estudianteId });
       return transformBackendSesion(response.data);
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -71,9 +71,9 @@ export const editSesion = createAsyncThunk(
 
 export const removeSesion = createAsyncThunk(
   'sesiones/removeSesion',
-  async ({ sesionId, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionId, estudianteId }, { rejectWithValue }) => {
     try {
-      await deleteSesion(sesionId, usuarioId);
+      await deleteSesion(sesionId, estudianteId);
       return sesionId;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -83,9 +83,9 @@ export const removeSesion = createAsyncThunk(
 
 export const joinToSesion = createAsyncThunk(
   'sesiones/joinToSesion',
-  async ({ sesionId, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionId, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await joinSesion(sesionId, usuarioId);
+      const response = await joinSesion(sesionId, estudianteId);
       return { sesionId, participante: response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -95,9 +95,9 @@ export const joinToSesion = createAsyncThunk(
 
 export const fetchParticipantes = createAsyncThunk(
   'sesiones/fetchParticipantes',
-  async ({ sesionId, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionId, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await getParticipantes(sesionId, usuarioId);
+      const response = await getParticipantes(sesionId, estudianteId);
       return { sesionId, participantes: response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -107,9 +107,9 @@ export const fetchParticipantes = createAsyncThunk(
 
 export const approveParticipanteThunk = createAsyncThunk(
   'sesiones/approveParticipante',
-  async ({ sesionId, participanteId, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionId, participanteId, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await approveParticipante(sesionId, participanteId, usuarioId);
+      const response = await approveParticipante(sesionId, participanteId, estudianteId);
       return { sesionId, participante: response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -119,9 +119,9 @@ export const approveParticipanteThunk = createAsyncThunk(
 
 export const rejectParticipanteThunk = createAsyncThunk(
   'sesiones/rejectParticipante',
-  async ({ sesionId, participanteId, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionId, participanteId, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await rejectParticipante(sesionId, participanteId, usuarioId);
+      const response = await rejectParticipante(sesionId, participanteId, estudianteId);
       return { sesionId, participante: response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);
@@ -131,9 +131,9 @@ export const rejectParticipanteThunk = createAsyncThunk(
 
 export const leaveSesionThunk = createAsyncThunk(
   'sesiones/leaveSesion',
-  async ({ sesionId, participanteId, usuarioId }, { rejectWithValue }) => {
+  async ({ sesionId, participanteId, estudianteId }, { rejectWithValue }) => {
     try {
-      const response = await leaveSesion(sesionId, participanteId, usuarioId);
+      const response = await leaveSesion(sesionId, participanteId, estudianteId);
       return { sesionId, participante: response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || error.message);

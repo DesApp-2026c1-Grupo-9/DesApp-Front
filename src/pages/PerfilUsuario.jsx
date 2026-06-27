@@ -66,7 +66,7 @@ export const PerfilUsuario = () => {
 
   useEffect(() => {
     if (usuarioIdActual && !esMiPerfil) {
-      dispatch(fetchConexiones(usuarioIdActual));
+      dispatch(fetchConexiones(estudianteActual?.id));
     }
   }, [usuarioIdActual, esMiPerfil, dispatch]);
 

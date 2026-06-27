@@ -56,19 +56,23 @@ const Sesiones = () => {
   });
 
   const { data: misMateriasIds, loading: loadingMisMaterias, refetch: refetchMisMaterias } = useFetchData({
-    fetchFn: () => api.get(`/api/estudiantes/${user?.id}/materias-ids`)
+    fetchFn: () => api.get(`/api/estudiantes/${estudianteId}/materias-ids`)
       .then(res => res.data?.data || []),
     deps: [activeTab, user?.id],
     immediate: activeTab === 'misMaterias' && !!user?.id,
     timeout: 10000,
   });
 
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id;
+
   useEffect(() => {
     if (user?.id) {
       dispatch(fetchSesiones({ usuarioId: user.id }));
-      dispatch(fetchConexiones(user.id));
     }
-  }, [user, dispatch]);
+    if (estudianteId) {
+      dispatch(fetchConexiones(estudianteId));
+    }
+  }, [user, estudianteId, dispatch]);
 
   const today = new Date().toISOString().split('T')[0];
   const misMateriasIdsArray = Array.isArray(misMateriasIds) ? misMateriasIds : [];

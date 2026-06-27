@@ -269,10 +269,7 @@ export const EstudianteDashboard = () => {
 
     setAvatarUploading(true);
     try {
-      const usuarioId = user?.id;
-      if (!usuarioId) return;
-
-      const result = await dispatch(updateAvatar({ id: usuarioId, file })).unwrap();
+      const result = await dispatch(updateAvatar({ file })).unwrap();
       setEstudiante((prev) => ({ ...prev, avatarUrl: result }));
     } catch {
       console.error('Error al subir avatar');

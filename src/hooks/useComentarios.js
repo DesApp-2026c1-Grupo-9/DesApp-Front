@@ -51,7 +51,7 @@ export default function useComentarios(post, currentUserId) {
       return;
     }
     try {
-      await dispatch(fetchComentariosThunk({ novedadId: post.id, usuarioId: currentUserId })).unwrap();
+      await dispatch(fetchComentariosThunk({ novedadId: post.id, estudianteId: currentUserId })).unwrap();
       setShowComentarios(true);
     } catch (err) {
       setError(typeof err === 'string' ? err : 'Error al cargar comentarios');
@@ -64,7 +64,7 @@ export default function useComentarios(post, currentUserId) {
       await dispatch(addComentario({
         novedadId: post.id,
         contenido: nuevoComentario.trim(),
-        usuarioId: currentUserId,
+        estudianteId: currentUserId,
       })).unwrap();
       setNuevoComentario('');
       setVisibleCount((prev) => prev + 1);
@@ -79,7 +79,7 @@ export default function useComentarios(post, currentUserId) {
         novedadId: post.id,
         comentarioId: editandoComentarioId,
         contenido: editComentarioContent.trim(),
-        usuarioId: currentUserId,
+        estudianteId: currentUserId,
       })).unwrap();
       setEditandoComentarioId(null);
     } catch (err) {
@@ -93,7 +93,7 @@ export default function useComentarios(post, currentUserId) {
         novedadId: post.id,
         comentarioId: editandoReplyId,
         contenido: editReplyContent.trim(),
-        usuarioId: currentUserId,
+        estudianteId: currentUserId,
       })).unwrap();
       setEditandoReplyId(null);
     } catch (err) {
@@ -103,9 +103,9 @@ export default function useComentarios(post, currentUserId) {
 
   const handleLikeComentario = (comentarioId, liked) => {
     if (liked) {
-      dispatch(unlikeComentarioThunk({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
+      dispatch(unlikeComentarioThunk({ novedadId: post.id, comentarioId, estudianteId: currentUserId }));
     } else {
-      dispatch(likeComentarioThunk({ novedadId: post.id, comentarioId, usuarioId: currentUserId }));
+      dispatch(likeComentarioThunk({ novedadId: post.id, comentarioId, estudianteId: currentUserId }));
     }
   };
 
@@ -115,7 +115,7 @@ export default function useComentarios(post, currentUserId) {
       await dispatch(addComentario({
         novedadId: post.id,
         contenido,
-        usuarioId: currentUserId,
+        estudianteId: currentUserId,
         comentarioPadreId,
       })).unwrap();
       setReplyingTo(null);
@@ -130,7 +130,7 @@ export default function useComentarios(post, currentUserId) {
       await dispatch(removeComentario({
         novedadId: post.id,
         comentarioId: comentarioSeleccionado.id,
-        usuarioId: currentUserId,
+        estudianteId: currentUserId,
       })).unwrap();
     } catch (err) {
       setError(typeof err === 'string' ? err : 'Error al eliminar comentario');
@@ -143,7 +143,7 @@ export default function useComentarios(post, currentUserId) {
       await dispatch(removeComentario({
         novedadId: post.id,
         comentarioId: replySeleccionada.id,
-        usuarioId: currentUserId,
+        estudianteId: currentUserId,
       })).unwrap();
     } catch (err) {
       setError(typeof err === 'string' ? err : 'Error al eliminar respuesta');
