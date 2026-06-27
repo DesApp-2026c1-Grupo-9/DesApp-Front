@@ -3,18 +3,18 @@ import { Card, CardContent, Typography, Chip, Button, Box, CircularProgress } fr
 import { AccessTime, LocationOn, Videocam, HourglassEmpty, Public, Group, Lock } from '@mui/icons-material';
 
 const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilidad, onEdit, onJoin, onLeave, onViewParticipantes, onDelete }) => {
-  const currentUserId = currentUser?.id;
+  const currentEstudianteId = currentUser?.estudianteId || currentUser?.Estudiante?.id || currentUser?.id;
 
   const isThisOperationLoading = operationLoading && 
     operationLoading.sesionId === sesion.id && 
     ['joining', 'leaving'].includes(operationLoading.action);
   
   const participante = sesion.participantes?.find(p => 
-    p.estudianteId === currentUserId || p.estudiante?.id === currentUserId
+    p.estudianteId === currentEstudianteId
   );
   
   const isCanceled = sesion.estado === 'cancelada';
-  const isCreator = sesion.creadorId === currentUserId;
+  const isCreator = sesion.creadorId === currentEstudianteId;
   const isJoined = !!participante;
   const isPending = participante?.estado === 'pendiente';
   const isApproved = participante?.estado === 'aprobado';

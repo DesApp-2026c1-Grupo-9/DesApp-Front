@@ -46,6 +46,8 @@ const Sesiones = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [sesionToDelete, setSesionToDelete] = useState(null);
 
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
+
   const { data: materias, loading: loadingMaterias, refetch: refetchMaterias } = useFetchData({
     fetchFn: () => api.get('/api/materias?limit=0').then(res => {
       const lista = res.data?.data || res.data || [];
@@ -56,18 +58,16 @@ const Sesiones = () => {
   });
 
   const { data: misMateriasIds, loading: loadingMisMaterias, refetch: refetchMisMaterias } = useFetchData({
-    fetchFn: () => api.get(`/api/estudiantes/${estudianteId}/materias-ids`)
+    fetchFn: () => api.get(`/api/estudiantes/${user.usuarioId || user.id}/materias-ids`)
       .then(res => res.data?.data || []),
     deps: [activeTab, user?.id],
     immediate: activeTab === 'misMaterias' && !!user?.id,
     timeout: 10000,
   });
 
-  const estudianteId = user?.estudianteId || user?.Estudiante?.id;
-
   useEffect(() => {
     if (user?.id) {
-      dispatch(fetchSesiones({ usuarioId: user.id }));
+      dispatch(fetchSesiones({ estudianteId }));
     }
     if (estudianteId) {
       dispatch(fetchConexiones(estudianteId));
@@ -87,10 +87,10 @@ const Sesiones = () => {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
     }
     if (activeTab === 'misSesiones') {
-      if (s.creadorId !== user.id) return false;
+      if (s.creadorId !== estudianteId) return false;
     }
     if (activeTab === 'misInscripciones') {
-      if (!s.participantes?.some(p => p.estudianteId === user.id || p.estudiante?.id === user.id)) return false;
+      if (!s.participantes?.some(p => p.estudianteId === estudianteId)) return false;
     }
 
     if (filters.materia && s.materiaId !== Number(filters.materia)) return false;
@@ -122,12 +122,12 @@ const Sesiones = () => {
       dispatch(editSesion({ 
         sesionId: editingSesion.id, 
         sesionData, 
-        usuarioId: user.id 
+        estudianteId 
       }));
     } else {
       dispatch(addSesion({ 
         sesionData, 
-        usuarioId: user.id 
+        estudianteId 
       }));
     }
     setModalOpen(false);
@@ -136,7 +136,7 @@ const Sesiones = () => {
 
   // Handler: Join sesion
   const handleJoin = (sesionId) => {
-    dispatch(joinToSesion({ sesionId, usuarioId: user.id }))
+    dispatch(joinToSesion({ sesionId, estudianteId }))
       .unwrap()
       .catch((err) => {
         console.error('Error joining sesion:', err);
@@ -147,14 +147,14 @@ const Sesiones = () => {
   const handleLeave = (sesionId) => {
     const sesion = sesiones.find(s => s.id === sesionId);
     const participante = sesion?.participantes?.find(p => 
-      p.estudianteId === user.id || p.estudiante?.id === user.id
+      p.estudianteId === estudianteId
     );
     
     if (participante) {
       dispatch(leaveSesionThunk({ 
         sesionId, 
         participanteId: participante.id, 
-        usuarioId: user.id 
+        estudianteId 
       }))
         .unwrap()
         .catch((err) => {
@@ -171,7 +171,7 @@ const Sesiones = () => {
 
   // Handler: Approve participant
   const handleApprove = (sesionId, participanteId) => {
-    dispatch(approveParticipanteThunk({ sesionId, participanteId, usuarioId: user.id }));
+    dispatch(approveParticipanteThunk({ sesionId, participanteId, estudianteId }));
     // Update local selectedSesion for modal
     setSelectedSesion(prev => prev ? {
       ...prev,
@@ -183,7 +183,7 @@ const Sesiones = () => {
 
   // Handler: Reject participant
   const handleReject = (sesionId, participanteId) => {
-    dispatch(rejectParticipanteThunk({ sesionId, participanteId, usuarioId: user.id }));
+    dispatch(rejectParticipanteThunk({ sesionId, participanteId, estudianteId }));
     // Update local selectedSesion for modal
     setSelectedSesion(prev => prev ? {
       ...prev,
@@ -202,7 +202,7 @@ const Sesiones = () => {
   // Handler: Confirm delete
   const handleConfirmDelete = () => {
     if (sesionToDelete) {
-      dispatch(removeSesion({ sesionId: sesionToDelete, usuarioId: user.id }));
+      dispatch(removeSesion({ sesionId: sesionToDelete, estudianteId }));
     }
     setDeleteDialogOpen(false);
     setSesionToDelete(null);
@@ -347,7 +347,7 @@ const Sesiones = () => {
           message={error}
           icon="error"
           actionLabel="Reintentar"
-          onAction={() => dispatch(fetchSesiones({ usuarioId: user.id }))}
+          onAction={() => dispatch(fetchSesiones({ estudianteId }))}
         />
       )}
 
@@ -371,7 +371,7 @@ const Sesiones = () => {
             const creator = students.find(st => st.id === sesion.creadorId);
             const creatorPublico = creator?.perfilPublico ?? true;
             const esContacto = conexiones.includes(sesion.creadorId);
-            const isCreator = sesion.creadorId === user?.id;
+            const isCreator = sesion.creadorId === estudianteId;
             let visibilidad = 'publico';
             if (!creatorPublico) {
               visibilidad = isCreator ? 'privado' : 'contacto';
