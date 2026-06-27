@@ -36,7 +36,7 @@ const Materiales = () => {
     useSelector((state) => state.materiales);
   const { user } = useSelector((state) => state.auth);
 
-  const currentUserId = user?.id || 1;
+  const currentUserId = user?.estudianteId || user?.Estudiante?.id || user?.id;
   const currentUserName = user?.nombre || user?.name || 'Usuario';
   const isActive = user?.activo !== false;
 
@@ -60,12 +60,12 @@ const Materiales = () => {
 
   useEffect(() => {
     dispatch(
-      fetchMateriales({ ...filter, search: filters.search || '', sortBy, usuarioId: currentUserId })
+      fetchMateriales({ ...filter, search: filters.search || '', sortBy, estudianteId: currentUserId })
     );
   }, [filters.search, sortBy, filter, dispatch, currentUserId]);
 
   useEffect(() => {
-    dispatch(fetchMateriales({ ...filter, materiaId: filters.materiaId || null, sortBy, usuarioId: currentUserId }));
+    dispatch(fetchMateriales({ ...filter, materiaId: filters.materiaId || null, sortBy, estudianteId: currentUserId }));
   }, [filters.materiaId, dispatch]);
 
   const handleFilterChange = (newFilter) => {
@@ -80,9 +80,9 @@ const Materiales = () => {
 
   const handleRate = (id, value) => {
     if (currentUserId) {
-      dispatch(rateMaterialThunk({ id, value, usuarioId: currentUserId }))
+      dispatch(rateMaterialThunk({ id, value, estudianteId: currentUserId }))
         .then(() => dispatch(
-          fetchMateriales({ ...filter, search: filters.search || '', sortBy, usuarioId: currentUserId })
+          fetchMateriales({ ...filter, search: filters.search || '', sortBy, estudianteId: currentUserId })
         ));
     }
   };
@@ -93,7 +93,7 @@ const Materiales = () => {
         editMaterial({
           id: data.id,
           data: { titulo: data.titulo, descripcion: data.descripcion, tags: data.tags },
-          usuarioId: currentUserId,
+          estudianteId: currentUserId,
         })
       );
     } else {
@@ -110,7 +110,7 @@ const Materiales = () => {
   };
 
   const handleDeleteMaterial = (id) => {
-    dispatch(removeMaterial({ id, usuarioId: currentUserId }));
+    dispatch(removeMaterial({ id, estudianteId: currentUserId }));
   };
 
   const handleEditMaterial = (material) => {
@@ -127,7 +127,7 @@ const Materiales = () => {
     setDenunciaDialogOpen(false);
     setDenunciaMaterial(null);
     if (created) {
-      dispatch(fetchMateriales({ ...filter, search: filters.search || '', sortBy, usuarioId: currentUserId }));
+      dispatch(fetchMateriales({ ...filter, search: filters.search || '', sortBy, estudianteId: currentUserId }));
     }
   };
 
@@ -210,7 +210,7 @@ const Materiales = () => {
           message={error}
           icon="error"
           actionLabel="Reintentar"
-          onAction={() => dispatch(fetchMateriales({ ...filter, search, sortBy, usuarioId: currentUserId }))}
+          onAction={() => dispatch(fetchMateriales({ ...filter, search, sortBy, estudianteId: currentUserId }))}
         />
       ) : !materiales || materiales.length === 0 ? (
         <EmptyState
@@ -252,7 +252,7 @@ const Materiales = () => {
           open={denunciaDialogOpen}
           onClose={handleDenunciaClose}
           material={denunciaMaterial}
-          usuarioId={currentUserId}
+          estudianteId={currentUserId}
         />
       )}
     </PageContainer>
