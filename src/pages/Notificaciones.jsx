@@ -26,24 +26,25 @@ export default function Notificaciones() {
   const { lista, total, page, totalPages, noLeidas, loading } = useSelector(
     (state) => state.notificaciones
   );
-  const userId = useSelector((state) => state.auth.user?.id);
+  const { user } = useSelector((state) => state.auth);
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
 
   const cargar = useCallback(
     (pagina) => {
-      if (!userId) return;
-      dispatch(fetchNotificaciones({ usuarioId: userId, page: pagina }));
+      if (!estudianteId) return;
+      dispatch(fetchNotificaciones({ estudianteId, page: pagina }));
     },
-    [userId, dispatch]
+    [estudianteId, dispatch]
   );
 
   useEffect(() => {
     cargar(1);
-    if (userId) dispatch(fetchContador(userId));
+    if (estudianteId) dispatch(fetchContador(estudianteId));
 
     return () => {
-      if (userId) dispatch(readAllNotificaciones(userId));
+      if (estudianteId) dispatch(readAllNotificaciones(estudianteId));
     };
-  }, [userId, dispatch, cargar]);
+  }, [estudianteId, dispatch, cargar]);
 
   const handleCambiarPagina = (_, pagina) => {
     cargar(pagina);
