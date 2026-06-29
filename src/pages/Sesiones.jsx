@@ -1,12 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
   Typography, Button, Box, FormControl, InputLabel, Select, MenuItem,
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
-  DialogContentText, Tabs, Tab, FormControlLabel, Checkbox, Grid
+  DialogContentText, Tabs, Tab, FormControlLabel, Grid,
+  Chip, Stack
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
+import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns';
+import { es } from 'date-fns/locale';
 import SesionCard from '../components/SesionCard';
 import SesionModal from '../components/SesionModal';
 import AprobacionModal from '../components/AprobacionModal';
@@ -24,17 +29,35 @@ const Sesiones = () => {
   const { user, students, conexiones } = useSelector(state => state.auth);
   const { list: sesiones, loading, error, operationLoading } = useSelector(state => state.sesiones);
 
-  const { filters, setFilter, clearFilters, hasActiveFilters } = useFilter({
+  const { filters, setFilter, setMultipleFilters, clearFilters, hasActiveFilters } = useFilter({
     initialFilters: {
       materia: null,
-      fecha: null,
+      fechaInicio: null,
+      fechaFin: null,
       tipo: null,
     },
   });
 
   const [activeTab, setActiveTab] = useState('todas');
-  const [showPastEvents, setShowPastEvents] = useState(false);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      setFilter('fechaInicio', new Date());
+    }
+  }, [setFilter]);
+
+  const handleClearFilters = useCallback(() => {
+    setMultipleFilters({ materia: null, fechaFin: null, tipo: null });
+    setFilter('fechaInicio', new Date());
+    setActiveQuick(null);
+  }, [setMultipleFilters, setFilter]);
+  const [activeQuick, setActiveQuick] = useState(null);
   const [materiaMenuWidth, setMateriaMenuWidth] = useState(0);
+
+  const isQuickActive = (key) => activeQuick === key;
+  const showClearButton = filters.materia !== null || filters.fechaFin !== null || filters.tipo !== null;
   const materiaFormRef = useCallback(node => {
     if (node && !materiaMenuWidth) setMateriaMenuWidth(node.offsetWidth);
   }, []);
@@ -74,15 +97,9 @@ const Sesiones = () => {
     }
   }, [user, estudianteId, dispatch]);
 
-  const today = new Date().toISOString().split('T')[0];
   const misMateriasIdsArray = Array.isArray(misMateriasIds) ? misMateriasIds : [];
 
   const filteredSesiones = sesiones.filter(s => {
-    if (!showPastEvents) {
-      const sesionDate = s.fechaHora?.split('T')[0];
-      if (sesionDate < today) return false;
-    }
-
     if (activeTab === 'misMaterias') {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
     }
@@ -95,9 +112,13 @@ const Sesiones = () => {
 
     if (filters.materia && s.materiaId !== Number(filters.materia)) return false;
     if (filters.tipo && s.tipo !== filters.tipo) return false;
-    if (filters.fecha) {
+    if (filters.fechaInicio) {
       const sesionDate = s.fechaHora?.split('T')[0];
-      if (sesionDate !== filters.fecha) return false;
+      if (sesionDate < format(filters.fechaInicio, 'yyyy-MM-dd')) return false;
+    }
+    if (filters.fechaFin) {
+      const sesionDate = s.fechaHora?.split('T')[0];
+      if (sesionDate > format(filters.fechaFin, 'yyyy-MM-dd')) return false;
     }
 
     return true;
@@ -245,7 +266,7 @@ const Sesiones = () => {
       {/* Filtros */}
       <Box sx={{ mb: 3 }}>
         <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={3}>
             <FormControl fullWidth disabled={loadingMaterias} ref={materiaFormRef}>
               <InputLabel>Materia</InputLabel>
               <Select
@@ -265,17 +286,28 @@ const Sesiones = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <TextField
-              fullWidth
-              label="Fecha"
-              type="date"
-              InputLabelProps={{ shrink: true }}
-              value={filters.fecha || ''}
-              onChange={(e) => setFilter('fecha', e.target.value || null)}
-            />
+          <Grid item xs={12} sm={3}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+              <DatePicker
+                label="Fecha desde"
+                value={filters.fechaInicio}
+                onChange={(value) => setFilter('fechaInicio', value)}
+                slotProps={{ textField: { fullWidth: true } }}
+              />
+            </LocalizationProvider>
           </Grid>
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={3}>
+            <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={es}>
+              <DatePicker
+                label="Fecha hasta"
+                value={filters.fechaFin}
+                onChange={(value) => setFilter('fechaFin', value)}
+                slotProps={{ textField: { fullWidth: true } }}
+                minDate={filters.fechaInicio || undefined}
+              />
+            </LocalizationProvider>
+          </Grid>
+          <Grid item xs={12} sm={3}>
             <FormControl fullWidth>
               <InputLabel>Tipo</InputLabel>
               <Select
@@ -291,21 +323,58 @@ const Sesiones = () => {
           </Grid>
         </Grid>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={showPastEvents} 
-                onChange={(e) => setShowPastEvents(e.target.checked)} 
-              />
-            }
-            label="Mostrar eventos pasados"
+        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
+          <Chip
+            label="Hoy"
+            size="small"
+            variant={isQuickActive('hoy') ? 'filled' : 'outlined'}
+            color={isQuickActive('hoy') ? 'primary' : 'default'}
+            onClick={() => {
+              const today = new Date();
+              setMultipleFilters({ fechaInicio: today, fechaFin: today });
+              setActiveQuick('hoy');
+            }}
           />
+          <Chip
+            label="Esta semana"
+            size="small"
+            variant={isQuickActive('semana') ? 'filled' : 'outlined'}
+            color={isQuickActive('semana') ? 'primary' : 'default'}
+            onClick={() => {
+              const today = new Date();
+              setMultipleFilters({ fechaInicio: startOfWeek(today, { weekStartsOn: 1 }), fechaFin: endOfWeek(today, { weekStartsOn: 1 }) });
+              setActiveQuick('semana');
+            }}
+          />
+          <Chip
+            label="Este mes"
+            size="small"
+            variant={isQuickActive('mes') ? 'filled' : 'outlined'}
+            color={isQuickActive('mes') ? 'primary' : 'default'}
+            onClick={() => {
+              const today = new Date();
+              setMultipleFilters({ fechaInicio: startOfMonth(today), fechaFin: endOfMonth(today) });
+              setActiveQuick('mes');
+            }}
+          />
+          <Chip
+            label="Próx. 7 días"
+            size="small"
+            variant={isQuickActive('7d') ? 'filled' : 'outlined'}
+            color={isQuickActive('7d') ? 'primary' : 'default'}
+            onClick={() => {
+              const today = new Date();
+              setMultipleFilters({ fechaInicio: today, fechaFin: addDays(today, 7) });
+              setActiveQuick('7d');
+            }}
+          />
+        </Stack>
 
-          {hasActiveFilters && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+          {showClearButton && (
             <Button
               variant="text"
-              onClick={clearFilters}
+              onClick={handleClearFilters}
             >
               Limpiar filtros
             </Button>
@@ -326,12 +395,13 @@ const Sesiones = () => {
       </Tabs>
 
       {/* Active Filters Display */}
-      {hasActiveFilters && (
+      {showClearButton && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="textSecondary">
             Filtros activos:
-            {filters.materia && ` Materia ID: ${filters.materia}`}
-            {filters.fecha && ` Fecha: ${filters.fecha}`}
+            {filters.materia && ` Materia: ${materias?.find(m => m.id === Number(filters.materia))?.nombre || filters.materia}`}
+            {filters.fechaInicio && ` Desde: ${format(filters.fechaInicio, 'dd/MM/yyyy')}`}
+            {filters.fechaFin && ` Hasta: ${format(filters.fechaFin, 'dd/MM/yyyy')}`}
             {filters.tipo && ` Tipo: ${filters.tipo}`}
           </Typography>
         </Box>
@@ -363,7 +433,7 @@ const Sesiones = () => {
           message="No hay sesiones que coincidan con los filtros seleccionados."
           icon="search"
           actionLabel="Limpiar filtros"
-          onAction={clearFilters}
+          onAction={handleClearFilters}
         />
       ) : !showLoading && (
         <Grid container spacing={2}>
