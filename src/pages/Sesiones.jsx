@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
   Typography, Button, Box, FormControl, InputLabel, Select, MenuItem,
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
-  DialogContentText, Tabs, Tab, FormControlLabel, Checkbox, Grid,
+  DialogContentText, Tabs, Tab, FormControlLabel, Grid,
   Chip, Stack
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
@@ -39,11 +39,25 @@ const Sesiones = () => {
   });
 
   const [activeTab, setActiveTab] = useState('todas');
-  const [showPastEvents, setShowPastEvents] = useState(false);
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true;
+      setFilter('fechaInicio', new Date());
+    }
+  }, [setFilter]);
+
+  const handleClearFilters = useCallback(() => {
+    setMultipleFilters({ materia: null, fechaFin: null, tipo: null });
+    setFilter('fechaInicio', new Date());
+    setActiveQuick(null);
+  }, [setMultipleFilters, setFilter]);
   const [activeQuick, setActiveQuick] = useState(null);
   const [materiaMenuWidth, setMateriaMenuWidth] = useState(0);
 
   const isQuickActive = (key) => activeQuick === key;
+  const showClearButton = filters.materia !== null || filters.fechaFin !== null || filters.tipo !== null;
   const materiaFormRef = useCallback(node => {
     if (node && !materiaMenuWidth) setMateriaMenuWidth(node.offsetWidth);
   }, []);
@@ -83,15 +97,9 @@ const Sesiones = () => {
     }
   }, [user, estudianteId, dispatch]);
 
-  const today = new Date().toISOString().split('T')[0];
   const misMateriasIdsArray = Array.isArray(misMateriasIds) ? misMateriasIds : [];
 
   const filteredSesiones = sesiones.filter(s => {
-    if (!showPastEvents) {
-      const sesionDate = s.fechaHora?.split('T')[0];
-      if (sesionDate < today) return false;
-    }
-
     if (activeTab === 'misMaterias') {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
     }
@@ -363,20 +371,10 @@ const Sesiones = () => {
         </Stack>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={showPastEvents} 
-                onChange={(e) => setShowPastEvents(e.target.checked)} 
-              />
-            }
-            label="Mostrar eventos pasados"
-          />
-
-          {hasActiveFilters && (
+          {showClearButton && (
             <Button
               variant="text"
-              onClick={() => { clearFilters(); setActiveQuick(null); }}
+              onClick={handleClearFilters}
             >
               Limpiar filtros
             </Button>
@@ -397,7 +395,7 @@ const Sesiones = () => {
       </Tabs>
 
       {/* Active Filters Display */}
-      {hasActiveFilters && (
+      {showClearButton && (
         <Box sx={{ mb: 2 }}>
           <Typography variant="body2" color="textSecondary">
             Filtros activos:
@@ -435,7 +433,7 @@ const Sesiones = () => {
           message="No hay sesiones que coincidan con los filtros seleccionados."
           icon="search"
           actionLabel="Limpiar filtros"
-          onAction={() => { clearFilters(); setActiveQuick(null); }}
+          onAction={handleClearFilters}
         />
       ) : !showLoading && (
         <Grid container spacing={2}>
