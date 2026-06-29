@@ -292,7 +292,7 @@ const Sesiones = () => {
                 label="Fecha desde"
                 value={filters.fechaInicio}
                 onChange={(value) => setFilter('fechaInicio', value)}
-                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+                slotProps={{ textField: { fullWidth: true } }}
               />
             </LocalizationProvider>
           </Grid>
@@ -302,7 +302,7 @@ const Sesiones = () => {
                 label="Fecha hasta"
                 value={filters.fechaFin}
                 onChange={(value) => setFilter('fechaFin', value)}
-                slotProps={{ textField: { fullWidth: true, size: 'small' } }}
+                slotProps={{ textField: { fullWidth: true } }}
                 minDate={filters.fechaInicio || undefined}
               />
             </LocalizationProvider>
