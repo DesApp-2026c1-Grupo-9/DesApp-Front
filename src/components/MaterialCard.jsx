@@ -29,6 +29,7 @@ import { getLinkIcon, getFileIcon, formatFileSize, DiscordIcon, LINK_TIPO } from
 const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit, onDelete, onDenunciar }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
+  const [ownerMenuAnchor, setOwnerMenuAnchor] = useState(null);
   const isOwner = currentUserId === material.creadorId;
   const isDiscord = material.tipoLink === LINK_TIPO.DISCORD;
 
@@ -169,21 +170,6 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
           }}
         >
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            {isOwner && isActive && (
-              <>
-                <IconButton size="small" onClick={() => onEdit(material)}>
-                  <Edit fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </>
-            )}
-
             {material.tipo === 'file' ? (
               <Button
                 size="small"
@@ -218,6 +204,45 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               >
                 Abrir
               </Button>
+            )}
+
+            {isOwner && isActive && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setOwnerMenuAnchor(e.currentTarget)}
+                >
+                  <MoreVert fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={ownerMenuAnchor}
+                  open={Boolean(ownerMenuAnchor)}
+                  onClose={() => setOwnerMenuAnchor(null)}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      setOwnerMenuAnchor(null);
+                      onEdit(material);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Edit fontSize="small" />
+                    </ListItemIcon>
+                    Editar
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      setOwnerMenuAnchor(null);
+                      setShowDeleteConfirm(true);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Delete fontSize="small" color="error" />
+                    </ListItemIcon>
+                    <Typography color="error">Eliminar</Typography>
+                  </MenuItem>
+                </Menu>
+              </>
             )}
 
             {!isOwner && isActive && onDenunciar && (
