@@ -16,7 +16,7 @@ const ConnectionCard = ({ conexion, onDelete }) => {
   const inactivo = contacto?.activo === false;
 
   return (
-    <Card sx={{ mb: 2, borderRadius: 2, opacity: inactivo ? 0.6 : 1, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
+    <Card sx={{ height: '100%', borderRadius: 2, opacity: inactivo ? 0.6 : 1, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
       <CardContent>
         <Box
           sx={{

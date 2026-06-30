@@ -16,6 +16,7 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  Grid,
 } from '@mui/material';
 import {
   PersonAdd,
@@ -190,13 +191,16 @@ export default function Conexiones() {
             icon="inbox"
           />
         ) : (
-          list.map((conexion) => (
-            <ConnectionCard
-              key={conexion.id}
-              conexion={conexion}
-              onDelete={handleDeleteClick}
-            />
-          ))
+          <Grid container spacing={2}>
+            {list.map((conexion) => (
+              <Grid item xs={12} sm={6} key={conexion.id}>
+                <ConnectionCard
+                  conexion={conexion}
+                  onDelete={handleDeleteClick}
+                />
+              </Grid>
+            ))}
+          </Grid>
         )}
       </TabPanel>
 
@@ -210,14 +214,17 @@ export default function Conexiones() {
             icon="inbox"
           />
         ) : (
-          requests.map((req) => (
-            <RequestCard
-              key={req.id}
-              request={req}
-              onAccept={(id) => handleRespond(id, 'aceptada')}
-              onReject={(id) => handleRespond(id, 'rechazada')}
-            />
-          ))
+          <Grid container spacing={2}>
+            {requests.map((req) => (
+              <Grid item xs={12} sm={6} key={req.id}>
+                <RequestCard
+                  request={req}
+                  onAccept={(id) => handleRespond(id, 'aceptada')}
+                  onReject={(id) => handleRespond(id, 'rechazada')}
+                />
+              </Grid>
+            ))}
+          </Grid>
         )}
       </TabPanel>
 
@@ -247,15 +254,18 @@ export default function Conexiones() {
             icon="search"
           />
         ) : (
-          resultadosBusqueda.map((s) => (
-            <DiscoverCard
-              key={s.id}
-              student={s}
-              onInvite={handleInviteFromDiscover}
-              isInviting={invitingUserId === s.id}
-              isInvited={invitedUserIds.has(s.id)}
-            />
-          ))
+          <Grid container spacing={2}>
+            {resultadosBusqueda.map((s) => (
+              <Grid item xs={12} sm={6} key={s.id}>
+                <DiscoverCard
+                  student={s}
+                  onInvite={handleInviteFromDiscover}
+                  isInviting={invitingUserId === s.id}
+                  isInvited={invitedUserIds.has(s.id)}
+                />
+              </Grid>
+            ))}
+          </Grid>
         )}
       </TabPanel>
 
