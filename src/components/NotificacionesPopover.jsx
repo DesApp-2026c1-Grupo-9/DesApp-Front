@@ -26,7 +26,8 @@ export default function NotificacionesPopover() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const noLeidas = useSelector((state) => state.notificaciones.noLeidas);
-  const userId = useSelector((state) => state.auth.user?.id);
+  const { user } = useSelector((state) => state.auth);
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
   const [anchorEl, setAnchorEl] = useState(null);
   const [listaNotifs, setListaNotifs] = useState([]);
   const [loadingLocal, setLoadingLocal] = useState(false);
@@ -34,10 +35,10 @@ export default function NotificacionesPopover() {
 
   const handleClick = async (event) => {
     setAnchorEl(event.currentTarget);
-    if (!userId) return;
+    if (!estudianteId) return;
     setLoadingLocal(true);
     try {
-      const res = await getNotificaciones({ usuarioId: userId, noLeidas: 'true', page: 1 });
+      const res = await getNotificaciones({ estudianteId, noLeidas: 'true', page: 1 });
       setListaNotifs(res.data.data || []);
     } catch {
       setListaNotifs([]);
@@ -47,7 +48,7 @@ export default function NotificacionesPopover() {
   };
 
   const handleClose = () => {
-    if (userId) dispatch(readAllNotificaciones(userId));
+    if (estudianteId) dispatch(readAllNotificaciones(estudianteId));
     setAnchorEl(null);
   };
 
@@ -57,13 +58,13 @@ export default function NotificacionesPopover() {
   };
 
   useEffect(() => {
-    if (!userId) return;
-    dispatch(fetchContador(userId));
+    if (!estudianteId) return;
+    dispatch(fetchContador(estudianteId));
     const interval = setInterval(() => {
-      dispatch(fetchContador(userId));
+      dispatch(fetchContador(estudianteId));
     }, 20000);
     return () => clearInterval(interval);
-  }, [userId, dispatch]);
+  }, [estudianteId, dispatch]);
 
   const formatTime = (dateStr) => {
     const d = new Date(dateStr);

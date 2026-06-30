@@ -7,9 +7,9 @@ import {
 
 export const fetchNotificaciones = createAsyncThunk(
   'notificaciones/fetch',
-  async ({ usuarioId, noLeidas, page = 1 } = {}, { rejectWithValue }) => {
+  async ({ estudianteId, noLeidas, page = 1 } = {}, { rejectWithValue }) => {
     try {
-      const params = { usuarioId, page };
+      const params = { estudianteId, page };
       if (noLeidas) params.noLeidas = 'true';
       const response = await getNotificaciones(params);
       return response.data;
@@ -21,9 +21,9 @@ export const fetchNotificaciones = createAsyncThunk(
 
 export const fetchContador = createAsyncThunk(
   'notificaciones/fetchContador',
-  async (usuarioId, { rejectWithValue }) => {
+  async (estudianteId, { rejectWithValue }) => {
     try {
-      const response = await getContador({ usuarioId });
+      const response = await getContador({ estudianteId });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al obtener contador');
@@ -33,9 +33,9 @@ export const fetchContador = createAsyncThunk(
 
 export const readAllNotificaciones = createAsyncThunk(
   'notificaciones/readAll',
-  async (usuarioId, { rejectWithValue }) => {
+  async (estudianteId, { rejectWithValue }) => {
     try {
-      const response = await marcarTodasLeidas({ usuarioId });
+      const response = await marcarTodasLeidas({ estudianteId });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Error al marcar todas como leídas');

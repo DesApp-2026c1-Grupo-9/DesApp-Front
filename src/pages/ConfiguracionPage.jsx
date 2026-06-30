@@ -69,7 +69,7 @@ function ProfileSection() {
 
     setSaving(true);
     try {
-      await dispatch(updateUserData({ id: usuario.id, data })).unwrap();
+      await dispatch(updateUserData({ data })).unwrap();
       showSuccess('Datos actualizados correctamente');
     } catch (err) {
       showError(err?.message || 'Error al actualizar');

@@ -48,17 +48,18 @@ export const fetchStudents = createAsyncThunk(
   'auth/fetchStudents',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/api/usuarios', { params: { limit: 1000 } });
-      return response.data.data.map(u => ({
-        id: u.id,
-        nombre: u.nombre,
-        apellido: u.apellido,
-        email: u.email,
-        rol: u.rol || 'estudiante',
-        activo: u.activo,
-        avatarUrl: u.avatarUrl || `https://ui-avatars.com/api/?name=${u.nombre}+${u.apellido}&background=random`,
-        perfilPublico: u.perfilPublico ?? true,
-        visibleEnDescubrir: u.visibleEnDescubrir ?? true,
+      const response = await api.get('/api/estudiantes');
+      return response.data.data.map(e => ({
+        id: e.id,
+        usuarioId: e.usuario.id,
+        nombre: e.usuario.nombre,
+        apellido: e.usuario.apellido,
+        email: e.usuario.email,
+        rol: 'estudiante',
+        activo: e.usuario.activo,
+        avatarUrl: e.usuario.avatarUrl || `https://ui-avatars.com/api/?name=${e.usuario.nombre}+${e.usuario.apellido}&background=random`,
+        perfilPublico: e.perfilPublico ?? true,
+        visibleEnDescubrir: e.visibleEnDescubrir ?? true,
         conexiones: []
       }));
     } catch (error) {
@@ -69,10 +70,10 @@ export const fetchStudents = createAsyncThunk(
 
 export const fetchConexiones = createAsyncThunk(
   'auth/fetchConexiones',
-  async (usuarioId, { rejectWithValue }) => {
+  async (estudianteId, { rejectWithValue }) => {
     try {
       const response = await api.get('/api/conexiones', {
-        params: { usuarioId }
+        params: { estudianteId }
       });
       return response.data.data || [];
     } catch (error) {
@@ -95,9 +96,14 @@ export const fetchPreferencias = createAsyncThunk(
 
 export const updateUserData = createAsyncThunk(
   'auth/updateUserData',
-  async ({ id, data }, { rejectWithValue }) => {
+  async ({ data }, { getState, rejectWithValue }) => {
     try {
-      const response = await authService.updateUser(id, data);
+      const { user } = getState().auth;
+      const estudianteId = user.estudianteId || user.Estudiante?.id;
+      if (!estudianteId) {
+        return rejectWithValue({ message: 'No se encontró el ID del estudiante' });
+      }
+      const response = await authService.updateUser(estudianteId, data);
       const updatedUser = response.data.data;
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       const newUser = { ...storedUser, ...updatedUser };
@@ -111,9 +117,14 @@ export const updateUserData = createAsyncThunk(
 
 export const updateAvatar = createAsyncThunk(
   'auth/updateAvatar',
-  async ({ id, file }, { rejectWithValue }) => {
+  async ({ file }, { getState, rejectWithValue }) => {
     try {
-      const response = await authService.uploadAvatar(id, file);
+      const { user } = getState().auth;
+      const estudianteId = user.estudianteId || user.Estudiante?.id;
+      if (!estudianteId) {
+        return rejectWithValue({ message: 'No se encontró el ID del estudiante' });
+      }
+      const response = await authService.uploadAvatar(estudianteId, file);
       const { avatarUrl } = response.data.data;
       const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
       storedUser.avatarUrl = avatarUrl;
@@ -264,7 +275,7 @@ const authSlice = createSlice({
       })
       .addCase(fetchConexiones.fulfilled, (state, action) => {
         state.loadingConexiones = false;
-        state.conexiones = action.payload.map(c => c.contacto.id);
+        state.conexiones = action.payload.map(c => c.contacto.estudianteId);
       })
       .addCase(fetchConexiones.rejected, (state, action) => {
         state.loadingConexiones = false;

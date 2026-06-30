@@ -21,7 +21,7 @@ export const createMaterial = async (data) => {
   formData.append('descripcion', data.descripcion || '');
   formData.append('tipo', data.tipo);
   formData.append('materiaId', data.materiaId);
-  formData.append('usuarioId', data.creadorId);
+  formData.append('estudianteId', data.creadorId);
   
   if (data.tags && data.tags.length > 0) {
     data.tags.forEach(tag => formData.append('tags', tag));
@@ -39,18 +39,18 @@ export const createMaterial = async (data) => {
   return response.data.data;
 };
 
-export const updateMaterial = async (id, data, usuarioId) => {
-  const response = await api.put(`/api/materiales/${id}?usuarioId=${usuarioId}`, data);
+export const updateMaterial = async (id, data, estudianteId) => {
+  const response = await api.put(`/api/materiales/${id}?estudianteId=${estudianteId}`, data);
   return response.data.data;
 };
 
-export const deleteMaterial = async (id, usuarioId) => {
-  await api.delete(`/api/materiales/${id}?usuarioId=${usuarioId}`);
+export const deleteMaterial = async (id, estudianteId) => {
+  await api.delete(`/api/materiales/${id}?estudianteId=${estudianteId}`);
   return id;
 };
 
-export const rateMaterial = async (id, value, usuarioId) => {
-  const response = await api.post(`/api/materiales/${id}/rate?usuarioId=${usuarioId}`, { value });
+export const rateMaterial = async (id, value, estudianteId) => {
+  const response = await api.post(`/api/materiales/${id}/rate?estudianteId=${estudianteId}`, { value });
   return response.data.data;
 };
 
@@ -59,15 +59,15 @@ export const getMotivosDenuncia = async () => {
   return response.data.data;
 };
 
-export const verificarDenunciaExistente = async (materialId, usuarioId) => {
+export const verificarDenunciaExistente = async (materialId, estudianteId) => {
   const response = await api.get('/api/denuncias/verificar', {
-    params: { materialId, usuarioId },
+    params: { materialId, estudianteId },
   });
   return response.data.yaDenuncio;
 };
 
-export const createDenuncia = async ({ materialId, motivoId, detalle, usuarioId }) => {
-  const response = await api.post(`/api/denuncias?usuarioId=${usuarioId}`, {
+export const createDenuncia = async ({ materialId, motivoId, detalle, estudianteId }) => {
+  const response = await api.post(`/api/denuncias?estudianteId=${estudianteId}`, {
     materialId,
     motivoId,
     detalle

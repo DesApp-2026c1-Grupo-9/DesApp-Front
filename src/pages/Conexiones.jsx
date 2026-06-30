@@ -61,22 +61,24 @@ export default function Conexiones() {
   const [invitedUserIds, setInvitedUserIds] = useState(new Set());
   const [confirmDelete, setConfirmDelete] = useState({ open: false, conexionId: null, contacto: null });
 
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id;
+
   useEffect(() => {
-    if (user?.id) {
-      dispatch(fetchConexiones(user.id));
-      dispatch(fetchPendientes(user.id));
+    if (estudianteId) {
+      dispatch(fetchConexiones(estudianteId));
+      dispatch(fetchPendientes(estudianteId));
     }
-  }, [user, dispatch]);
+  }, [estudianteId, dispatch]);
 
   const handleInvite = async (e) => {
     e.preventDefault();
     if (!email.trim()) return;
     setInviteLoading(true);
     try {
-      await dispatch(inviteContact({ email, usuarioId: user.id })).unwrap();
+      await dispatch(inviteContact({ email, estudianteId })).unwrap();
       setEmail('');
       showSuccess('Invitación enviada exitosamente');
-      dispatch(fetchPendientes(user.id));
+      dispatch(fetchPendientes(estudianteId));
     } catch (err) {
       showError(err || 'Error al enviar invitación');
     } finally {
@@ -86,10 +88,10 @@ export default function Conexiones() {
 
   const handleRespond = async (id, estado) => {
     try {
-      await dispatch(respondToInvitation({ id, estado, usuarioId: user.id })).unwrap();
+      await dispatch(respondToInvitation({ id, estado, estudianteId })).unwrap();
       showSuccess(`Solicitud ${estado} exitosamente`);
-      dispatch(fetchPendientes(user.id));
-      dispatch(fetchConexiones(user.id));
+      dispatch(fetchPendientes(estudianteId));
+      dispatch(fetchConexiones(estudianteId));
     } catch (err) {
       showError(err || 'Error al responder solicitud');
     }
@@ -103,9 +105,9 @@ export default function Conexiones() {
     const { conexionId } = confirmDelete;
     setConfirmDelete({ open: false, conexionId: null, contacto: null });
     try {
-      await dispatch(deleteConexion({ id: conexionId, usuarioId: user.id })).unwrap();
+      await dispatch(deleteConexion({ id: conexionId, estudianteId })).unwrap();
       showSuccess('Conexión eliminada exitosamente');
-      dispatch(fetchConexiones(user.id));
+      dispatch(fetchConexiones(estudianteId));
     } catch (err) {
       showError(err || 'Error al eliminar conexión');
     }
@@ -115,14 +117,18 @@ export default function Conexiones() {
     setConfirmDelete({ open: false, conexionId: null, contacto: null });
   };
 
-  const conexionIds = new Set(list.map((c) => c.contacto?.id));
+  const acceptedIds = new Set(list.map((c) => c.contacto?.estudianteId).filter(Boolean));
+  const pendingIds = new Set([
+    ...requests.filter((r) => r.usuarioId === estudianteId).map((r) => r.contacto?.estudianteId),
+    ...requests.filter((r) => r.contactoId === estudianteId).map((r) => r.usuario?.estudianteId),
+  ].filter(Boolean));
 
   const usuariosDescubribles = students.filter(
     (s) =>
-      s.id !== user?.id &&
+      s.id !== estudianteId &&
       s.activo !== false &&
       s.visibleEnDescubrir !== false &&
-      !conexionIds.has(s.id) &&
+      !acceptedIds.has(s.id) &&
       s.rol !== 'administrador'
   );
 
@@ -144,10 +150,9 @@ export default function Conexiones() {
       return;
     }
     try {
-      await dispatch(inviteContact({ email: target.email, usuarioId: user.id })).unwrap();
+      await dispatch(inviteContact({ email: target.email, estudianteId })).unwrap();
       showSuccess('Invitación enviada exitosamente');
-      setInvitedUserIds((prev) => new Set(prev).add(targetId));
-      dispatch(fetchPendientes(user.id));
+      dispatch(fetchPendientes(estudianteId));
     } catch (err) {
       showError(err || 'Error al enviar invitación');
     } finally {
@@ -175,7 +180,7 @@ export default function Conexiones() {
           <Tab
             icon={<HourglassEmpty />}
             iconPosition="start"
-            label={`Pendientes (${requests.length})`}
+            label={`Pendientes (${requests.filter((r) => r.contactoId === estudianteId).length})`}
           />
           <Tab icon={<Search />} iconPosition="start" label="Descubrir" />
         </Tabs>
@@ -207,7 +212,7 @@ export default function Conexiones() {
       <TabPanel value={tabValue} index={1}>
         {loading ? (
           <LoadingSpinner message="Cargando solicitudes..." />
-        ) : requests.length === 0 ? (
+        ) : requests.filter((r) => r.contactoId === estudianteId).length === 0 ? (
           <EmptyState
             title="Sin solicitudes pendientes"
             message="No tienes solicitudes de conexión pendientes."
@@ -215,7 +220,7 @@ export default function Conexiones() {
           />
         ) : (
           <Grid container spacing={2}>
-            {requests.map((req) => (
+            {requests.filter((r) => r.contactoId === estudianteId).map((req) => (
               <Grid item xs={12} sm={6} key={req.id}>
                 <RequestCard
                   request={req}
@@ -262,6 +267,7 @@ export default function Conexiones() {
                   onInvite={handleInviteFromDiscover}
                   isInviting={invitingUserId === s.id}
                   isInvited={invitedUserIds.has(s.id)}
+                  isPending={pendingIds.has(s.id)}
                 />
               </Grid>
             ))}

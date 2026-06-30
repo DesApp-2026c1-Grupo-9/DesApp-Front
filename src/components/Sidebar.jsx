@@ -55,16 +55,16 @@ export function Sidebar() {
   const { estudianteActual, cerrarSesion } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const userId = user?.id;
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
 
   useEffect(() => {
-    if (!userId) return;
-    dispatch(fetchContador(userId));
+    if (!estudianteId) return;
+    dispatch(fetchContador(estudianteId));
     const interval = setInterval(() => {
-      dispatch(fetchContador(userId));
+      dispatch(fetchContador(estudianteId));
     }, 20000);
     return () => clearInterval(interval);
-  }, [userId, dispatch]);
+  }, [estudianteId, dispatch]);
 
   const showAdmin = user?.rol === 'administrador';
   const isSocialActive = location.pathname.startsWith('/social/');

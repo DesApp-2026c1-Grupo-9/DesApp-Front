@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import EstudianteService from '../services/EstudianteService';
 import { useAuth } from '../context/AuthContext';
+import { fetchSesiones } from '../features/sesiones/slice';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import {
   Box,
   Typography,
@@ -44,8 +47,10 @@ import { PageContainer, LoadingSpinner, SectionCard, PageTransition } from '../c
 
 const Home = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { estudianteActual } = useAuth();
   const { user } = useSelector((state) => state.auth);
+  const { list: sesionesList } = useSelector((state) => state.sesiones);
   const [estudianteInfo, setEstudianteInfo] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -97,6 +102,15 @@ const Home = () => {
       navigate('/academico/carreras', { replace: true });
     }
   }, [estudianteActual, user, navigate]);
+
+  useEffect(() => {
+    if (estudianteActual?.id) {
+      dispatch(fetchSesiones({
+        estudianteId: estudianteActual.id,
+        fechaInicio: new Date().toISOString().split('T')[0]
+      }));
+    }
+  }, [estudianteActual, dispatch]);
 
   const esAdmin =
     user?.rol === 'administrador' ||
@@ -239,8 +253,24 @@ const Home = () => {
     );
   }
 
+  const estudianteId = estudianteActual?.id || estudianteActual?.estudianteId;
+
+  const hoy = new Date().toISOString().split('T')[0];
+
   const proximasFechas = [
-    { evento: 'Período de Finales', fecha: 'Julio 1-15, 2026', tipo: 'periodo' }
+    { evento: 'Período de Finales', fecha: 'Julio 1-15, 2026', tipo: 'periodo' },
+    ...sesionesList
+      .filter(s => {
+        const esParticipante = s.participantes?.some(p => p.estudianteId === estudianteId);
+        const fechaSesion = s.fechaHora?.split('T')[0];
+        return esParticipante && s.estado !== 'cancelada' && fechaSesion >= hoy;
+      })
+      .map(s => ({
+        evento: s.tema,
+        fecha: format(new Date(s.fechaHora), "dd 'de' MMMM yyyy - HH:mm", { locale: es }),
+        tipo: 'sesion',
+        materia: s.materia?.nombre
+      }))
   ];
 
   // Calcular progreso basado en datos reales del backend
@@ -256,6 +286,7 @@ const Home = () => {
       case 'inscripcion': return <Assignment color="primary" />;
       case 'examen': return <Event color="warning" />;
       case 'periodo': return <CalendarToday color="info" />;
+      case 'sesion': return <Book color="primary" />;
       default: return <Event />;
     }
   };

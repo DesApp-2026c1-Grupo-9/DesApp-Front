@@ -30,7 +30,9 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [ownerMenuAnchor, setOwnerMenuAnchor] = useState(null);
-  const isOwner = currentUserId === material.creadorId;
+  const creadorId = material.creadorId ?? material.estudianteId;
+  const isOwner = currentUserId === creadorId;
+  const tieneDenunciasActivas = material.denunciasPendientes > 0 || material.denunciasConfirmadas > 0;
   const isDiscord = material.tipoLink === LINK_TIPO.DISCORD;
 
   const handleRate = (value) => {
@@ -206,7 +208,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               </Button>
             )}
 
-            {isOwner && isActive && (
+            {isOwner && isActive && !tieneDenunciasActivas && (
               <>
                 <IconButton
                   size="small"
