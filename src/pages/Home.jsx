@@ -52,8 +52,9 @@ const Home = () => {
   const { user } = useSelector((state) => state.auth);
   const { list: sesionesList } = useSelector((state) => state.sesiones);
   const [estudianteInfo, setEstudianteInfo] = useState(null);
-  const [situacionAcademica, setSituacionAcademica] = useState(null);
+  const [analisisAcademico, setAnalisisAcademico] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [carreraFiltro, setCarreraFiltro] = useState(null);
 
   // Cargar datos del estudiante actual
   useEffect(() => {
@@ -62,9 +63,9 @@ const Home = () => {
       
       try {
         setLoading(true);
-        const [estudianteData, materias] = await Promise.all([
+        const [estudianteData, analisis] = await Promise.all([
           EstudianteService.obtenerEstudiante(estudianteActual.id),
-          EstudianteService.obtenerMateriasEstudiante(estudianteActual.id)
+          EstudianteService.obtenerAsistenteAcademico(estudianteActual.id, { modo: 'intercalado' })
         ]);
         
         // Procesar datos del estudiante
@@ -74,16 +75,11 @@ const Home = () => {
           carreras: estudianteData.data.carreras
         };
         
-        // Procesar situación académica desde la nueva estructura
-        const situacionProcesada = {
-          carrera: materias.data?.carrera?.nombre,
-          resumen: materias.data?.resumen || {},
-          materiasPorAnio: materias.data?.materiasPorAnio || {},
-          situacionAcademica: Object.values(materias.data?.materiasPorAnio || {}).flat() || []
-        };
-        
         setEstudianteInfo(estudianteInfo);
-        setSituacionAcademica(situacionProcesada);
+        setAnalisisAcademico(analisis.data);
+        if (carreraFiltro === null && analisis.data.carrerasSeleccionadas?.length > 0) {
+          setCarreraFiltro(analisis.data.carrerasSeleccionadas[0].nombre);
+        }
         
       } catch (error) {
         console.error('Error al cargar datos:', error);
@@ -273,13 +269,23 @@ const Home = () => {
       }))
   ];
 
-  // Calcular progreso basado en datos reales del backend
-  const materiasAprobadas = situacionAcademica?.resumen?.aprobadas || 0;
-  const materiasRegularizadas = situacionAcademica?.resumen?.regularizadas || 0;
-  const totalMaterias = situacionAcademica?.resumen?.total || 0;
-  const progresoCarrera = totalMaterias > 0 ? (materiasAprobadas / totalMaterias) * 100 : 0;
-  const materiasCursandoList = situacionAcademica?.situacionAcademica?.filter(m => m.estado === 'cursando') || [];
-  const materiasRegularizadasList = situacionAcademica?.situacionAcademica?.filter(m => m.estado === 'regularizada') || [];
+  // Calcular progreso basado en todas las carreras (intercalado)
+  const todasLasMaterias = analisisAcademico?.materias || [];
+  const carrerasConPlan = analisisAcademico?.carrerasSeleccionadas || [];
+
+  const materiasCursandoList = todasLasMaterias.filter(m => m.estado === 'cursando');
+  const materiasRegularizadasList = todasLasMaterias.filter(m => m.estado === 'regularizada');
+
+  // Progreso filtrado por carrera seleccionada
+  const materiasFiltradas = carreraFiltro
+    ? todasLasMaterias.filter(m => m.carreras?.includes(carreraFiltro))
+    : [];
+
+  const aprobadasFilt = materiasFiltradas.filter(m => m.estado === 'aprobada').length;
+  const regularizadasFilt = materiasFiltradas.filter(m => m.estado === 'regularizada').length;
+  const cursandoFilt = materiasFiltradas.filter(m => m.estado === 'cursando').length;
+  const totalFilt = materiasFiltradas.length;
+  const progresoCarrera = totalFilt > 0 ? (aprobadasFilt / totalFilt) * 100 : 0;
 
   const getEventIcon = (tipo) => {
     switch (tipo) {
@@ -371,6 +377,25 @@ const Home = () => {
           </CardContent>
         </Card>
 
+        {/* Selector de Carrera */}
+        {carrerasConPlan.length > 1 && (
+          <Box sx={{ mb: 3 }}>
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {carrerasConPlan.map((c) => (
+                <Chip
+                  key={c.id}
+                  label={c.nombre}
+                  size="medium"
+                  variant={carreraFiltro === c.nombre ? 'filled' : 'outlined'}
+                  color={carreraFiltro === c.nombre ? 'primary' : 'default'}
+                  onClick={() => setCarreraFiltro(c.nombre)}
+                  sx={{ fontWeight: carreraFiltro === c.nombre ? 700 : 400 }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        )}
+
         {/* Métricas Rápidas con estilo moderno */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={4}>
@@ -380,13 +405,13 @@ const Home = () => {
                   <CheckCircle sx={{ fontSize: 30 }} />
                 </Avatar>
                 <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
-                  {materiasAprobadas}
+                  {aprobadasFilt}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                   Aprobadas
                 </Typography>
                 <Typography variant="caption" color="text.disabled">
-                  de {totalMaterias} totales
+                  de {totalFilt} totales
                 </Typography>
               </Box>
             </SectionCard>
@@ -398,7 +423,7 @@ const Home = () => {
                   <PlayArrow sx={{ fontSize: 30 }} />
                 </Avatar>
                 <Typography variant="h4" sx={{ fontWeight: 700, color: 'info.main' }}>
-                  {materiasCursandoList.length}
+                  {cursandoFilt}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                   Cursando
@@ -416,7 +441,7 @@ const Home = () => {
                   <Warning sx={{ fontSize: 30 }} />
                 </Avatar>
                 <Typography variant="h4" sx={{ fontWeight: 700, color: 'warning.main' }}>
-                  {materiasRegularizadas}
+                  {regularizadasFilt}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
                   Regularizadas
@@ -587,11 +612,10 @@ const Home = () => {
           <Grid item xs={12}>
             <SectionCard
               title="Progreso de Carrera"
-              subtitle={estudianteInfo.carreras?.[0]?.nombre || 'Sin carrera'}
+              subtitle={carreraFiltro}
               headerColor="rgba(46, 125, 50, 0.06)"
             >
-              <Box sx={{ mb: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Box sx={{ flex: 1, mr: 2 }}>
                     <LinearProgress
                       variant="determinate"
@@ -615,23 +639,22 @@ const Home = () => {
                 </Box>
                 <Stack direction="row" spacing={3} justifyContent="center">
                   <Box sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>{materiasAprobadas}</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>{aprobadasFilt}</Typography>
                     <Typography variant="caption" color="text.secondary">Aprobadas</Typography>
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>{materiasRegularizadas}</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>{regularizadasFilt}</Typography>
                     <Typography variant="caption" color="text.secondary">Regularizadas</Typography>
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.main' }}>{materiasCursandoList.length}</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.main' }}>{cursandoFilt}</Typography>
                     <Typography variant="caption" color="text.secondary">Cursando</Typography>
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
-                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.secondary' }}>{totalMaterias}</Typography>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.secondary' }}>{totalFilt}</Typography>
                     <Typography variant="caption" color="text.secondary">Totales</Typography>
                   </Box>
                 </Stack>
-              </Box>
             </SectionCard>
           </Grid>
         </Grid>
