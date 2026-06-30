@@ -437,7 +437,7 @@ const Home = () => {
                           sx={{
                             borderRadius: 2,
                             mb: 0.5,
-                            '&:hover': { bgcolor: 'action.hover' },
+
                           }}
                         >
                           <ListItemIcon sx={{ minWidth: 40 }}>
@@ -471,7 +471,7 @@ const Home = () => {
                             sx={{
                               borderRadius: 2,
                               mb: 0.5,
-                              '&:hover': { bgcolor: 'action.hover' },
+  
                             }}
                           >
                             <ListItemIcon sx={{ minWidth: 40 }}>
@@ -523,7 +523,6 @@ const Home = () => {
                       sx={{
                         borderRadius: 2,
                         mb: 0.5,
-                        '&:hover': { bgcolor: 'action.hover' },
                       }}
                     >
                       <ListItemIcon sx={{ minWidth: 40 }}>

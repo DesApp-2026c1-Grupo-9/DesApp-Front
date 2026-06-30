@@ -22,8 +22,8 @@ const SectionCard = ({
     elevation: elevation,
     border: bordered ? '1px solid' : 'none',
     borderColor: 'divider',
-    transition: 'box-shadow 0.3s ease-in-out',
     ...(hoverable && {
+      transition: 'box-shadow 0.3s ease-in-out',
       '&:hover': {
         boxShadow: '0px 8px 16px -4px rgba(0,0,0,0.2),0px 12px 24px -4px rgba(0,0,0,0.14)',
       },
