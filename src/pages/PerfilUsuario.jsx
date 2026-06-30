@@ -266,7 +266,6 @@ export const PerfilUsuario = () => {
           {!esMiPerfil && (
             <Box mt={1.5}>
               <Button
-                variant="contained"
                 size="small"
                 startIcon={<PersonAdd />}
                 onClick={handleInvite}
