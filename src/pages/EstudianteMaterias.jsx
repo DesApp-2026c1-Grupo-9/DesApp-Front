@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Table, TableBody,
@@ -28,6 +28,7 @@ import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 export const EstudianteMaterias = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { estudianteActual, loading: authLoading } = useAuth();
   const [estudiante, setEstudiante] = useState(null);
   const [situacionAcademica, setSituacionAcademica] = useState(null);
@@ -36,7 +37,12 @@ export const EstudianteMaterias = () => {
   const [anchorCarreraEl, setAnchorCarreraEl] = useState(null);
   const [planesDisponibles, setPlanesDisponibles] = useState([]);
   const [planSeleccionadoId, setPlanSeleccionadoId] = useState('');
-  const [tabValue, setTabValue] = useState(0);
+  const [tabValue, setTabValue] = useState(() => {
+    if (location.state?.tabIndex !== undefined) {
+      return Math.min(Math.max(location.state.tabIndex, 0), 5);
+    }
+    return 0;
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
