@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Box, Alert, AlertTitle } from '@mui/material';
 import { Block } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { AdminAppBar } from '../components/AdminAppBar';
+import { AdminSidebar } from '../components/AdminSidebar';
 import { PageTransition, LoadingSpinner } from '../components/ui';
 import AppErrorBoundary from '../components/AppErrorBoundary';
 
@@ -36,44 +36,47 @@ export default function AdminLayout() {
   }
 
   return (
-    <>
-      <AdminAppBar />
-      {estudianteActual?.usuario?.activo === false && (
-        <Alert severity="warning" sx={{ borderRadius: 0, justifyContent: 'center', '& .MuiAlert-message': { textAlign: 'center', width: '100%' } }} icon={false}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-            <Block />
-            <AlertTitle sx={{ mb: 0 }}>Cuenta desactivada</AlertTitle>
-          </Box>
-        </Alert>
-      )}
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50', overflowX: 'hidden' }}>
+      <AdminSidebar />
 
-      {errorGeneral && (
-        <Alert
-          severity="error"
-          sx={{ borderRadius: 0 }}
-          onClose={() => setErrorGeneral(null)}
-        >
-          <AlertTitle>Error general</AlertTitle>
-          {MENSAJE_ERROR_GENERAL}
-        </Alert>
-      )}
+      <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        {estudianteActual?.usuario?.activo === false && (
+          <Alert severity="warning" sx={{ borderRadius: 0, justifyContent: 'center', '& .MuiAlert-message': { textAlign: 'center', width: '100%' } }} icon={false}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+              <Block />
+              <AlertTitle sx={{ mb: 0 }}>Cuenta desactivada</AlertTitle>
+            </Box>
+          </Alert>
+        )}
 
-      <Box sx={{ minHeight: 'calc(100vh - 64px)', overflowX: 'hidden', boxSizing: 'border-box' }}>
-        <PageTransition key={location.pathname}>
-          <AppErrorBoundary
-            fallback={(
-              <Box sx={{ p: 3 }}>
-                <Alert severity="error">
-                  <AlertTitle>Error general</AlertTitle>
-                  {MENSAJE_ERROR_GENERAL}
-                </Alert>
-              </Box>
-            )}
+        {errorGeneral && (
+          <Alert
+            severity="error"
+            sx={{ borderRadius: 0 }}
+            onClose={() => setErrorGeneral(null)}
           >
-            <Outlet />
-          </AppErrorBoundary>
-        </PageTransition>
+            <AlertTitle>Error general</AlertTitle>
+            {MENSAJE_ERROR_GENERAL}
+          </Alert>
+        )}
+
+        <Box sx={{ flexGrow: 1, p: { xs: 2, md: 3 }, width: '100%', boxSizing: 'border-box' }}>
+          <PageTransition key={location.pathname}>
+            <AppErrorBoundary
+              fallback={(
+                <Box sx={{ p: 3 }}>
+                  <Alert severity="error">
+                    <AlertTitle>Error general</AlertTitle>
+                    {MENSAJE_ERROR_GENERAL}
+                  </Alert>
+                </Box>
+              )}
+            >
+              <Outlet />
+            </AppErrorBoundary>
+          </PageTransition>
+        </Box>
       </Box>
-    </>
+    </Box>
   );
 }

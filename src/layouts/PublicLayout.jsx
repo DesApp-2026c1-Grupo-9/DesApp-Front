@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Box, Alert, AlertTitle } from '@mui/material';
 import { useSelector } from 'react-redux';
 import { Sidebar } from '../components/Sidebar';
-import { AdminAppBar } from '../components/AdminAppBar';
+import { AdminSidebar } from '../components/AdminSidebar';
 import { useAuth } from '../context/AuthContext';
 import { PageTransition, LoadingSpinner } from '../components/ui';
 import AppErrorBoundary from '../components/AppErrorBoundary';
@@ -43,36 +43,11 @@ export default function PublicLayout() {
     return <Navigate to="/admin" replace />;
   }
 
-  if (esAdmin) {
-    return (
-      <>
-        <AdminAppBar />
-        {errorGeneral && (
-          <Alert severity="error" sx={{ borderRadius: 0 }} onClose={() => setErrorGeneral(null)}>
-            <AlertTitle>Error general</AlertTitle>
-            {MENSAJE_ERROR_GENERAL}
-          </Alert>
-        )}
-        <Box sx={{ p: { xs: 2, md: 3 }, minHeight: 'calc(100vh - 64px)' }}>
-          <PageTransition key={routeKey}>
-            <AppErrorBoundary
-              fallback={(
-                <Box sx={{ p: 3 }}>
-                  <Alert severity="error"><AlertTitle>Error general</AlertTitle>{MENSAJE_ERROR_GENERAL}</Alert>
-                </Box>
-              )}
-            >
-              <Outlet />
-            </AppErrorBoundary>
-          </PageTransition>
-        </Box>
-      </>
-    );
-  }
+  const SidebarComponent = esAdmin ? AdminSidebar : Sidebar;
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'grey.50', overflowX: 'hidden' }}>
-      <Sidebar />
+      <SidebarComponent />
 
       <Box
         sx={{

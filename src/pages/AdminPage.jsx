@@ -44,7 +44,7 @@ export default function AdminPage() {
 
   return (
     <PageContainer maxWidth={1400} padding={0}>
-      <Box sx={{ mt: '112px' }}>
+      <Box>
         <PersonasTab />
       </Box>
     </PageContainer>
