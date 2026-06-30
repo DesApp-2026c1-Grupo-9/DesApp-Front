@@ -48,6 +48,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
     <Box
       sx={{
         border: isDiscord ? '2px solid #5865F2' : '1px solid #e0e0e0',
+        ...(isOwner && { borderLeft: '4px solid #1976d2' }),
         borderRadius: 2,
         p: 2,
         mb: 2,
@@ -78,6 +79,9 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
             <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
               {material.titulo}
             </Typography>
+            {isOwner && (
+              <Chip label="Tu material" size="small" color="primary" variant="outlined" sx={{ fontWeight: 'bold' }} />
+            )}
             {isDiscord && (
               <Chip
                 icon={<span style={{ fontSize: '0.8rem' }}>🎮</span>}
@@ -113,7 +117,13 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               sx={{ backgroundColor: '#e3f2fd' }}
             />
             <Typography variant="caption" color="text.secondary">
-              {material.fecha} · {material.creador ? `${material.creador.nombre} ${material.creador.apellido}` : (material.creadorId ? `Usuario ${material.creadorId}` : 'Usuario eliminado')}
+              {material.fecha} ·{' '}
+              <Box
+                component="span"
+                sx={isOwner ? { color: 'primary.main' } : {}}
+              >
+                {material.creador ? `${material.creador.nombre} ${material.creador.apellido}` : (material.creadorId ? `Usuario ${material.creadorId}` : 'Usuario eliminado')}
+              </Box>
             </Typography>
             {material.nombreArchivo && (
               <Typography variant="caption" color="text.secondary">
