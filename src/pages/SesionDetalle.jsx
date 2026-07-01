@@ -1,22 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import {
-  Typography, Box, Button, Chip, CircularProgress, Alert, Card, CardContent,
+  Typography, Box, Button, Chip, CircularProgress, Alert, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
 } from '@mui/material';
 import { ArrowBack, AccessTime, LocationOn, Videocam, Public, Group, Lock, HourglassEmpty } from '@mui/icons-material';
 import { getSesionById } from '../features/sesiones/service';
+import { joinToSesion, leaveSesionThunk, fetchParticipantes } from '../features/sesiones/slice';
 import { PageContainer, LoadingSpinner } from '../components/ui';
 
 export default function SesionDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
 
   const [sesion, setSesion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [participantesOpen, setParticipantesOpen] = useState(false);
+  const [participantesList, setParticipantesList] = useState([]);
 
   useEffect(() => {
     if (!estudianteId || !id) return;
@@ -32,11 +36,33 @@ export default function SesionDetalle() {
       .finally(() => setLoading(false));
   }, [id, estudianteId]);
 
+  const handleJoin = async () => {
+    await dispatch(joinToSesion({ sesionId: sesion.id, estudianteId }));
+    const res = await getSesionById(id, estudianteId);
+    setSesion(res.data);
+  };
+
+  const handleLeave = async () => {
+    const p = sesion.participantes?.find(p => p.estudianteId === estudianteId);
+    if (!p) return;
+    await dispatch(leaveSesionThunk({ sesionId: sesion.id, participanteId: p.id, estudianteId }));
+    const res = await getSesionById(id, estudianteId);
+    setSesion(res.data);
+  };
+
+  const handleVerParticipantes = () => {
+    dispatch(fetchParticipantes({ sesionId: sesion.id, estudianteId }))
+      .then((res) => {
+        setParticipantesList(res.payload?.participantes || []);
+        setParticipantesOpen(true);
+      });
+  };
+
   if (loading) return <LoadingSpinner fullScreen message="Cargando sesión..." />;
 
   if (error) {
     return (
-    <PageContainer>
+      <PageContainer>
         <Button startIcon={<ArrowBack />} onClick={() => navigate(-1)} sx={{ mb: 2 }}>
           Volver
         </Button>
@@ -124,7 +150,7 @@ export default function SesionDetalle() {
             {!isCreator && !isCanceled && (
               <>
                 {(!participante || isRejected) && (
-                  <Button size="small" variant="contained">
+                  <Button size="small" variant="contained" onClick={handleJoin}>
                     {sesion.necesidadAprobacion ? 'Solicitar inscribirse' : 'Inscribirse'}
                   </Button>
                 )}
@@ -134,20 +160,43 @@ export default function SesionDetalle() {
                   </Button>
                 )}
                 {isApproved && (
-                  <Button size="small" variant="outlined" color="error">
+                  <Button size="small" variant="outlined" color="error" onClick={handleLeave}>
                     Abandonar
                   </Button>
                 )}
               </>
             )}
             {isCreator && !isCanceled && (
-              <Button size="small" variant="contained" color="warning">
+              <Button size="small" variant="contained" color="warning" onClick={handleVerParticipantes}>
                 Ver Participantes ({sesion.participantes?.length || 0})
               </Button>
             )}
           </Box>
         </CardContent>
       </Card>
+
+      <Dialog open={participantesOpen} onClose={() => setParticipantesOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Participantes</DialogTitle>
+        <DialogContent>
+          {participantesList.length === 0 ? (
+            <Typography color="text.secondary">No hay participantes.</Typography>
+          ) : (
+            <List disablePadding>
+              {participantesList.map((p) => (
+                <ListItem key={p.id} disableGutters>
+                  <ListItemText
+                    primary={p.estudiante?.nombre || p.estudiante?.Usuario?.nombre || `Usuario ${p.estudianteId}`}
+                    secondary={`Estado: ${p.estado}`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setParticipantesOpen(false)}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 }

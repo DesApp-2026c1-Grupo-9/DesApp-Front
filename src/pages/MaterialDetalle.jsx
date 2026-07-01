@@ -1,17 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Typography, Box, Button, Chip, CircularProgress, Alert,
 } from '@mui/material';
 import { ArrowBack } from '@mui/icons-material';
 import { getMaterialById } from '../features/materiales/service';
+import { rateMaterialThunk } from '../features/materiales/slice';
 import { PageContainer } from '../components/ui';
 import MaterialCard from '../components/MaterialCard';
 
 export default function MaterialDetalle() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const location = useLocation();
+  const { user } = useSelector((state) => state.auth);
+  const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
   const denunciaId = location.state?.denunciaId;
 
   const [material, setMaterial] = useState(null);
@@ -31,6 +36,12 @@ export default function MaterialDetalle() {
       })
       .finally(() => setLoading(false));
   }, [id]);
+
+  const handleRate = useCallback((materialId, value) => {
+    if (estudianteId) {
+      dispatch(rateMaterialThunk({ id: materialId, value, estudianteId }));
+    }
+  }, [dispatch, estudianteId]);
 
   if (loading) {
     return (
@@ -67,8 +78,9 @@ export default function MaterialDetalle() {
 
       <MaterialCard
         material={material}
-        currentUserId={null}
+        currentUserId={estudianteId}
         isActive={!material.suspendido}
+        onRate={handleRate}
       />
 
       {totalDenuncias > 0 && (
