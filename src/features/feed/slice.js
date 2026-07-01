@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getFeed, createPost, deletePost, likePost, unlikePost, updatePost } from './service';
 
-const transformBackendNovedad = (novedad, currentUserId) => {
+export const transformBackendNovedad = (novedad, currentUserId) => {
   const tipoMap = {
     posteo: 'publicacion',
     inscripcion: 'evento_academico',

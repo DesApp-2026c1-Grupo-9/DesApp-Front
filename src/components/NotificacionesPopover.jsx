@@ -20,7 +20,8 @@ import {
   fetchContador,
   readAllNotificaciones,
 } from '../features/notificaciones/slice';
-import { getNotificaciones } from '../features/notificaciones/service';
+import { getNotificaciones, marcarLeida } from '../features/notificaciones/service';
+import { getNotificationLink } from '../features/notificaciones/notificationRoutes';
 
 export default function NotificacionesPopover() {
   const dispatch = useDispatch();
@@ -50,6 +51,16 @@ export default function NotificacionesPopover() {
   const handleClose = () => {
     if (estudianteId) dispatch(readAllNotificaciones(estudianteId));
     setAnchorEl(null);
+  };
+
+  const handleClickNotificacion = async (notif) => {
+    const link = getNotificationLink(notif);
+    if (!link) return;
+    try {
+      await marcarLeida(notif.id, { estudianteId });
+    } catch {}
+    handleClose();
+    navigate(link);
   };
 
   const handleVerTodas = () => {
@@ -130,6 +141,7 @@ export default function NotificacionesPopover() {
                     cursor: 'pointer',
                     '&:hover': { bgcolor: 'action.selected' },
                   }}
+                  onClick={() => handleClickNotificacion(notif)}
                 >
                   <ListItemText
                     primary={notif.titulo}
