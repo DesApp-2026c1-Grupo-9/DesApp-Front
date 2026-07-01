@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -19,10 +20,13 @@ import {
   fetchContador,
   readAllNotificaciones,
 } from '../features/notificaciones/slice';
+import { marcarLeida } from '../features/notificaciones/service';
+import { getNotificationLink } from '../features/notificaciones/notificationRoutes';
 import { PageContainer } from '../components/ui';
 
 export default function Notificaciones() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { lista, total, page, totalPages, noLeidas, loading } = useSelector(
     (state) => state.notificaciones
   );
@@ -45,6 +49,15 @@ export default function Notificaciones() {
       if (estudianteId) dispatch(readAllNotificaciones(estudianteId));
     };
   }, [estudianteId, dispatch, cargar]);
+
+  const handleClickNotificacion = async (notif) => {
+    const link = getNotificationLink(notif);
+    if (!link) return;
+    try {
+      await marcarLeida(notif.id, { estudianteId });
+    } catch {}
+    navigate(link);
+  };
 
   const handleCambiarPagina = (_, pagina) => {
     cargar(pagina);
@@ -90,7 +103,10 @@ export default function Notificaciones() {
                 sx={{
                   bgcolor: notif.leido ? 'transparent' : 'action.hover',
                   py: 1.5,
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: 'action.selected' },
                 }}
+                onClick={() => handleClickNotificacion(notif)}
               >
                 <ListItemText
                   primary={notif.titulo}

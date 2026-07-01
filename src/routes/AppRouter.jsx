@@ -26,6 +26,9 @@ import AdminModeracionPage from '../pages/AdminModeracionPage';
 import AppErrorPage from '../pages/AppErrorPage';
 import AsistenteAcademico from '../pages/AsistenteAcademico';
 import Notificaciones from '../pages/Notificaciones';
+import SesionDetalle from '../pages/SesionDetalle';
+import MaterialDetalle from '../pages/MaterialDetalle';
+import NovedadDetalle from '../pages/NovedadDetalle';
 import AuthProvider from '../context/AuthContext';
 import PublicLayout from '../layouts/PublicLayout';
 import AdminLayout from '../layouts/AdminLayout';
@@ -64,10 +67,13 @@ const AppRouter = () => {
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/sesiones" element={<Sesiones />} />
+              <Route path="/sesiones/:id" element={<SesionDetalle />} />
               <Route path="/materiales" element={<Materiales />} />
+              <Route path="/materiales/:id" element={<MaterialDetalle />} />
               <Route path="/social" element={<SocialPage />}>
                 <Route index element={<Navigate to="/social/feed" replace />} />
                 <Route path="feed" element={<Feed />} />
+                <Route path="feed/novedad/:id" element={<NovedadDetalle />} />
                 <Route path="conexiones" element={<Conexiones />} />
               </Route>
               <Route path="/configuracion" element={<ConfiguracionPage />} />
