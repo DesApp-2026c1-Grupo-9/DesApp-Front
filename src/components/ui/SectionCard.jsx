@@ -8,7 +8,7 @@ const SectionCard = ({
   children,
   headerColor = 'transparent',
   elevation = 2,
-  hoverable = true,
+  hoverable = false,
   bordered = false,
   noPadding = false,
   noHeaderPadding = false,
@@ -16,18 +16,20 @@ const SectionCard = ({
   headerProps = {},
   contentProps = {},
   actionPosition = 'right',
+  sx = {},
 }) => {
   const cardStyles = useMemo(() => ({
     elevation: elevation,
     border: bordered ? '1px solid' : 'none',
     borderColor: 'divider',
-    transition: 'box-shadow 0.3s ease-in-out',
     ...(hoverable && {
+      transition: 'box-shadow 0.3s ease-in-out',
       '&:hover': {
         boxShadow: '0px 8px 16px -4px rgba(0,0,0,0.2),0px 12px 24px -4px rgba(0,0,0,0.14)',
       },
     }),
-  }), [elevation, bordered, hoverable]);
+    ...sx,
+  }), [elevation, bordered, hoverable, sx]);
 
   const headerStyles = useMemo(() => ({
     backgroundColor: headerColor,
@@ -83,21 +85,9 @@ const SectionCard = ({
           )}
         </>
       ) : (
-        action ? (
-          <>
-            <CardContent sx={contentStyles} {...contentProps}>
-              {children}
-            </CardContent>
-            <Divider />
-            <CardActions sx={{ px: 3, py: 2 }}>
-              {action}
-            </CardActions>
-          </>
-        ) : (
-          <CardContent sx={contentStyles} {...contentProps}>
-            {children}
-          </CardContent>
-        )
+        <CardContent sx={contentStyles} {...contentProps}>
+          {children}
+        </CardContent>
       )}
     </Card>
   );

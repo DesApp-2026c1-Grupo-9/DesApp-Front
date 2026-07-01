@@ -29,6 +29,7 @@ import { getLinkIcon, getFileIcon, formatFileSize, DiscordIcon, LINK_TIPO } from
 const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit, onDelete, onDenunciar }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
+  const [ownerMenuAnchor, setOwnerMenuAnchor] = useState(null);
   const creadorId = material.creadorId ?? material.estudianteId;
   const isOwner = currentUserId === creadorId;
   const tieneDenunciasActivas = material.denunciasPendientes > 0 || material.denunciasConfirmadas > 0;
@@ -47,6 +48,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
     <Box
       sx={{
         border: isDiscord ? '2px solid #5865F2' : '1px solid #e0e0e0',
+        ...(isOwner && { borderLeft: '4px solid #1976d2' }),
         borderRadius: 2,
         p: 2,
         mb: 2,
@@ -77,6 +79,9 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
             <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>
               {material.titulo}
             </Typography>
+            {isOwner && (
+              <Chip label="Tu material" size="small" color="primary" variant="outlined" sx={{ fontWeight: 'bold' }} />
+            )}
             {isDiscord && (
               <Chip
                 icon={<span style={{ fontSize: '0.8rem' }}>🎮</span>}
@@ -112,7 +117,13 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               sx={{ backgroundColor: '#e3f2fd' }}
             />
             <Typography variant="caption" color="text.secondary">
-              {material.fecha} · {material.creador ? `${material.creador.nombre} ${material.creador.apellido}` : (material.creadorId ? `Usuario ${material.creadorId}` : 'Usuario eliminado')}
+              {material.fecha} ·{' '}
+              <Box
+                component="span"
+                sx={isOwner ? { color: 'primary.main' } : {}}
+              >
+                {material.creador ? `${material.creador.nombre} ${material.creador.apellido}` : (material.creadorId ? `Usuario ${material.creadorId}` : 'Usuario eliminado')}
+              </Box>
             </Typography>
             {material.nombreArchivo && (
               <Typography variant="caption" color="text.secondary">
@@ -171,21 +182,6 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
           }}
         >
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
-            {isOwner && isActive && !tieneDenunciasActivas && (
-              <>
-                <IconButton size="small" onClick={() => onEdit(material)}>
-                  <Edit fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </>
-            )}
-
             {material.tipo === 'file' ? (
               <Button
                 size="small"
@@ -220,6 +216,45 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               >
                 Abrir
               </Button>
+            )}
+
+            {isOwner && isActive && !tieneDenunciasActivas && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setOwnerMenuAnchor(e.currentTarget)}
+                >
+                  <MoreVert fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={ownerMenuAnchor}
+                  open={Boolean(ownerMenuAnchor)}
+                  onClose={() => setOwnerMenuAnchor(null)}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      setOwnerMenuAnchor(null);
+                      onEdit(material);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Edit fontSize="small" />
+                    </ListItemIcon>
+                    Editar
+                  </MenuItem>
+                  <MenuItem
+                    onClick={() => {
+                      setOwnerMenuAnchor(null);
+                      setShowDeleteConfirm(true);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <Delete fontSize="small" color="error" />
+                    </ListItemIcon>
+                    <Typography color="error">Eliminar</Typography>
+                  </MenuItem>
+                </Menu>
+              </>
             )}
 
             {!isOwner && isActive && onDenunciar && (

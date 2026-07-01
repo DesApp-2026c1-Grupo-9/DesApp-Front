@@ -89,7 +89,7 @@ export default function AdminDashboardPage() {
 
   return (
     <PageContainer maxWidth={1400} padding={0}>
-      <Box sx={{ mt: '112px', pb: 4 }}>
+      <Box sx={{ pb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
           <Avatar sx={{ bgcolor: 'warning.main', width: 36, height: 36 }}>
             <AdminPanelSettings sx={{ fontSize: 20, color: '#fff' }} />
