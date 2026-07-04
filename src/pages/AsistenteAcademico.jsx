@@ -41,6 +41,16 @@ const formatFechaCorta = (fecha) => {
 
 const formatHoras = (horas) => `${Number(horas || 0)} hs`;
 
+const formatearCarrerasMateria = (carreras) => {
+  if (!Array.isArray(carreras) || carreras.length === 0) {
+    return 'Carrera no informada';
+  }
+  if (carreras.length === 1) {
+    return carreras[0];
+  }
+  return carreras.join(' | ');
+};
+
 const STORAGE_PLANES_PREFIX = 'desapp-planes-cursada';
 const MAX_MATERIAS_POR_PERIODO = 5;
 
@@ -1035,7 +1045,7 @@ export default function AsistenteAcademico() {
                               >
                                 <ListItemText
                                   primary={m.nombre}
-                                  secondary={`Carga estimada: ${formatHoras(m.cargaHoraria)}`}
+                                  secondary={`Carga estimada: ${formatHoras(m.cargaHoraria)} · ${formatearCarrerasMateria(m.carreras)}`}
                                 />
                               </ListItem>
                             ))}
@@ -1209,6 +1219,7 @@ export default function AsistenteAcademico() {
                     <TableHead>
                       <TableRow>
                         <TableCell>Materia</TableCell>
+                        <TableCell>Carrera/s</TableCell>
                         <TableCell>Año</TableCell>
                         <TableCell>Horas</TableCell>
                         <TableCell>Fecha regularidad</TableCell>
@@ -1220,6 +1231,7 @@ export default function AsistenteAcademico() {
                       {finalesOrdenados.map((m) => (
                         <TableRow key={m.id}>
                           <TableCell>{m.nombre}</TableCell>
+                          <TableCell>{formatearCarrerasMateria(m.carreras)}</TableCell>
                           <TableCell>{m.anio}°</TableCell>
                           <TableCell>{formatHoras(m.cargaHoraria)}</TableCell>
                           <TableCell>{formatFechaCorta(m.fechaRegularidad)}</TableCell>
