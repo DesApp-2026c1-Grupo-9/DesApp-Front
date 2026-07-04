@@ -33,10 +33,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateStudentActiveStatus, fetchStudents } from '../../features/auth/slice';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
+import { LoadingSpinner, EmptyState } from '../ui';
 
 function PersonasTab() {
   const [usuarios, setUsuarios] = useState([]);
   const [total, setTotal] = useState(0);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroRol, setFiltroRol] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -68,6 +70,7 @@ function PersonasTab() {
   };
 
   const cargarUsuarios = useCallback(async (targetPage) => {
+    setLoadingUsuarios(true);
     try {
       const params = {
         page: targetPage !== undefined ? targetPage + 1 : page + 1,
@@ -84,6 +87,8 @@ function PersonasTab() {
     } catch {
       showError('Error al cargar usuarios');
       setTotal(0);
+    } finally {
+      setLoadingUsuarios(false);
     }
   }, [page, sortField, sortDir, searchTerm, filtroRol, filtroEstado, rowsPerPage, showError]);
 
@@ -194,72 +199,70 @@ function PersonasTab() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: { xs: 1, sm: 0 } }}>
         <Typography variant="h6" sx={{ lineHeight: '36px', my: 0 }}>Gestión de Personas ({usuarios.length})</Typography>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <Button variant="contained" startIcon={<PersonAdd />} onClick={openCreate}>
-            Nueva Persona
-          </Button>
-        </Box>
+        <Button variant="contained" startIcon={<PersonAdd />} onClick={openCreate} fullWidth={false} sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}>
+          Nueva Persona
+        </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
         <TextField
-          fullWidth
           size="small"
           placeholder="Buscar por nombre, apellido o email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ flexGrow: 1 }}
         />
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Rol</InputLabel>
-          <Select value={filtroRol} label="Rol" onChange={(e) => setFiltroRol(e.target.value)}>
-            <MenuItem value="todos">Todos</MenuItem>
-            <MenuItem value="estudiante">Estudiante</MenuItem>
-            <MenuItem value="administrador">Administrador</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Estado</InputLabel>
-          <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
-            <MenuItem value="todos">Todos</MenuItem>
-            <MenuItem value="activo">Activo</MenuItem>
-            <MenuItem value="inactivo">Inactivo</MenuItem>
-          </Select>
-        </FormControl>
+        <Box sx={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          <FormControl size="small" sx={{ minWidth: 140, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Rol</InputLabel>
+            <Select value={filtroRol} label="Rol" onChange={(e) => setFiltroRol(e.target.value)}>
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="estudiante">Estudiante</MenuItem>
+              <MenuItem value="administrador">Administrador</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 140, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Estado</InputLabel>
+            <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="activo">Activo</MenuItem>
+              <MenuItem value="inactivo">Inactivo</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: 70 }}>
-                <TableSortLabel active={sortField === 'id'} direction={sortField === 'id' ? sortDir : 'asc'} onClick={() => handleSort('id')}>ID</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'email'} direction={sortField === 'email' ? sortDir : 'asc'} onClick={() => handleSort('email')}>Email</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'rol'} direction={sortField === 'rol' ? sortDir : 'asc'} onClick={() => handleSort('rol')}>Rol</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'activo'} direction={sortField === 'activo' ? sortDir : 'asc'} onClick={() => handleSort('activo')}>Estado</TableSortLabel>
-              </TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {usuarios.length === 0 ? (
+      {loadingUsuarios ? (
+        <LoadingSpinner message="Cargando usuarios..." />
+      ) : usuarios.length === 0 ? (
+        <EmptyState icon="inbox" title="No hay usuarios registrados" message="No se encontraron usuarios con los filtros actuales." />
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  No hay usuarios registrados
+                <TableCell sx={{ width: 70 }}>
+                  <TableSortLabel active={sortField === 'id'} direction={sortField === 'id' ? sortDir : 'asc'} onClick={() => handleSort('id')}>ID</TableSortLabel>
                 </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'email'} direction={sortField === 'email' ? sortDir : 'asc'} onClick={() => handleSort('email')}>Email</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'rol'} direction={sortField === 'rol' ? sortDir : 'asc'} onClick={() => handleSort('rol')}>Rol</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'activo'} direction={sortField === 'activo' ? sortDir : 'asc'} onClick={() => handleSort('activo')}>Estado</TableSortLabel>
+                </TableCell>
+                <TableCell align="center">Acciones</TableCell>
               </TableRow>
-            ) : (
-              usuarios.map((u) => (
+            </TableHead>
+            <TableBody>
+              {usuarios.map((u) => (
                 <TableRow key={u.id} sx={{ transition: 'background-color 0.5s', backgroundColor: u.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{u.id}</TableCell>
                   <TableCell>
@@ -286,11 +289,11 @@ function PersonasTab() {
                     </IconButton>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {usuarios.length > 0 && (
         <TablePagination
@@ -307,19 +310,19 @@ function PersonasTab() {
         <DialogTitle>{editUser ? 'Editar Persona' : 'Crear Nueva Persona'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Nombre" value={form.nombre} error={!!errors.nombre} helperText={errors.nombre} required onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Apellido" value={form.apellido} error={!!errors.apellido} helperText={errors.apellido} required onChange={(e) => setForm({ ...form, apellido: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
               <TextField fullWidth label="Email" type="email" value={form.email} error={!!errors.email} helperText={errors.email} required onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Contraseña (opcional)" type="password" value={form.password} helperText="Dejar vacío si no hay login implementado" onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Rol</InputLabel>
                 <Select value={form.rol} label="Rol" onChange={(e) => setForm({ ...form, rol: e.target.value })}>
@@ -330,7 +333,7 @@ function PersonasTab() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave}>{editUser ? 'Guardar' : 'Crear'}</Button>
         </DialogActions>
@@ -344,7 +347,7 @@ function PersonasTab() {
             <Alert severity="warning" sx={{ mt: 2 }}>Este usuario es administrador. Al eliminarlo perderá acceso al panel de administración.</Alert>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
           <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
         </DialogActions>
@@ -363,7 +366,7 @@ function PersonasTab() {
             </Alert>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setUserToToggle(null)}>Cancelar</Button>
           <Button variant="contained" color={userToToggle?.activo ? 'error' : 'success'} onClick={handleToggleEstadoConfirm}>Sí, {userToToggle?.activo ? 'desactivar' : 'activar'}</Button>
         </DialogActions>

@@ -17,6 +17,9 @@ import {
   DialogContentText,
   DialogActions,
   Button,
+  useMediaQuery,
+  useTheme,
+  IconButton,
 } from '@mui/material';
 import {
   Home,
@@ -24,21 +27,20 @@ import {
   PersonAdd,
   School,
   Gavel,
-  Speed,
   Logout,
-  Person,
-  MenuBook,
-  DynamicFeed,
   BarChart,
+  ChevronLeft,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
 
 const SIDEBAR_WIDTH = 260;
 
-export function AdminSidebar() {
+export function AdminSidebar({ mobileOpen, onToggle }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user } = useSelector((state) => state.auth);
   const { cerrarSesion } = useAuth();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -55,7 +57,6 @@ export function AdminSidebar() {
     { label: 'Usuarios', path: '/admin/usuarios', icon: <PersonAdd /> },
     { label: 'Académico', path: '/admin/academico', icon: <School /> },
     { label: 'Moderación', path: '/admin/moderacion', icon: <Gavel /> },
-    { label: 'Configuración', path: '/configuracion', icon: <DynamicFeed /> },
   ];
 
   const isSelected = (item) => {
@@ -63,21 +64,8 @@ export function AdminSidebar() {
     return location.pathname.startsWith(item.path);
   };
 
-  return (
-    <Drawer
-      variant="permanent"
-      sx={{
-        width: SIDEBAR_WIDTH,
-        flexShrink: 0,
-        '& .MuiDrawer-paper': {
-          width: SIDEBAR_WIDTH,
-          boxSizing: 'border-box',
-          bgcolor: 'background.paper',
-          borderRight: '1px solid',
-          borderColor: 'divider',
-        },
-      }}
-    >
+  const drawerContent = (
+    <>
       <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
         <Box
           onClick={() => navigate('/admin')}
@@ -93,7 +81,7 @@ export function AdminSidebar() {
           }}
         >
           <AdminPanelSettings color="warning" sx={{ fontSize: 28 }} />
-          <Box>
+          <Box sx={{ flexGrow: 1 }}>
             <Typography variant="subtitle1" fontWeight="bold" lineHeight={1.2}>
               Panel Admin
             </Typography>
@@ -101,6 +89,11 @@ export function AdminSidebar() {
               UNAHUR
             </Typography>
           </Box>
+          {isMobile && (
+            <IconButton onClick={onToggle} size="small">
+              <ChevronLeft />
+            </IconButton>
+          )}
         </Box>
 
         <List sx={{ flexGrow: 1, overflowY: 'auto', pt: 1, pb: 1 }}>
@@ -110,7 +103,7 @@ export function AdminSidebar() {
               <ListItem key={item.label} disablePadding>
                 <ListItemButton
                   selected={selected}
-                  onClick={() => navigate(item.path)}
+                  onClick={() => { navigate(item.path); if (isMobile) onToggle(); }}
                   sx={{
                     borderRadius: 0,
                     '&.Mui-selected': {
@@ -173,11 +166,46 @@ export function AdminSidebar() {
         <DialogContent>
           <DialogContentText>¿Estás seguro de que querés cerrar la sesión?</DialogContentText>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
           <Button onClick={handleLogout} color="primary" variant="contained">Cerrar sesión</Button>
         </DialogActions>
       </Dialog>
+    </>
+  );
+
+  return isMobile ? (
+    <Drawer
+      variant="temporary"
+      open={mobileOpen}
+      onClose={onToggle}
+      ModalProps={{ keepMounted: true }}
+      sx={{
+        '& .MuiDrawer-paper': {
+          width: SIDEBAR_WIDTH,
+          boxSizing: 'border-box',
+          bgcolor: 'background.paper',
+        },
+      }}
+    >
+      {drawerContent}
+    </Drawer>
+  ) : (
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: SIDEBAR_WIDTH,
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: SIDEBAR_WIDTH,
+          boxSizing: 'border-box',
+          bgcolor: 'background.paper',
+          borderRight: '1px solid',
+          borderColor: 'divider',
+        },
+      }}
+    >
+      {drawerContent}
     </Drawer>
   );
 }

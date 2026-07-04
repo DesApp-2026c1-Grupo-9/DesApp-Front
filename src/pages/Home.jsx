@@ -286,6 +286,7 @@ const Home = () => {
   const cursandoFilt = materiasFiltradas.filter(m => m.estado === 'cursando').length;
   const totalFilt = materiasFiltradas.length;
   const progresoCarrera = totalFilt > 0 ? (aprobadasFilt / totalFilt) * 100 : 0;
+  const carreraActivaId = carrerasConPlan.find(c => c.nombre === carreraFiltro)?.id;
 
   const getEventIcon = (tipo) => {
     switch (tipo) {
@@ -400,7 +401,7 @@ const Home = () => {
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={4}>
             <SectionCard hoverable sx={{ cursor: 'pointer' }}>
-              <Box sx={{ textAlign: 'center', py: 1 }} onClick={() => navigate('/academico/mis-materias', { state: { tabIndex: 1 } })}>
+              <Box sx={{ textAlign: 'center', py: 1 }} onClick={() => navigate('/academico/mis-materias', { state: { tabIndex: 1, carreraId: carreraActivaId } })}>
                 <Avatar sx={{ bgcolor: 'success.light', width: 56, height: 56, mx: 'auto', mb: 1.5 }}>
                   <CheckCircle sx={{ fontSize: 30 }} />
                 </Avatar>
@@ -418,7 +419,7 @@ const Home = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <SectionCard hoverable sx={{ cursor: 'pointer' }}>
-              <Box sx={{ textAlign: 'center', py: 1 }} onClick={() => navigate('/academico/mis-materias', { state: { tabIndex: 3 } })}>
+              <Box sx={{ textAlign: 'center', py: 1 }} onClick={() => navigate('/academico/mis-materias', { state: { tabIndex: 3, carreraId: carreraActivaId } })}>
                 <Avatar sx={{ bgcolor: 'info.light', width: 56, height: 56, mx: 'auto', mb: 1.5 }}>
                   <PlayArrow sx={{ fontSize: 30 }} />
                 </Avatar>
@@ -436,7 +437,7 @@ const Home = () => {
           </Grid>
           <Grid item xs={12} sm={6} md={4}>
             <SectionCard hoverable sx={{ cursor: 'pointer' }}>
-              <Box sx={{ textAlign: 'center', py: 1 }} onClick={() => navigate('/academico/mis-materias', { state: { tabIndex: 2 } })}>
+              <Box sx={{ textAlign: 'center', py: 1 }} onClick={() => navigate('/academico/mis-materias', { state: { tabIndex: 2, carreraId: carreraActivaId } })}>
                 <Avatar sx={{ bgcolor: 'warning.light', width: 56, height: 56, mx: 'auto', mb: 1.5 }}>
                   <Warning sx={{ fontSize: 30 }} />
                 </Avatar>

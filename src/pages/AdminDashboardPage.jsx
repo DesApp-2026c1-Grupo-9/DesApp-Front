@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,7 +20,6 @@ import {
   ListItemText,
   ListItemIcon,
   Avatar,
-  CircularProgress,
 } from '@mui/material';
 import {
   AdminPanelSettings,
@@ -35,7 +33,8 @@ import {
   FiberManualRecord,
   MenuBook,
 } from '@mui/icons-material';
-import { PageContainer } from '../components/ui';
+import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
+import useFetchData from '../hooks/useFetchData';
 import api from '../api/axiosConfig';
 
 const STAT_CARDS = [
@@ -50,20 +49,16 @@ export default function AdminDashboardPage() {
   const user = useSelector((state) => state.auth.user);
   const loadingStudents = useSelector((state) => state.auth.loadingStudents);
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api.get('/api/admin/dashboard')
-      .then((res) => setData(res.data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, loading, error, refetch } = useFetchData({
+    fetchFn: () => api.get('/api/admin/dashboard').then(res => res.data?.data),
+    deps: [],
+  });
 
   if (loadingStudents) {
     return (
       <PageContainer centered padding={3}>
-        <CircularProgress />
+        <LoadingSpinner message="Cargando información del usuario..." />
       </PageContainer>
     );
   }
@@ -85,24 +80,41 @@ export default function AdminDashboardPage() {
     );
   }
 
+  if (loading) {
+    return (
+      <PageContainer centered padding={3}>
+        <LoadingSpinner message="Cargando dashboard..." />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer maxWidth={600}>
+        <EmptyState
+          icon="error"
+          title="Error al cargar el dashboard"
+          message={error}
+          actionLabel="Reintentar"
+          onAction={refetch}
+        />
+      </PageContainer>
+    );
+  }
+
   const stats = data?.stats;
 
   return (
     <PageContainer maxWidth={1400} padding={0}>
       <Box sx={{ pb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-          <Avatar sx={{ bgcolor: 'warning.main', width: 36, height: 36 }}>
-            <AdminPanelSettings sx={{ fontSize: 20, color: '#fff' }} />
+          <Avatar sx={{ bgcolor: 'warning.main', width: { xs: 32, sm: 36 }, height: { xs: 32, sm: 36 } }}>
+            <AdminPanelSettings sx={{ fontSize: { xs: 18, sm: 20 }, color: '#fff' }} />
           </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>Dashboard</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>Dashboard</Typography>
         </Box>
 
-        {loading ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
+        <Grid container spacing={3}>
             {STAT_CARDS.map(({ key, label, icon: Icon, color, bg }) => (
               <Grid item xs={12} sm={6} md={4} key={key}>
                 <Card variant="outlined" elevation={0} sx={{ borderTop: 4, borderTopColor: `${color}.main`, boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>
@@ -128,7 +140,7 @@ export default function AdminDashboardPage() {
               </Card>
             </Grid>
 
-            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Grid item xs={12} lg={6} sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Flag fontSize="small" color="warning" /> Últimas Denuncias Pendientes
               </Typography>
@@ -162,7 +174,7 @@ export default function AdminDashboardPage() {
               </TableContainer>
             </Grid>
 
-            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Grid item xs={12} lg={6} sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Block fontSize="small" color="error" /> Materiales Suspendidos
               </Typography>
@@ -236,7 +248,6 @@ export default function AdminDashboardPage() {
               </Card>
             </Grid>
           </Grid>
-        )}
       </Box>
     </PageContainer>
   );
