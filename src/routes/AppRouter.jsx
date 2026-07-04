@@ -23,6 +23,7 @@ import AdminPage from '../pages/AdminPage';
 import AdminDashboardPage from '../pages/AdminDashboardPage';
 import AdminAcademicoPage from '../pages/AdminAcademicoPage';
 import AdminModeracionPage from '../pages/AdminModeracionPage';
+import AdminReportesPage from '../pages/AdminReportesPage';
 import AppErrorPage from '../pages/AppErrorPage';
 import AsistenteAcademico from '../pages/AsistenteAcademico';
 import Notificaciones from '../pages/Notificaciones';
@@ -94,6 +95,7 @@ const AppRouter = () => {
               <Route path="/admin/usuarios" element={<AdminPage />} />
               <Route path="/admin/academico" element={<AdminAcademicoPage />} />
               <Route path="/admin/moderacion" element={<AdminModeracionPage />} />
+              <Route path="/admin/reportes" element={<AdminReportesPage />} />
               <Route path="/admin" element={<AdminDashboardPage />} />
             </Route>
             <Route path="*" element={<AppErrorPage />} />

@@ -29,6 +29,7 @@ import {
   Person,
   MenuBook,
   DynamicFeed,
+  BarChart,
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
@@ -50,6 +51,7 @@ export function AdminSidebar() {
 
   const menuItems = [
     { label: 'Inicio', path: '/admin', icon: <Home />, exact: true },
+    { label: 'Reportes', path: '/admin/reportes', icon: <BarChart /> },
     { label: 'Usuarios', path: '/admin/usuarios', icon: <PersonAdd /> },
     { label: 'Académico', path: '/admin/academico', icon: <School /> },
     { label: 'Moderación', path: '/admin/moderacion', icon: <Gavel /> },
