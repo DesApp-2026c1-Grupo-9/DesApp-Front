@@ -110,14 +110,7 @@ export default function Notificaciones() {
               >
                 <ListItemText
                   primary={notif.titulo}
-                  secondary={
-                    <>
-                      {formatDate(notif.createdAt)}
-                      {notif.actor && (
-                        <> &middot; {notif.actor.nombre} {notif.actor.apellido}</>
-                      )}
-                    </>
-                  }
+                  secondary={formatDate(notif.createdAt)}
                   primaryTypographyProps={{
                     fontWeight: notif.leido ? 400 : 600,
                   }}
