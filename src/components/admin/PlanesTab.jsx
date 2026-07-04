@@ -310,10 +310,10 @@ function PlanesTab() {
       <>
         <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth size="small" label="Nombre del plan" value={planForm.nombre} onChange={(e) => setPlanForm({ ...planForm, nombre: e.target.value })} disabled={!carreraId} />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={6} sm={3}>
               <FormControl fullWidth size="small" disabled={!carreraId}>
                 <InputLabel>Estado</InputLabel>
                 <Select value={planForm.estado} label="Estado" onChange={(e) => setPlanForm({ ...planForm, estado: e.target.value })}>
@@ -323,7 +323,7 @@ function PlanesTab() {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={6} sm={3}>
               <Button variant="contained" startIcon={<Add />} onClick={handleCreatePlan} fullWidth disabled={!carreraId}>
                 Agregar Plan
               </Button>
@@ -372,13 +372,13 @@ function PlanesTab() {
             <Typography>¿Estás seguro de que deseas eliminar el plan <strong>{deleteDialog.plan?.nombre}</strong>?</Typography>
             <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. También se eliminarán las materias asociadas al plan.</Alert>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
-            <Button variant="contained" color="error" onClick={handleDeletePlan}>Eliminar</Button>
-          </DialogActions>
-        </Dialog>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleDeletePlan}>Eliminar</Button>
+        </DialogActions>
+      </Dialog>
 
-        <Dialog open={estadoDialog.open} onClose={() => setEstadoDialog({ ...estadoDialog, open: false })}>
+      <Dialog open={estadoDialog.open} onClose={() => setEstadoDialog({ ...estadoDialog, open: false })}>
           <DialogTitle>Cambiar Estado del Plan</DialogTitle>
           <DialogContent>
             <Typography sx={{ mb: 2 }}>Seleccioná el nuevo estado para <strong>{estadoDialog.plan?.nombre}</strong>:</Typography>
@@ -391,26 +391,26 @@ function PlanesTab() {
               </Select>
             </FormControl>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEstadoDialog({ ...estadoDialog, open: false })}>Cancelar</Button>
-            <Button variant="contained" onClick={handleToggleEstadoConfirm}>Guardar</Button>
-          </DialogActions>
-        </Dialog>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Button onClick={() => setEstadoDialog({ ...estadoDialog, open: false })}>Cancelar</Button>
+          <Button variant="contained" onClick={handleToggleEstadoConfirm}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
 
-        <Dialog open={planEditDialog.open} onClose={() => setPlanEditDialog({ ...planEditDialog, open: false })} maxWidth="sm" fullWidth>
+      <Dialog open={planEditDialog.open} onClose={() => setPlanEditDialog({ ...planEditDialog, open: false })} maxWidth="sm" fullWidth>
           <DialogTitle>Editar Plan de Estudio</DialogTitle>
           <DialogContent>
             <TextField fullWidth label="Nombre del plan" value={planEditForm.nombre} onChange={(e) => setPlanEditForm({ ...planEditForm, nombre: e.target.value })} sx={{ mt: 2 }} />
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setPlanEditDialog({ ...planEditDialog, open: false })}>Cancelar</Button>
-            <Button variant="contained" onClick={handleEditPlan}>Guardar</Button>
-          </DialogActions>
-        </Dialog>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Button onClick={() => setPlanEditDialog({ ...planEditDialog, open: false })}>Cancelar</Button>
+          <Button variant="contained" onClick={handleEditPlan}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
 
-        <Dialog open={materiasEditDialog.open} onClose={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })} maxWidth="md" fullWidth>
+      <Dialog open={materiasEditDialog.open} onClose={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })} maxWidth="md" fullWidth>
           <DialogTitle>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' }}>
               <span>Materias — {materiasEditDialog.plan?.nombre}</span>
               <Chip label={`${materiasEditDialog.plan?.totalMaterias || 0} materias`} color="primary" size="small" />
             </Box>
@@ -418,8 +418,8 @@ function PlanesTab() {
           <DialogContent>
             <Paper variant="outlined" sx={{ p: 2, mb: 2, bgcolor: 'grey.50' }}>
               <Typography variant="subtitle2" gutterBottom>Asignar nueva materia al plan</Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <FormControl size="small" sx={{ minWidth: 100 }}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 100 } }}>
                   <InputLabel>Año</InputLabel>
                   <Select value={selectedAnio} label="Año" onChange={(e) => setSelectedAnio(e.target.value)}>
                     {[1, 2, 3, 4, 5].map((a) => (<MenuItem key={a} value={a}>{a}° Año</MenuItem>))}
@@ -436,7 +436,7 @@ function PlanesTab() {
                   noOptionsText={allMaterias.filter((m) => !materiasEditDialog.plan?.materias?.some((pm) => pm.id === m.id)).length === 0 ? 'Todas las materias ya están asignadas' : 'Sin resultados'}
                   renderInput={(params) => <TextField {...params} label="Buscar materia" placeholder="Escribí el nombre..." />}
                 />
-                <Button variant="contained" startIcon={<CheckCircle />} onClick={() => handleAddMateriaToPlan(materiasEditDialog.plan?.id)} disabled={!materiaToAdd} sx={{ minWidth: 130 }}>Asignar</Button>
+                <Button variant="contained" startIcon={<CheckCircle />} onClick={() => handleAddMateriaToPlan(materiasEditDialog.plan?.id)} disabled={!materiaToAdd} sx={{ minWidth: { xs: '100%', sm: 130 } }}>Asignar</Button>
               </Box>
             </Paper>
 
@@ -476,7 +476,7 @@ function PlanesTab() {
                 )}
               </>
           </DialogContent>
-          <DialogActions><Button onClick={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })}>Cerrar</Button></DialogActions>
+          <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}><Button onClick={() => setMateriasEditDialog({ ...materiasEditDialog, open: false })}>Cerrar</Button></DialogActions>
         </Dialog>
 
         <Dialog open={removeMateriaDialog.open} onClose={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>
@@ -484,13 +484,13 @@ function PlanesTab() {
           <DialogContent>
             <Typography>¿Estás seguro de que deseas remover <strong>{removeMateriaDialog.materia?.nombre}</strong> del plan?</Typography>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>Cancelar</Button>
-            <Button variant="contained" color="error" onClick={handleRemoveMateriaFromPlan}>Remover</Button>
-          </DialogActions>
-        </Dialog>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Button onClick={() => setRemoveMateriaDialog({ ...removeMateriaDialog, open: false })}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleRemoveMateriaFromPlan}>Remover</Button>
+        </DialogActions>
+      </Dialog>
 
-        <Dialog open={editAnioDialog.open} onClose={() => setEditAnioDialog({ ...editAnioDialog, open: false })}>
+      <Dialog open={editAnioDialog.open} onClose={() => setEditAnioDialog({ ...editAnioDialog, open: false })}>
           <DialogTitle>Cambiar año — {editAnioDialog.materia?.nombre}</DialogTitle>
           <DialogContent>
             <FormControl fullWidth sx={{ mt: 1, minWidth: 120 }}>
@@ -500,11 +500,11 @@ function PlanesTab() {
               </Select>
             </FormControl>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setEditAnioDialog({ ...editAnioDialog, open: false })}>Cancelar</Button>
-            <Button variant="contained" onClick={handleEditAnio}>Guardar</Button>
-          </DialogActions>
-        </Dialog>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Button onClick={() => setEditAnioDialog({ ...editAnioDialog, open: false })}>Cancelar</Button>
+          <Button variant="contained" onClick={handleEditAnio}>Guardar</Button>
+        </DialogActions>
+      </Dialog>
       </>
 
       {snackbar && (

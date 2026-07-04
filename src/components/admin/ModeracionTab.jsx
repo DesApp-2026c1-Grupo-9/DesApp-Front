@@ -186,13 +186,13 @@ function ListaDenuncias({ showSuccess, showError }) {
         <Typography variant="h6">Denuncias ({total})</Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 1, mb: filterOpen ? 0 : 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1, mb: filterOpen ? { xs: 1, sm: 0 } : 2 }}>
         <TextField
-          fullWidth
           size="small"
           placeholder="Buscar por material..."
           value={filtroMaterial}
           onChange={(e) => setFiltroMaterial(e.target.value)}
+          sx={{ flexGrow: 1 }}
           slotProps={{
             input: {
               startAdornment: <Search fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />,
@@ -203,7 +203,7 @@ function ListaDenuncias({ showSuccess, showError }) {
           variant={filterOpen ? 'contained' : 'outlined'}
           startIcon={<FilterList />}
           onClick={() => setFilterOpen(!filterOpen)}
-          sx={{ whiteSpace: 'nowrap' }}
+          sx={{ whiteSpace: 'nowrap', alignSelf: { xs: 'stretch', sm: 'auto' } }}
         >
           Filtrar
         </Button>
@@ -212,7 +212,7 @@ function ListaDenuncias({ showSuccess, showError }) {
       <Collapse in={filterOpen}>
         <Card variant="outlined" sx={{ p: 2, mb: 2 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={5}>
               <FormControl fullWidth size="small">
                 <InputLabel>Estado</InputLabel>
                 <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
@@ -224,7 +224,7 @@ function ListaDenuncias({ showSuccess, showError }) {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={5}>
               <FormControl fullWidth size="small">
                 <InputLabel>Motivo</InputLabel>
                 <Select value={filtroMotivo} label="Motivo" onChange={(e) => setFiltroMotivo(e.target.value)}>
@@ -235,8 +235,8 @@ function ListaDenuncias({ showSuccess, showError }) {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={4}>
-              <Button variant="text" onClick={limpiarFiltros}>
+            <Grid item xs={12} sm={2}>
+              <Button variant="text" onClick={limpiarFiltros} fullWidth>
                 Limpiar filtros
               </Button>
             </Grid>
@@ -383,7 +383,7 @@ function ListaDenuncias({ showSuccess, showError }) {
                 )}
               </Grid>
             </DialogContent>
-            <DialogActions>
+            <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
               <Button onClick={() => { setDetailOpen(false); setSelectedDenuncia(null); }}>
                 Cerrar
               </Button>
@@ -574,7 +574,7 @@ function MotivosDenuncia({ showSuccess, showError }) {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave}>
             {editMotivo ? 'Guardar' : 'Crear'}
@@ -685,6 +685,8 @@ export default function ModeracionTab() {
       <Tabs
         value={subTab}
         onChange={(_, v) => setSubTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
         sx={{
           mb: 3,
           minHeight: 10,

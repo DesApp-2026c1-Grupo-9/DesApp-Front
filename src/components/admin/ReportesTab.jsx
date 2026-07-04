@@ -28,14 +28,14 @@ function MiniBar({ value, max, color = 'primary' }) {
 function StatCard({ icon: Icon, label, value, sub, color = 'primary' }) {
   return (
     <Card variant="outlined" sx={{ borderTop: 4, borderTopColor: `${color}.main`, height: '100%' }}>
-      <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, height: '100%', boxSizing: 'border-box' }}>
+      <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, height: '100%', boxSizing: 'border-box', flexWrap: 'wrap' }}>
         <Avatar sx={{ bgcolor: `${color}.main`, width: 48, height: 48, flexShrink: 0 }}>
           <Icon sx={{ color: '#fff' }} />
         </Avatar>
         <Box sx={{ minWidth: 0 }}>
           <Typography variant="h4" sx={{ fontWeight: 700 }}>{value}</Typography>
-          <Typography variant="body2" color="text.secondary">{label}</Typography>
-          {sub && <Typography variant="caption" color="text.secondary">{sub}</Typography>}
+          <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-word' }}>{label}</Typography>
+          {sub && <Typography variant="caption" color="text.secondary" sx={{ wordBreak: 'break-word' }}>{sub}</Typography>}
         </Box>
       </CardContent>
     </Card>
@@ -46,10 +46,10 @@ function ResumenUsuarios({ data }) {
   if (!data) return null;
   return (
     <Grid container spacing={2}>
-      <Grid item xs={6} sm={3}><StatCard icon={People} label="Total Usuarios" value={data.total} color="primary" /></Grid>
-      <Grid item xs={6} sm={3}><StatCard icon={People} label="Usuarios activos" value={data.activos} sub={`${data.total > 0 ? ((data.activos / data.total) * 100).toFixed(0) : 0}%`} color="success" /></Grid>
-      <Grid item xs={6} sm={3}><StatCard icon={School} label="Estudiantes" value={data.estudiantes} color="info" /></Grid>
-      <Grid item xs={6} sm={3}><StatCard icon={Assessment} label="Administradores" value={data.administradores} color="warning" /></Grid>
+      <Grid item xs={12} sm={6} md={6} lg={3}><StatCard icon={People} label="Total Usuarios" value={data.total} color="primary" /></Grid>
+      <Grid item xs={12} sm={6} md={6} lg={3}><StatCard icon={People} label="Usuarios activos" value={data.activos} sub={`${data.total > 0 ? ((data.activos / data.total) * 100).toFixed(0) : 0}%`} color="success" /></Grid>
+      <Grid item xs={12} sm={6} md={6} lg={3}><StatCard icon={School} label="Estudiantes" value={data.estudiantes} color="info" /></Grid>
+      <Grid item xs={12} sm={6} md={6} lg={3}><StatCard icon={Assessment} label="Administradores" value={data.administradores} color="warning" /></Grid>
     </Grid>
   );
 }
@@ -200,7 +200,7 @@ function DenunciasStats({ data }) {
   return (
     <Grid container spacing={2}>
       {data.porEstado && data.porEstado.length > 0 && (
-        <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+        <Grid item xs={12} lg={6} sx={{ display: 'flex' }}>
           <Card variant="outlined" sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Denuncias por Estado</Typography>
@@ -232,7 +232,7 @@ function DenunciasStats({ data }) {
         </Grid>
       )}
       {data.porMotivo && data.porMotivo.length > 0 && (
-        <Grid item xs={12} md={6} sx={{ display: 'flex' }}>
+        <Grid item xs={12} lg={6} sx={{ display: 'flex' }}>
           <Card variant="outlined" sx={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
             <CardContent sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Denuncias por Motivo</Typography>
@@ -268,9 +268,9 @@ function UtilizacionSesionesCard({ data }) {
   if (!data) return null;
   return (
     <Grid container spacing={2}>
-      <Grid item xs={4}><StatCard icon={MenuBook} label="Total de sesiones" value={data.totalSesiones} color="info" /></Grid>
-      <Grid item xs={4}><StatCard icon={Group} label="Sesiones con participantes" value={data.sesionesConParticipantes} color="success" /></Grid>
-      <Grid item xs={4}><StatCard icon={People} label="Promedio de participantes" value={data.promedioParticipantes} color="warning" /></Grid>
+      <Grid item xs={12} sm={4}><StatCard icon={MenuBook} label="Total de sesiones" value={data.totalSesiones} color="info" /></Grid>
+      <Grid item xs={12} sm={4}><StatCard icon={Group} label="Sesiones con participantes" value={data.sesionesConParticipantes} color="success" /></Grid>
+      <Grid item xs={12} sm={4}><StatCard icon={People} label="Promedio de participantes" value={data.promedioParticipantes} color="warning" /></Grid>
       {data.distribucion && data.distribucion.length > 0 && (
         <Grid item xs={12}>
           <DistribucionTable
@@ -355,15 +355,17 @@ export default function ReportesTab() {
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-        <Avatar sx={{ bgcolor: 'success.main', width: 36, height: 36 }}>
-          <BarChart sx={{ fontSize: 20, color: '#fff' }} />
+        <Avatar sx={{ bgcolor: 'success.main', width: { xs: 32, sm: 36 }, height: { xs: 32, sm: 36 } }}>
+          <BarChart sx={{ fontSize: { xs: 18, sm: 20 }, color: '#fff' }} />
         </Avatar>
-        <Typography variant="h5" sx={{ fontWeight: 700 }}>Reportes y Estadísticas</Typography>
+        <Typography variant="h5" sx={{ fontWeight: 700, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>Reportes y Estadísticas</Typography>
       </Box>
 
       <Tabs
         value={subTab}
         onChange={(_, v) => setSubTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
         sx={{ mb: 3, minHeight: 10, '& .MuiTab-root': { pt: 1, pb: 1, minHeight: 10, '& .MuiTab-iconWrapper': { mb: 0 } } }}
       >
         <Tab icon={<BarChart />} label="Uso del Sistema" iconPosition="start" />

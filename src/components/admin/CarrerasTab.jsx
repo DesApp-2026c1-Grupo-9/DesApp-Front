@@ -274,29 +274,31 @@ function CarrerasTab() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: { xs: 1, sm: 0 } }}>
         <Typography variant="h6">Gestión de Carreras</Typography>
-        <Button variant="contained" startIcon={<School />} onClick={openCreate}>
+        <Button variant="contained" startIcon={<School />} onClick={openCreate} sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}>
           Nueva Carrera
         </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <TextField fullWidth size="small" placeholder="Buscar carrera por nombre, título o instituto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Instituto</InputLabel>
-          <Select value={filtroInstituto} label="Instituto" onChange={(e) => setFiltroInstituto(e.target.value)}>
-            <MenuItem value="todos">Todos</MenuItem>
-            {institutos.map((inst) => (<MenuItem key={inst} value={inst}>{inst}</MenuItem>))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 120 }}>
-          <InputLabel>Duración</InputLabel>
-          <Select value={filtroDuracion} label="Duración" onChange={(e) => setFiltroDuracion(e.target.value)}>
-            <MenuItem value="todos">Todas</MenuItem>
-            {duraciones.map((d) => (<MenuItem key={d} value={d}>{d} años</MenuItem>))}
-          </Select>
-        </FormControl>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
+        <TextField size="small" placeholder="Buscar carrera por nombre, título o instituto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ flexGrow: 1 }} />
+        <Box sx={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          <FormControl size="small" sx={{ minWidth: 160, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Instituto</InputLabel>
+            <Select value={filtroInstituto} label="Instituto" onChange={(e) => setFiltroInstituto(e.target.value)}>
+              <MenuItem value="todos">Todos</MenuItem>
+              {institutos.map((inst) => (<MenuItem key={inst} value={inst}>{inst}</MenuItem>))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 120, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Duración</InputLabel>
+            <Select value={filtroDuracion} label="Duración" onChange={(e) => setFiltroDuracion(e.target.value)}>
+              <MenuItem value="todos">Todas</MenuItem>
+              {duraciones.map((d) => (<MenuItem key={d} value={d}>{d} años</MenuItem>))}
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
 
       {loadingCarreras ? (
@@ -368,15 +370,15 @@ function CarrerasTab() {
             <Grid item xs={12}>
               <TextField fullWidth label="Título" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Instituto" value={form.instituto} onChange={(e) => setForm({ ...form, instituto: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Duración (años)" type="number" value={form.duracion} onChange={(e) => setForm({ ...form, duracion: e.target.value })} />
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave}>{editCarrera ? 'Guardar' : 'Crear'}</Button>
         </DialogActions>
@@ -421,7 +423,7 @@ function CarrerasTab() {
             )}
           </Paper>
         </DialogContent>
-        <DialogActions><Button onClick={() => setDetalleDialog({ ...detalleDialog, open: false })}>Cerrar</Button></DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}><Button onClick={() => setDetalleDialog({ ...detalleDialog, open: false })}>Cerrar</Button></DialogActions>
       </Dialog>
 
       <Dialog open={confirmMateriaDialog.open} onClose={() => setConfirmMateriaDialog({ ...confirmMateriaDialog, open: false })} maxWidth="sm" fullWidth>
@@ -452,7 +454,7 @@ function CarrerasTab() {
             </>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setConfirmMateriaDialog({ ...confirmMateriaDialog, open: false })}>Cancelar</Button>
           <Button variant="contained" onClick={handleConfirmGuardarMaterias}>Confirmar</Button>
         </DialogActions>
@@ -464,7 +466,7 @@ function CarrerasTab() {
           <Typography>¿Estás seguro de que deseas eliminar la carrera <strong>{deleteDialog.carrera?.nombre}</strong>?</Typography>
           <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. Si la carrera tiene planes de estudio asociados, no podrá eliminarse.</Alert>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
           <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
         </DialogActions>
@@ -553,7 +555,7 @@ function CarrerasTab() {
             );
           })()}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setMateriaDialog({ ...materiaDialog, open: false })}>Cancelar</Button>
           <Button variant="contained" onClick={handleGuardarMaterias}>Guardar</Button>
         </DialogActions>

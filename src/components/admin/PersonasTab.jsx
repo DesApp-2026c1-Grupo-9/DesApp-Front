@@ -199,39 +199,39 @@ function PersonasTab() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: { xs: 1, sm: 0 } }}>
         <Typography variant="h6" sx={{ lineHeight: '36px', my: 0 }}>Gestión de Personas ({usuarios.length})</Typography>
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-          <Button variant="contained" startIcon={<PersonAdd />} onClick={openCreate}>
-            Nueva Persona
-          </Button>
-        </Box>
+        <Button variant="contained" startIcon={<PersonAdd />} onClick={openCreate} fullWidth={false} sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}>
+          Nueva Persona
+        </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
         <TextField
-          fullWidth
           size="small"
           placeholder="Buscar por nombre, apellido o email..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ flexGrow: 1 }}
         />
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Rol</InputLabel>
-          <Select value={filtroRol} label="Rol" onChange={(e) => setFiltroRol(e.target.value)}>
-            <MenuItem value="todos">Todos</MenuItem>
-            <MenuItem value="estudiante">Estudiante</MenuItem>
-            <MenuItem value="administrador">Administrador</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 140 }}>
-          <InputLabel>Estado</InputLabel>
-          <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
-            <MenuItem value="todos">Todos</MenuItem>
-            <MenuItem value="activo">Activo</MenuItem>
-            <MenuItem value="inactivo">Inactivo</MenuItem>
-          </Select>
-        </FormControl>
+        <Box sx={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          <FormControl size="small" sx={{ minWidth: 140, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Rol</InputLabel>
+            <Select value={filtroRol} label="Rol" onChange={(e) => setFiltroRol(e.target.value)}>
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="estudiante">Estudiante</MenuItem>
+              <MenuItem value="administrador">Administrador</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 140, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Estado</InputLabel>
+            <Select value={filtroEstado} label="Estado" onChange={(e) => setFiltroEstado(e.target.value)}>
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="activo">Activo</MenuItem>
+              <MenuItem value="inactivo">Inactivo</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
 
       {loadingUsuarios ? (
@@ -310,19 +310,19 @@ function PersonasTab() {
         <DialogTitle>{editUser ? 'Editar Persona' : 'Crear Nueva Persona'}</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Nombre" value={form.nombre} error={!!errors.nombre} helperText={errors.nombre} required onChange={(e) => setForm({ ...form, nombre: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Apellido" value={form.apellido} error={!!errors.apellido} helperText={errors.apellido} required onChange={(e) => setForm({ ...form, apellido: e.target.value })} />
             </Grid>
             <Grid item xs={12}>
               <TextField fullWidth label="Email" type="email" value={form.email} error={!!errors.email} helperText={errors.email} required onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <TextField fullWidth label="Contraseña (opcional)" type="password" value={form.password} helperText="Dejar vacío si no hay login implementado" onChange={(e) => setForm({ ...form, password: e.target.value })} />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={12} sm={6}>
               <FormControl fullWidth>
                 <InputLabel>Rol</InputLabel>
                 <Select value={form.rol} label="Rol" onChange={(e) => setForm({ ...form, rol: e.target.value })}>
@@ -333,7 +333,7 @@ function PersonasTab() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDialogOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave}>{editUser ? 'Guardar' : 'Crear'}</Button>
         </DialogActions>
@@ -347,7 +347,7 @@ function PersonasTab() {
             <Alert severity="warning" sx={{ mt: 2 }}>Este usuario es administrador. Al eliminarlo perderá acceso al panel de administración.</Alert>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
           <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
         </DialogActions>
@@ -366,7 +366,7 @@ function PersonasTab() {
             </Alert>
           )}
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setUserToToggle(null)}>Cancelar</Button>
           <Button variant="contained" color={userToToggle?.activo ? 'error' : 'success'} onClick={handleToggleEstadoConfirm}>Sí, {userToToggle?.activo ? 'desactivar' : 'activar'}</Button>
         </DialogActions>

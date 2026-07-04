@@ -108,10 +108,10 @@ export default function AdminDashboardPage() {
     <PageContainer maxWidth={1400} padding={0}>
       <Box sx={{ pb: 4 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-          <Avatar sx={{ bgcolor: 'warning.main', width: 36, height: 36 }}>
-            <AdminPanelSettings sx={{ fontSize: 20, color: '#fff' }} />
+          <Avatar sx={{ bgcolor: 'warning.main', width: { xs: 32, sm: 36 }, height: { xs: 32, sm: 36 } }}>
+            <AdminPanelSettings sx={{ fontSize: { xs: 18, sm: 20 }, color: '#fff' }} />
           </Avatar>
-          <Typography variant="h5" sx={{ fontWeight: 700 }}>Dashboard</Typography>
+          <Typography variant="h5" sx={{ fontWeight: 700, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>Dashboard</Typography>
         </Box>
 
         <Grid container spacing={3}>
@@ -140,7 +140,7 @@ export default function AdminDashboardPage() {
               </Card>
             </Grid>
 
-            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Grid item xs={12} lg={6} sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Flag fontSize="small" color="warning" /> Últimas Denuncias Pendientes
               </Typography>
@@ -174,7 +174,7 @@ export default function AdminDashboardPage() {
               </TableContainer>
             </Grid>
 
-            <Grid item xs={12} md={6} sx={{ display: 'flex', flexDirection: 'column' }}>
+            <Grid item xs={12} lg={6} sx={{ display: 'flex', flexDirection: 'column' }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Block fontSize="small" color="error" /> Materiales Suspendidos
               </Typography>

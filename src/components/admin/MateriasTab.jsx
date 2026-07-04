@@ -177,30 +177,32 @@ function MateriasTab() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 3, gap: { xs: 1, sm: 0 } }}>
         <Typography variant="h6">Gesti&oacute;n de Materias</Typography>
-        <Button variant="contained" startIcon={<MenuBook />} onClick={openCreate}>
+        <Button variant="contained" startIcon={<MenuBook />} onClick={openCreate} sx={{ alignSelf: { xs: 'stretch', sm: 'auto' } }}>
           Nueva Materia
         </Button>
       </Box>
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <TextField fullWidth size="small" placeholder="Buscar materia por nombre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        <FormControl size="small" sx={{ minWidth: 200 }}>
-          <InputLabel>Carrera</InputLabel>
-          <Select value={filtroCarrera} label="Carrera" onChange={(e) => setFiltroCarrera(e.target.value)}>
-            <MenuItem value="todos">Todas</MenuItem>
-            {allCarreras.map((c) => (<MenuItem key={c.id} value={c.id}>{c.nombre}</MenuItem>))}
-          </Select>
-        </FormControl>
-        <FormControl size="small" sx={{ minWidth: 150 }}>
-          <InputLabel>Tipo</InputLabel>
-          <Select value={filtroTipo} label="Tipo" onChange={(e) => setFiltroTipo(e.target.value)}>
-            <MenuItem value="todos">Todos</MenuItem>
-            <MenuItem value="cuatrimestral">Cuatrimestral</MenuItem>
-            <MenuItem value="anual">Anual</MenuItem>
-          </Select>
-        </FormControl>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 2 }}>
+        <TextField size="small" placeholder="Buscar materia por nombre..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} sx={{ flexGrow: 1 }} />
+        <Box sx={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+          <FormControl size="small" sx={{ minWidth: 160, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Carrera</InputLabel>
+            <Select value={filtroCarrera} label="Carrera" onChange={(e) => setFiltroCarrera(e.target.value)}>
+              <MenuItem value="todos">Todas</MenuItem>
+              {allCarreras.map((c) => (<MenuItem key={c.id} value={c.id}>{c.nombre}</MenuItem>))}
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 130, flex: { xs: 1, sm: 'none' } }}>
+            <InputLabel>Tipo</InputLabel>
+            <Select value={filtroTipo} label="Tipo" onChange={(e) => setFiltroTipo(e.target.value)}>
+              <MenuItem value="todos">Todos</MenuItem>
+              <MenuItem value="cuatrimestral">Cuatrimestral</MenuItem>
+              <MenuItem value="anual">Anual</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       </Box>
 
       {loadingMaterias ? (
@@ -275,7 +277,7 @@ function MateriasTab() {
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setOpen(false)}>Cancelar</Button>
           <Button variant="contained" onClick={handleSave}>{editMateria ? 'Guardar' : 'Crear'}</Button>
         </DialogActions>
@@ -287,7 +289,7 @@ function MateriasTab() {
           <Typography>¿Estás seguro de que deseas eliminar la materia <strong>{deleteDialog.materia?.nombre}</strong>?</Typography>
           <Alert severity="warning" sx={{ mt: 2 }}>Esta acción no se puede deshacer. Si la materia está asignada a algún plan, no podrá eliminarse.</Alert>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancelar</Button>
           <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
         </DialogActions>
