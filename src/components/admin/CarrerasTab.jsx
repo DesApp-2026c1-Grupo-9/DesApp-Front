@@ -31,11 +31,13 @@ import {
 import { School, Edit, Delete, MenuBook, Visibility } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
+import { LoadingSpinner, EmptyState } from '../ui';
 
 function CarrerasTab() {
   const [carreras, setCarreras] = useState([]);
   const [allCarreras, setAllCarreras] = useState([]);
   const [total, setTotal] = useState(0);
+  const [loadingCarreras, setLoadingCarreras] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroInstituto, setFiltroInstituto] = useState('todos');
   const [filtroDuracion, setFiltroDuracion] = useState('todos');
@@ -71,6 +73,7 @@ function CarrerasTab() {
   };
 
   const cargarCarreras = useCallback(async (targetPage) => {
+    setLoadingCarreras(true);
     try {
       const params = {
         page: targetPage !== undefined ? targetPage + 1 : page + 1,
@@ -87,6 +90,8 @@ function CarrerasTab() {
     } catch {
       showError('Error al cargar carreras');
       setTotal(0);
+    } finally {
+      setLoadingCarreras(false);
     }
   }, [page, sortField, sortDir, searchTerm, filtroInstituto, filtroDuracion, rowsPerPage, showError]);
 
@@ -94,7 +99,9 @@ function CarrerasTab() {
     try {
       const res = await api.get('/api/carreras', { params: { limit: 1000 } });
       setAllCarreras(res.data.data || []);
-    } catch { }
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al cargar carreras');
+    }
   }, []);
 
   useEffect(() => {
@@ -109,7 +116,9 @@ function CarrerasTab() {
     try {
       const res = await api.get('/api/materias', { params: { limit: 1000 } });
       setAllMaterias(res.data.data || []);
-    } catch { }
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al cargar materias');
+    }
   }, []);
 
   useEffect(() => {
@@ -128,7 +137,8 @@ function CarrerasTab() {
         setAllMaterias(materiasRes.data.data || []);
         setCarreraMaterias(asignadasRes.data.data || []);
         setSelectedMaterias(asignadasRes.data.data || []);
-      } catch {
+      } catch (err) {
+        showError(err.response?.data?.message || 'Error al cargar materias');
         setAllMaterias([]);
         setCarreraMaterias([]);
       }
@@ -289,34 +299,34 @@ function CarrerasTab() {
         </FormControl>
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'titulo'} direction={sortField === 'titulo' ? sortDir : 'asc'} onClick={() => handleSort('titulo')}>Título</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'instituto'} direction={sortField === 'instituto' ? sortDir : 'asc'} onClick={() => handleSort('instituto')}>Instituto</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'duracion'} direction={sortField === 'duracion' ? sortDir : 'asc'} onClick={() => handleSort('duracion')}>Duración</TableSortLabel>
-              </TableCell>
-              <TableCell>Planes</TableCell>
-              <TableCell align="center">Materias</TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {carreras.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>No hay carreras registradas</TableCell>
+      {loadingCarreras ? (
+        <LoadingSpinner message="Cargando carreras..." />
+      ) : carreras.length === 0 ? (
+        <EmptyState icon="inbox" title="No hay carreras registradas" message="No se encontraron carreras con los filtros actuales." />
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'titulo'} direction={sortField === 'titulo' ? sortDir : 'asc'} onClick={() => handleSort('titulo')}>Título</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'instituto'} direction={sortField === 'instituto' ? sortDir : 'asc'} onClick={() => handleSort('instituto')}>Instituto</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'duracion'} direction={sortField === 'duracion' ? sortDir : 'asc'} onClick={() => handleSort('duracion')}>Duración</TableSortLabel>
+                </TableCell>
+                <TableCell>Planes</TableCell>
+                <TableCell align="center">Materias</TableCell>
+                <TableCell align="center">Acciones</TableCell>
               </TableRow>
-            ) : (
-              carreras.map((c) => (
+            </TableHead>
+            <TableBody>
+              {carreras.map((c) => (
                 <TableRow key={c.id} sx={{ transition: 'background-color 0.5s', backgroundColor: c.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontWeight: 'medium' }}>{c.nombre}</TableCell>
                   <TableCell>{c.titulo}</TableCell>
@@ -331,11 +341,11 @@ function CarrerasTab() {
                     <IconButton size="small" onClick={() => openDeleteDialog(c)} title="Eliminar" color="error"><Delete fontSize="small" /></IconButton>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {carreras.length > 0 && (
         <TablePagination

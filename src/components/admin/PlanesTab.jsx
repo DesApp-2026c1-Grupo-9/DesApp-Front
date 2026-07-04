@@ -31,11 +31,13 @@ import {
 import { Add, Delete, Edit, MenuBook, RemoveCircleOutline, EditNote, CheckCircle } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
+import { LoadingSpinner, EmptyState } from '../ui';
 
 function PlanesTab() {
   const [carreras, setCarreras] = useState([]);
   const [carreraId, setCarreraId] = useState('');
   const [planes, setPlanes] = useState([]);
+  const [loadingPlanes, setLoadingPlanes] = useState(false);
   const [allMaterias, setAllMaterias] = useState([]);
   const [planForm, setPlanForm] = useState({ nombre: '', estado: 'vigente' });
   const [planEditDialog, setPlanEditDialog] = useState({ open: false, plan: null });
@@ -73,7 +75,8 @@ function PlanesTab() {
         if (materiasPlanPage > maxPage) {
           setMateriasPlanPage(maxPage);
         }
-      } catch {
+      } catch (err) {
+        showError(err.response?.data?.message || 'Error al cargar materias del plan');
         setMateriasPlan([]);
         setTotalMateriasPlan(0);
       }
@@ -114,6 +117,7 @@ function PlanesTab() {
       return;
     }
     const fetchPlanes = async () => {
+      setLoadingPlanes(true);
       try {
         const [planesRes, materiasRes] = await Promise.all([
           api.get(`/api/carreras/${carreraId}/planes`),
@@ -121,9 +125,12 @@ function PlanesTab() {
         ]);
         setPlanes(planesRes.data.data || []);
         setAllMaterias(materiasRes.data.data || []);
-      } catch {
+      } catch (err) {
+        showError(err.response?.data?.message || 'Error al cargar planes');
         setPlanes([]);
         setAllMaterias([]);
+      } finally {
+        setLoadingPlanes(false);
       }
     };
     fetchPlanes();
@@ -324,37 +331,40 @@ function PlanesTab() {
           </Grid>
         </Paper>
 
-        <TableContainer component={Paper} variant="outlined">
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Plan</TableCell>
-                <TableCell>Estado</TableCell>
-                <TableCell align="center">Materias</TableCell>
-                <TableCell align="center">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {planes.map((p) => (
-                <TableRow key={p.id} sx={{ transition: 'background-color 0.5s', backgroundColor: p.id === highlightPlanId ? 'action.selected' : 'inherit' }}>
-                  <TableCell sx={{ fontWeight: 'medium' }}>{p.nombre}</TableCell>
-                  <TableCell><Chip label={p.estado} size="small" color={p.estado === 'vigente' ? 'success' : p.estado === 'transición' ? 'warning' : 'default'} onClick={() => handleToggleEstadoClick(p)} clickable /></TableCell>
-                  <TableCell align="center">{p.totalMaterias}</TableCell>
-                  <TableCell align="center">
-                    <IconButton size="small" onClick={() => openPlanEdit(p)} title="Editar plan"><Edit fontSize="small" /></IconButton>
-                    <IconButton size="small" onClick={() => openMateriasEdit(p)} title="Gestionar materias"><MenuBook fontSize="small" /></IconButton>
-                    <IconButton size="small" onClick={() => openDeleteDialog(p)} color="error" title="Eliminar plan"><Delete fontSize="small" /></IconButton>
-                  </TableCell>
+        {!carreraId ? (
+          <EmptyState icon="search" title="Seleccioná una carrera" message="Buscá una carrera arriba para ver sus planes de estudio." />
+        ) : loadingPlanes ? (
+          <LoadingSpinner message="Cargando planes..." />
+        ) : planes.length === 0 ? (
+          <EmptyState icon="inbox" title="No hay planes de estudio" message="Esta carrera no tiene planes de estudio registrados." />
+        ) : (
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Plan</TableCell>
+                  <TableCell>Estado</TableCell>
+                  <TableCell align="center">Materias</TableCell>
+                  <TableCell align="center">Acciones</TableCell>
                 </TableRow>
-              ))}
-              {!carreraId ? (
-                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}>Seleccioná una carrera arriba para ver sus planes</TableCell></TableRow>
-              ) : planes.length === 0 && (
-                <TableRow><TableCell colSpan={4} align="center" sx={{ py: 4 }}>No hay planes de estudio para esta carrera</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {planes.map((p) => (
+                  <TableRow key={p.id} sx={{ transition: 'background-color 0.5s', backgroundColor: p.id === highlightPlanId ? 'action.selected' : 'inherit' }}>
+                    <TableCell sx={{ fontWeight: 'medium' }}>{p.nombre}</TableCell>
+                    <TableCell><Chip label={p.estado} size="small" color={p.estado === 'vigente' ? 'success' : p.estado === 'transición' ? 'warning' : 'default'} onClick={() => handleToggleEstadoClick(p)} clickable /></TableCell>
+                    <TableCell align="center">{p.totalMaterias}</TableCell>
+                    <TableCell align="center">
+                      <IconButton size="small" onClick={() => openPlanEdit(p)} title="Editar plan"><Edit fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={() => openMateriasEdit(p)} title="Gestionar materias"><MenuBook fontSize="small" /></IconButton>
+                      <IconButton size="small" onClick={() => openDeleteDialog(p)} color="error" title="Eliminar plan"><Delete fontSize="small" /></IconButton>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
 
         <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
           <DialogTitle>Confirmar Eliminación</DialogTitle>

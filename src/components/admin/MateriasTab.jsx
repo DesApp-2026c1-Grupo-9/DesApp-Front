@@ -30,11 +30,13 @@ import {
 import { MenuBook, Edit, Delete } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
+import { LoadingSpinner, EmptyState } from '../ui';
 
 function MateriasTab() {
   const [materias, setMaterias] = useState([]);
   const [total, setTotal] = useState(0);
   const [allCarreras, setAllCarreras] = useState([]);
+  const [loadingMaterias, setLoadingMaterias] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('todos');
   const [filtroCarrera, setFiltroCarrera] = useState('todos');
@@ -61,6 +63,7 @@ function MateriasTab() {
   };
 
   const cargarMaterias = useCallback(async (targetPage) => {
+    setLoadingMaterias(true);
     try {
       const params = {
         page: targetPage !== undefined ? targetPage + 1 : page + 1,
@@ -77,6 +80,8 @@ function MateriasTab() {
     } catch {
       showError('Error al cargar materias');
       setTotal(0);
+    } finally {
+      setLoadingMaterias(false);
     }
   }, [page, sortField, sortDir, searchTerm, filtroTipo, filtroCarrera, rowsPerPage, showError]);
 
@@ -84,7 +89,9 @@ function MateriasTab() {
     try {
       const res = await api.get('/api/carreras');
       setAllCarreras(res.data.data || []);
-    } catch { }
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error al cargar carreras');
+    }
   }, []);
 
   useEffect(() => {
@@ -196,30 +203,30 @@ function MateriasTab() {
         </FormControl>
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>
-                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'tipo'} direction={sortField === 'tipo' ? sortDir : 'asc'} onClick={() => handleSort('tipo')}>Tipo</TableSortLabel>
-              </TableCell>
-              <TableCell align="center">Carga Horaria</TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'carreras'} direction={sortField === 'carreras' ? sortDir : 'asc'} onClick={() => handleSort('carreras')}>Carreras</TableSortLabel>
-              </TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {materias.length === 0 ? (
+      {loadingMaterias ? (
+        <LoadingSpinner message="Cargando materias..." />
+      ) : materias.length === 0 ? (
+        <EmptyState icon="inbox" title="No hay materias registradas" message="No se encontraron materias con los filtros actuales." />
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 4 }}>No hay materias registradas</TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'tipo'} direction={sortField === 'tipo' ? sortDir : 'asc'} onClick={() => handleSort('tipo')}>Tipo</TableSortLabel>
+                </TableCell>
+                <TableCell align="center">Carga Horaria</TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'carreras'} direction={sortField === 'carreras' ? sortDir : 'asc'} onClick={() => handleSort('carreras')}>Carreras</TableSortLabel>
+                </TableCell>
+                <TableCell align="center">Acciones</TableCell>
               </TableRow>
-            ) : (
-              materias.map((m) => (
+            </TableHead>
+            <TableBody>
+              {materias.map((m) => (
                 <TableRow key={m.id} sx={{ transition: 'background-color 0.5s', backgroundColor: m.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontWeight: 'medium' }}>{m.nombre}</TableCell>
                   <TableCell><Chip label={m.tipo} size="small" color={m.tipo === 'anual' ? 'info' : 'secondary'} /></TableCell>
@@ -230,11 +237,11 @@ function MateriasTab() {
                     <IconButton size="small" onClick={() => openDeleteDialog(m)} title="Eliminar" color="error"><Delete fontSize="small" /></IconButton>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {materias.length > 0 && (
         <TablePagination

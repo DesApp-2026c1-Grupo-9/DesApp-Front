@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,7 +20,6 @@ import {
   ListItemText,
   ListItemIcon,
   Avatar,
-  CircularProgress,
 } from '@mui/material';
 import {
   AdminPanelSettings,
@@ -35,7 +33,8 @@ import {
   FiberManualRecord,
   MenuBook,
 } from '@mui/icons-material';
-import { PageContainer } from '../components/ui';
+import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
+import useFetchData from '../hooks/useFetchData';
 import api from '../api/axiosConfig';
 
 const STAT_CARDS = [
@@ -50,20 +49,16 @@ export default function AdminDashboardPage() {
   const user = useSelector((state) => state.auth.user);
   const loadingStudents = useSelector((state) => state.auth.loadingStudents);
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    api.get('/api/admin/dashboard')
-      .then((res) => setData(res.data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, loading, error, refetch } = useFetchData({
+    fetchFn: () => api.get('/api/admin/dashboard').then(res => res.data?.data),
+    deps: [],
+  });
 
   if (loadingStudents) {
     return (
       <PageContainer centered padding={3}>
-        <CircularProgress />
+        <LoadingSpinner message="Cargando información del usuario..." />
       </PageContainer>
     );
   }
@@ -85,6 +80,28 @@ export default function AdminDashboardPage() {
     );
   }
 
+  if (loading) {
+    return (
+      <PageContainer centered padding={3}>
+        <LoadingSpinner message="Cargando dashboard..." />
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer maxWidth={600}>
+        <EmptyState
+          icon="error"
+          title="Error al cargar el dashboard"
+          message={error}
+          actionLabel="Reintentar"
+          onAction={refetch}
+        />
+      </PageContainer>
+    );
+  }
+
   const stats = data?.stats;
 
   return (
@@ -97,12 +114,7 @@ export default function AdminDashboardPage() {
           <Typography variant="h5" sx={{ fontWeight: 700 }}>Dashboard</Typography>
         </Box>
 
-        {loading ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Grid container spacing={3}>
+        <Grid container spacing={3}>
             {STAT_CARDS.map(({ key, label, icon: Icon, color, bg }) => (
               <Grid item xs={12} sm={6} md={4} key={key}>
                 <Card variant="outlined" elevation={0} sx={{ borderTop: 4, borderTopColor: `${color}.main`, boxShadow: 'none', '&:hover': { boxShadow: 'none' } }}>
@@ -236,7 +248,6 @@ export default function AdminDashboardPage() {
               </Card>
             </Grid>
           </Grid>
-        )}
       </Box>
     </PageContainer>
   );

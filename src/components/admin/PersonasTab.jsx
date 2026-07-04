@@ -33,10 +33,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateStudentActiveStatus, fetchStudents } from '../../features/auth/slice';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
+import { LoadingSpinner, EmptyState } from '../ui';
 
 function PersonasTab() {
   const [usuarios, setUsuarios] = useState([]);
   const [total, setTotal] = useState(0);
+  const [loadingUsuarios, setLoadingUsuarios] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroRol, setFiltroRol] = useState('todos');
   const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -68,6 +70,7 @@ function PersonasTab() {
   };
 
   const cargarUsuarios = useCallback(async (targetPage) => {
+    setLoadingUsuarios(true);
     try {
       const params = {
         page: targetPage !== undefined ? targetPage + 1 : page + 1,
@@ -84,6 +87,8 @@ function PersonasTab() {
     } catch {
       showError('Error al cargar usuarios');
       setTotal(0);
+    } finally {
+      setLoadingUsuarios(false);
     }
   }, [page, sortField, sortDir, searchTerm, filtroRol, filtroEstado, rowsPerPage, showError]);
 
@@ -229,37 +234,35 @@ function PersonasTab() {
         </FormControl>
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell sx={{ width: 70 }}>
-                <TableSortLabel active={sortField === 'id'} direction={sortField === 'id' ? sortDir : 'asc'} onClick={() => handleSort('id')}>ID</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'email'} direction={sortField === 'email' ? sortDir : 'asc'} onClick={() => handleSort('email')}>Email</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'rol'} direction={sortField === 'rol' ? sortDir : 'asc'} onClick={() => handleSort('rol')}>Rol</TableSortLabel>
-              </TableCell>
-              <TableCell>
-                <TableSortLabel active={sortField === 'activo'} direction={sortField === 'activo' ? sortDir : 'asc'} onClick={() => handleSort('activo')}>Estado</TableSortLabel>
-              </TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {usuarios.length === 0 ? (
+      {loadingUsuarios ? (
+        <LoadingSpinner message="Cargando usuarios..." />
+      ) : usuarios.length === 0 ? (
+        <EmptyState icon="inbox" title="No hay usuarios registrados" message="No se encontraron usuarios con los filtros actuales." />
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  No hay usuarios registrados
+                <TableCell sx={{ width: 70 }}>
+                  <TableSortLabel active={sortField === 'id'} direction={sortField === 'id' ? sortDir : 'asc'} onClick={() => handleSort('id')}>ID</TableSortLabel>
                 </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'nombre'} direction={sortField === 'nombre' ? sortDir : 'asc'} onClick={() => handleSort('nombre')}>Nombre</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'email'} direction={sortField === 'email' ? sortDir : 'asc'} onClick={() => handleSort('email')}>Email</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'rol'} direction={sortField === 'rol' ? sortDir : 'asc'} onClick={() => handleSort('rol')}>Rol</TableSortLabel>
+                </TableCell>
+                <TableCell>
+                  <TableSortLabel active={sortField === 'activo'} direction={sortField === 'activo' ? sortDir : 'asc'} onClick={() => handleSort('activo')}>Estado</TableSortLabel>
+                </TableCell>
+                <TableCell align="center">Acciones</TableCell>
               </TableRow>
-            ) : (
-              usuarios.map((u) => (
+            </TableHead>
+            <TableBody>
+              {usuarios.map((u) => (
                 <TableRow key={u.id} sx={{ transition: 'background-color 0.5s', backgroundColor: u.id === highlightId ? 'action.selected' : 'inherit' }}>
                   <TableCell sx={{ fontFamily: 'monospace', fontSize: 13 }}>{u.id}</TableCell>
                   <TableCell>
@@ -286,11 +289,11 @@ function PersonasTab() {
                     </IconButton>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {usuarios.length > 0 && (
         <TablePagination

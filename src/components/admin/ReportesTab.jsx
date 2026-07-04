@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
-  Tabs, Tab, CircularProgress, Avatar, Divider,
+  Tabs, Tab, Avatar, Divider,
 } from '@mui/material';
 import {
   People, School, MenuBook, Group, Flag, BarChart,
@@ -10,7 +10,8 @@ import {
   HowToVote,
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
-import { TabPanel } from '../ui';
+import { TabPanel, LoadingSpinner, EmptyState } from '../ui';
+import useFetchData from '../../hooks/useFetchData';
 
 function MiniBar({ value, max, color = 'primary' }) {
   const pct = max > 0 ? (value / max) * 100 : 0;
@@ -329,22 +330,25 @@ function CarrerasActivasTable({ data }) {
 
 export default function ReportesTab() {
   const [subTab, setSubTab] = useState(0);
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
-    api.get('/api/admin/reportes')
-      .then((res) => setData(res.data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, loading, error, refetch } = useFetchData({
+    fetchFn: () => api.get('/api/admin/reportes').then(res => res.data?.data),
+    deps: [],
+  });
 
   if (loading) {
+    return <LoadingSpinner message="Cargando reportes..." />;
+  }
+
+  if (error) {
     return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
+      <EmptyState
+        icon="error"
+        title="Error al cargar los reportes"
+        message={error}
+        actionLabel="Reintentar"
+        onAction={refetch}
+      />
     );
   }
 

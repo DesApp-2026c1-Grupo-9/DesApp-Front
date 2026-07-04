@@ -33,7 +33,6 @@ import {
   Collapse,
   Divider,
   Tooltip,
-  CircularProgress,
 } from '@mui/material';
 import {
   Visibility,
@@ -50,7 +49,7 @@ import {
 } from '@mui/icons-material';
 import api from '../../api/axiosConfig';
 import { useSnackbar } from '../../hooks';
-import { TabPanel } from '../ui';
+import { TabPanel, LoadingSpinner, EmptyState } from '../ui';
 
 const ESTADO_COLORS = {
   pendiente: 'warning',
@@ -77,15 +76,19 @@ function ListaDenuncias({ showSuccess, showError }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedDenuncia, setSelectedDenuncia] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [loadingDenuncias, setLoadingDenuncias] = useState(false);
   const rowsPerPage = 15;
 
   useEffect(() => {
     api.get('/api/admin/motivos-denuncia').then((res) => {
       setMotivos(res.data.data || []);
-    }).catch(() => {});
+    }).catch((err) => {
+      showError(err.response?.data?.message || 'Error al cargar motivos');
+    });
   }, []);
 
   const cargarDenuncias = useCallback(async () => {
+    setLoadingDenuncias(true);
     try {
       const params = {
         page: page + 1,
@@ -102,6 +105,8 @@ function ListaDenuncias({ showSuccess, showError }) {
       setTotal(res.data.total || 0);
     } catch {
       showError('Error al cargar denuncias');
+    } finally {
+      setLoadingDenuncias(false);
     }
   }, [page, filtroEstado, filtroMaterial, filtroMotivo, showError]);
 
@@ -239,28 +244,26 @@ function ListaDenuncias({ showSuccess, showError }) {
         </Card>
       </Collapse>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>ID</TableCell>
-              <TableCell>Material</TableCell>
-              <TableCell>Denunciante</TableCell>
-              <TableCell>Motivo</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell>Fecha</TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {denuncias.length === 0 ? (
+      {loadingDenuncias ? (
+        <LoadingSpinner message="Cargando denuncias..." />
+      ) : denuncias.length === 0 ? (
+        <EmptyState icon="inbox" title="No hay denuncias" message={`No hay denuncias${filtroEstado !== 'todas' ? ` con estado "${ESTADO_LABELS[filtroEstado]?.toLowerCase()}"` : ''} que coincidan con los filtros.`} />
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                  No hay denuncias{ filtroEstado !== 'todas' ? ` ${ESTADO_LABELS[filtroEstado]?.toLowerCase()}` : '' }
-                </TableCell>
+                <TableCell>ID</TableCell>
+                <TableCell>Material</TableCell>
+                <TableCell>Denunciante</TableCell>
+                <TableCell>Motivo</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell>Fecha</TableCell>
+                <TableCell align="center">Acciones</TableCell>
               </TableRow>
-            ) : (
-              denuncias.map((d) => (
+            </TableHead>
+            <TableBody>
+              {denuncias.map((d) => (
                 <TableRow key={d.id}>
                   <TableCell>#{d.id}</TableCell>
                   <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
@@ -284,11 +287,11 @@ function ListaDenuncias({ showSuccess, showError }) {
                     </Tooltip>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {total > 0 && (
         <TablePagination
@@ -413,17 +416,21 @@ function ListaDenuncias({ showSuccess, showError }) {
 
 function MotivosDenuncia({ showSuccess, showError }) {
   const [motivos, setMotivos] = useState([]);
+  const [loadingMotivos, setLoadingMotivos] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMotivo, setEditMotivo] = useState(null);
   const [form, setForm] = useState({ nombre: '', descripcion: '' });
   const [errors, setErrors] = useState({});
 
   const cargarMotivos = useCallback(async () => {
+    setLoadingMotivos(true);
     try {
       const res = await api.get('/api/admin/motivos-denuncia');
       setMotivos(res.data.data || []);
     } catch {
       showError('Error al cargar motivos');
+    } finally {
+      setLoadingMotivos(false);
     }
   }, [showError]);
 
@@ -496,25 +503,23 @@ function MotivosDenuncia({ showSuccess, showError }) {
         </Button>
       </Box>
 
-      <TableContainer component={Paper} variant="outlined">
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>Nombre</TableCell>
-              <TableCell>Descripción</TableCell>
-              <TableCell>Estado</TableCell>
-              <TableCell align="center">Acciones</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {motivos.length === 0 ? (
+      {loadingMotivos ? (
+        <LoadingSpinner message="Cargando motivos..." />
+      ) : motivos.length === 0 ? (
+        <EmptyState icon="inbox" title="No hay motivos de denuncia" message="No hay motivos de denuncia configurados." />
+      ) : (
+        <TableContainer component={Paper} variant="outlined">
+          <Table size="small">
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
-                  No hay motivos de denuncia configurados
-                </TableCell>
+                <TableCell>Nombre</TableCell>
+                <TableCell>Descripción</TableCell>
+                <TableCell>Estado</TableCell>
+                <TableCell align="center">Acciones</TableCell>
               </TableRow>
-            ) : (
-              motivos.map((m) => (
+            </TableHead>
+            <TableBody>
+              {motivos.map((m) => (
                 <TableRow key={m.id} sx={{ opacity: m.activo ? 1 : 0.5 }}>
                   <TableCell>{m.nombre}</TableCell>
                   <TableCell>{m.descripcion || '-'}</TableCell>
@@ -536,11 +541,11 @@ function MotivosDenuncia({ showSuccess, showError }) {
                     </IconButton>
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>{editMotivo ? 'Editar Motivo' : 'Nuevo Motivo'}</DialogTitle>
@@ -621,11 +626,7 @@ function ConfiguracionModeracion({ showSuccess, showError }) {
   };
 
   if (loading) {
-    return (
-      <Box sx={{ textAlign: 'center', py: 4 }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingSpinner message="Cargando configuración..." />;
   }
 
   return (
