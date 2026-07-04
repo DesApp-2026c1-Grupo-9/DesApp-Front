@@ -338,7 +338,11 @@ export const EstudianteMaterias = () => {
           setPlanesDisponibles(response.data.planesDisponibles || []);
           inicializado.current = true;
           skipNextCarreraChange.current = true;
-          if (response.data.carrera?.id) setCarreraSeleccionadaId(String(response.data.carrera.id));
+          const carreraInicial = location.state?.carreraId || response.data.carrera?.id;
+          if (carreraInicial) setCarreraSeleccionadaId(String(carreraInicial));
+          if (location.state?.carreraId || location.state?.tabIndex !== undefined) {
+            window.history.replaceState({}, '');
+          }
           if (response.data.planDeEstudio?.id) setPlanSeleccionadoId(String(response.data.planDeEstudio.id));
         }
       } catch (errorCargar) {
