@@ -67,8 +67,6 @@ export default function MaterialDetalle() {
   if (!material) return null;
 
   const denunciasPendientes = material.denunciasPendientes || 0;
-  const denunciasConfirmadas = material.denunciasConfirmadas || 0;
-  const totalDenuncias = denunciasPendientes + denunciasConfirmadas;
 
   return (
     <PageContainer >
@@ -83,19 +81,25 @@ export default function MaterialDetalle() {
         onRate={handleRate}
       />
 
-      {totalDenuncias > 0 && (
+      {material.suspendido && (
         <Alert severity="warning" sx={{ mt: 2 }}>
           <Typography variant="subtitle2" gutterBottom>
             Información de denuncias
           </Typography>
           <Typography variant="body2">
-            Este material tiene {denunciasPendientes} denuncia(s) pendiente(s) y {denunciasConfirmadas} confirmada(s).
+            Este material fue suspendido por {(material.suspendidoMotivo || 'múltiples denuncias').toLowerCase()}.
           </Typography>
-          {denunciaId && (
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              Denuncia específica ID: {denunciaId}
-            </Typography>
-          )}
+        </Alert>
+      )}
+
+      {!material.suspendido && denunciasPendientes > 0 && (
+        <Alert severity="warning" sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Información de denuncias
+          </Typography>
+          <Typography variant="body2">
+            Este material tiene {denunciasPendientes} denuncia{denunciasPendientes !== 1 ? 's' : ''} pendiente{denunciasPendientes !== 1 ? 's' : ''} de revisión.
+          </Typography>
         </Alert>
       )}
     </PageContainer>

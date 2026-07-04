@@ -26,13 +26,12 @@ import {
 } from '@mui/icons-material';
 import { getLinkIcon, getFileIcon, formatFileSize, DiscordIcon, LINK_TIPO } from '../utils';
 
-const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit, onDelete, onDenunciar }) => {
+const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit, onDelete, onDenunciar, onViewDetail }) => {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
   const [ownerMenuAnchor, setOwnerMenuAnchor] = useState(null);
   const creadorId = material.creadorId ?? material.estudianteId;
   const isOwner = currentUserId === creadorId;
-  const tieneDenunciasActivas = material.denunciasPendientes > 0 || material.denunciasConfirmadas > 0;
   const isDiscord = material.tipoLink === LINK_TIPO.DISCORD;
 
   const handleRate = (value) => {
@@ -138,36 +137,12 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
                 📍 {material.discordInfo.servidor} → {material.discordInfo.canal}
               </Typography>
             )}
-            {material.suspendido && (
+            {isOwner && material.suspendido && (
               <Chip
                 icon={<Warning fontSize="small" />}
                 label="Suspendido"
                 size="small"
                 color="error"
-              />
-            )}
-            {material.revocado && !material.suspendido && (
-              <Chip
-                label="Revocado"
-                size="small"
-                color="info"
-                variant="outlined"
-              />
-            )}
-            {material.denunciasPendientes > 0 && (
-              <Chip
-                label={`${material.denunciasPendientes} pendiente${material.denunciasPendientes !== 1 ? 's' : ''}`}
-                size="small"
-                color="warning"
-                variant="outlined"
-              />
-            )}
-            {material.denunciasConfirmadas > 0 && (
-              <Chip
-                label={`${material.denunciasConfirmadas} verificada${material.denunciasConfirmadas !== 1 ? 's' : ''}`}
-                size="small"
-                color="error"
-                variant="outlined"
               />
             )}
           </Box>
@@ -218,7 +193,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               </Button>
             )}
 
-            {isOwner && isActive && !tieneDenunciasActivas && (
+            {isOwner && isActive && !material.suspendido && (
               <>
                 <IconButton
                   size="small"
@@ -252,6 +227,34 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
                       <Delete fontSize="small" color="error" />
                     </ListItemIcon>
                     <Typography color="error">Eliminar</Typography>
+                  </MenuItem>
+                </Menu>
+              </>
+            )}
+
+            {isOwner && material.suspendido && onViewDetail && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setOwnerMenuAnchor(e.currentTarget)}
+                >
+                  <MoreVert fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={ownerMenuAnchor}
+                  open={Boolean(ownerMenuAnchor)}
+                  onClose={() => setOwnerMenuAnchor(null)}
+                >
+                  <MenuItem
+                    onClick={() => {
+                      setOwnerMenuAnchor(null);
+                      onViewDetail(material.id);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <OpenInNew fontSize="small" />
+                    </ListItemIcon>
+                    Ver detalle
                   </MenuItem>
                 </Menu>
               </>

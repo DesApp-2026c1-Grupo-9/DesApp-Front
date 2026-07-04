@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Typography,
   Box,
@@ -32,6 +33,7 @@ import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 const Materiales = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { list: materiales = [], materias = [], loading, error, filter, operationLoading } =
     useSelector((state) => state.materiales);
   const { user } = useSelector((state) => state.auth);
@@ -132,6 +134,10 @@ const Materiales = () => {
   const handleDenunciar = (material) => {
     setDenunciaMaterial(material);
     setDenunciaDialogOpen(true);
+  };
+
+  const handleViewDetail = (id) => {
+    navigate(`/materiales/${id}`);
   };
 
   const handleDenunciaClose = (created) => {
@@ -248,6 +254,7 @@ const Materiales = () => {
             onEdit={handleEditMaterial}
             onDelete={handleDeleteMaterial}
             onDenunciar={handleDenunciar}
+            onViewDetail={handleViewDetail}
           />
         ))
       )}
