@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
-  Typography, Box, Button, Chip, CircularProgress, Alert, Card, CardContent, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText,
+  Typography, Box, Button, Chip, Alert, Card, CardContent,
+  Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText,
 } from '@mui/material';
 import { ArrowBack, AccessTime, LocationOn, Videocam, Public, Group, Lock, HourglassEmpty } from '@mui/icons-material';
 import { getSesionById } from '../features/sesiones/service';
-import { joinToSesion, leaveSesionThunk, fetchParticipantes } from '../features/sesiones/slice';
+import {
+  joinToSesion, leaveSesionThunk, removeSesion, editSesion,
+  approveParticipanteThunk, rejectParticipanteThunk,
+} from '../features/sesiones/slice';
 import { PageContainer, LoadingSpinner } from '../components/ui';
+import SesionModal from '../components/SesionModal';
+import AprobacionModal from '../components/AprobacionModal';
 
 export default function SesionDetalle() {
   const { id } = useParams();
@@ -19,8 +25,9 @@ export default function SesionDetalle() {
   const [sesion, setSesion] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [participantesOpen, setParticipantesOpen] = useState(false);
-  const [participantesList, setParticipantesList] = useState([]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [aprobacionModalOpen, setAprobacionModalOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!estudianteId || !id) return;
@@ -50,12 +57,41 @@ export default function SesionDetalle() {
     setSesion(res.data);
   };
 
-  const handleVerParticipantes = () => {
-    dispatch(fetchParticipantes({ sesionId: sesion.id, estudianteId }))
-      .then((res) => {
-        setParticipantesList(res.payload?.participantes || []);
-        setParticipantesOpen(true);
-      });
+  const handleEdit = () => {
+    setEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async (sesionData) => {
+    await dispatch(editSesion({ sesionId: sesion.id, sesionData, estudianteId }));
+    setEditModalOpen(false);
+    const res = await getSesionById(id, estudianteId);
+    setSesion(res.data);
+  };
+
+  const handleDeleteClick = () => {
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    await dispatch(removeSesion({ sesionId: sesion.id, estudianteId }));
+    setDeleteDialogOpen(false);
+    navigate('/sesiones');
+  };
+
+  const handleCancelDelete = () => {
+    setDeleteDialogOpen(false);
+  };
+
+  const handleApprove = async (sesionId, participanteId) => {
+    await dispatch(approveParticipanteThunk({ sesionId, participanteId, estudianteId }));
+    const res = await getSesionById(id, estudianteId);
+    setSesion(res.data);
+  };
+
+  const handleReject = async (sesionId, participanteId) => {
+    await dispatch(rejectParticipanteThunk({ sesionId, participanteId, estudianteId }));
+    const res = await getSesionById(id, estudianteId);
+    setSesion(res.data);
   };
 
   if (loading) return <LoadingSpinner fullScreen message="Cargando sesión..." />;
@@ -81,6 +117,7 @@ export default function SesionDetalle() {
   const isApproved = participante?.estado === 'aprobado';
   const isRejected = participante?.estado === 'rechazado';
   const approvedCount = sesion.participantes?.filter(p => p.estado === 'aprobado').length || 0;
+  const pendingCount = sesion.participantes?.filter(p => p.estado === 'pendiente').length || 0;
 
   const creadorNombre = sesion.creador
     ? `${sesion.creador.nombre} ${sesion.creador.apellido}`
@@ -167,34 +204,52 @@ export default function SesionDetalle() {
               </>
             )}
             {isCreator && !isCanceled && (
-              <Button size="small" variant="contained" color="warning" onClick={handleVerParticipantes}>
-                Ver Participantes ({sesion.participantes?.length || 0})
-              </Button>
+              <>
+                <Button size="small" variant="outlined" onClick={handleEdit}>
+                  Editar
+                </Button>
+                <Button size="small" variant="outlined" color="error" onClick={handleDeleteClick}>
+                  Cancelar
+                </Button>
+                <Button size="small" variant="contained" color="warning" onClick={() => setAprobacionModalOpen(true)}>
+                  {sesion.necesidadAprobacion && pendingCount > 0
+                    ? `Ver Participantes (${pendingCount} pendientes)`
+                    : 'Ver Participantes'}
+                </Button>
+              </>
             )}
           </Box>
         </CardContent>
       </Card>
 
-      <Dialog open={participantesOpen} onClose={() => setParticipantesOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Participantes</DialogTitle>
+      <SesionModal
+        open={editModalOpen}
+        sesion={sesion}
+        onSave={handleSaveEdit}
+        onCancel={() => setEditModalOpen(false)}
+      />
+
+      <AprobacionModal
+        open={aprobacionModalOpen}
+        sesion={sesion}
+        currentUser={user}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onClose={() => setAprobacionModalOpen(false)}
+      />
+
+      <Dialog open={deleteDialogOpen} onClose={handleCancelDelete}>
+        <DialogTitle>Confirmar Cancelación</DialogTitle>
         <DialogContent>
-          {participantesList.length === 0 ? (
-            <Typography color="text.secondary">No hay participantes.</Typography>
-          ) : (
-            <List disablePadding>
-              {participantesList.map((p) => (
-                <ListItem key={p.id} disableGutters>
-                  <ListItemText
-                    primary={p.estudiante?.nombre || p.estudiante?.Usuario?.nombre || `Usuario ${p.estudianteId}`}
-                    secondary={`Estado: ${p.estado}`}
-                  />
-                </ListItem>
-              ))}
-            </List>
-          )}
+          <DialogContentText>
+            ¿Estás seguro de que deseas cancelar esta sesión? Esta acción no se puede deshacer.
+          </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setParticipantesOpen(false)}>Cerrar</Button>
+          <Button onClick={handleCancelDelete}>Volver</Button>
+          <Button onClick={handleConfirmDelete} variant="contained" color="error">
+            Cancelar sesión
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>
