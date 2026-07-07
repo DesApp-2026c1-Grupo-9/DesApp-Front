@@ -45,7 +45,7 @@ function PersonasTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [userToToggle, setUserToToggle] = useState(null);
-  const [form, setForm] = useState({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true });
+  const [form, setForm] = useState({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true, fechaNacimiento: '', genero: 'sin especificar' });
   const [errors, setErrors] = useState({});
   const [sortField, setSortField] = useState('apellido');
   const [sortDir, setSortDir] = useState('asc');
@@ -103,14 +103,14 @@ function PersonasTab() {
 
   const openCreate = () => {
     setEditUser(null);
-    setForm({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true });
+    setForm({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true, fechaNacimiento: '', genero: 'sin especificar' });
     setErrors({});
     setDialogOpen(true);
   };
 
   const openEdit = (user) => {
     setEditUser(user);
-    setForm({ nombre: user.nombre, apellido: user.apellido, email: user.email, password: '', rol: user.rol, activo: user.activo });
+    setForm({ nombre: user.nombre, apellido: user.apellido, email: user.email, password: '', rol: user.rol, activo: user.activo, fechaNacimiento: user.fechaNacimiento || '', genero: user.genero || 'sin especificar' });
     setErrors({});
     setDialogOpen(true);
   };
@@ -331,6 +331,27 @@ function PersonasTab() {
                 <Select value={form.rol} label="Rol" onChange={(e) => setForm({ ...form, rol: e.target.value })}>
                   <MenuItem value="estudiante">Estudiante</MenuItem>
                   <MenuItem value="administrador">Administrador</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Fecha de Nacimiento"
+                type="date"
+                value={form.fechaNacimiento}
+                InputLabelProps={{ shrink: true }}
+                onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel>Género</InputLabel>
+                <Select value={form.genero} label="Género" onChange={(e) => setForm({ ...form, genero: e.target.value })}>
+                  <MenuItem value="femenino">Femenino</MenuItem>
+                  <MenuItem value="masculino">Masculino</MenuItem>
+                  <MenuItem value="no binario">No binario</MenuItem>
+                  <MenuItem value="sin especificar">Sin especificar</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
