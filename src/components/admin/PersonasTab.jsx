@@ -47,7 +47,7 @@ function PersonasTab() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
   const [userToToggle, setUserToToggle] = useState(null);
-  const [form, setForm] = useState({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true });
+  const [form, setForm] = useState({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true, fechaNacimiento: '', genero: 'sin especificar' });
   const [errors, setErrors] = useState({});
   const [sortField, setSortField] = useState('apellido');
   const [sortDir, setSortDir] = useState('asc');
@@ -108,14 +108,14 @@ function PersonasTab() {
 
   const openCreate = () => {
     setEditUser(null);
-    setForm({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true });
+    setForm({ nombre: '', apellido: '', email: '', password: '', rol: 'estudiante', activo: true, fechaNacimiento: '', genero: 'sin especificar' });
     setErrors({});
     setDialogOpen(true);
   };
 
   const openEdit = (user) => {
     setEditUser(user);
-    setForm({ nombre: user.nombre, apellido: user.apellido, email: user.email, password: '', rol: user.rol, activo: user.activo });
+    setForm({ nombre: user.nombre, apellido: user.apellido, email: user.email, password: '', rol: user.rol, activo: user.activo, fechaNacimiento: user.fechaNacimiento || '', genero: user.genero || 'sin especificar' });
     setErrors({});
     setDialogOpen(true);
   };
@@ -284,9 +284,15 @@ function PersonasTab() {
                     <IconButton size="small" onClick={() => openEdit(u)} title="Editar">
                       <Edit fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" onClick={() => openDelete(u)} title="Eliminar" color="error">
-                      <Delete fontSize="small" />
-                    </IconButton>
+                    {Number(u.id) !== Number(currentUserId) ? (
+                      <IconButton size="small" onClick={() => openDelete(u)} title="Eliminar" color="error">
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    ) : (
+                      <IconButton size="small" disabled title="No puedes eliminarte a vos mismo">
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -331,6 +337,27 @@ function PersonasTab() {
                 </Select>
               </FormControl>
             </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                label="Fecha de Nacimiento"
+                type="date"
+                value={form.fechaNacimiento}
+                InputLabelProps={{ shrink: true }}
+                onChange={(e) => setForm({ ...form, fechaNacimiento: e.target.value })}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <FormControl fullWidth>
+                <InputLabel>Género</InputLabel>
+                <Select value={form.genero} label="Género" onChange={(e) => setForm({ ...form, genero: e.target.value })}>
+                  <MenuItem value="femenino">Femenino</MenuItem>
+                  <MenuItem value="masculino">Masculino</MenuItem>
+                  <MenuItem value="no binario">No binario</MenuItem>
+                  <MenuItem value="sin especificar">Sin especificar</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
@@ -346,10 +373,13 @@ function PersonasTab() {
           {userToDelete?.rol === 'administrador' && (
             <Alert severity="warning" sx={{ mt: 2 }}>Este usuario es administrador. Al eliminarlo perderá acceso al panel de administración.</Alert>
           )}
+          {Number(userToDelete?.id) === Number(currentUserId) && (
+            <Alert severity="error" sx={{ mt: 2 }}>No puedes eliminarte a vos mismo.</Alert>
+          )}
         </DialogContent>
         <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
-          <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
+          <Button variant="contained" color="error" onClick={handleDelete} disabled={Number(userToDelete?.id) === Number(currentUserId)}>Eliminar</Button>
         </DialogActions>
       </Dialog>
 
