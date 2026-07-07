@@ -281,9 +281,15 @@ function PersonasTab() {
                     <IconButton size="small" onClick={() => openEdit(u)} title="Editar">
                       <Edit fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" onClick={() => openDelete(u)} title="Eliminar" color="error">
-                      <Delete fontSize="small" />
-                    </IconButton>
+                    {Number(u.id) !== Number(currentUserId) ? (
+                      <IconButton size="small" onClick={() => openDelete(u)} title="Eliminar" color="error">
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    ) : (
+                      <IconButton size="small" disabled title="No puedes eliminarte a vos mismo">
+                        <Delete fontSize="small" />
+                      </IconButton>
+                    )}
                   </TableCell>
                 </TableRow>
               ))
@@ -343,10 +349,13 @@ function PersonasTab() {
           {userToDelete?.rol === 'administrador' && (
             <Alert severity="warning" sx={{ mt: 2 }}>Este usuario es administrador. Al eliminarlo perderá acceso al panel de administración.</Alert>
           )}
+          {Number(userToDelete?.id) === Number(currentUserId) && (
+            <Alert severity="error" sx={{ mt: 2 }}>No puedes eliminarte a vos mismo.</Alert>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
-          <Button variant="contained" color="error" onClick={handleDelete}>Eliminar</Button>
+          <Button variant="contained" color="error" onClick={handleDelete} disabled={Number(userToDelete?.id) === Number(currentUserId)}>Eliminar</Button>
         </DialogActions>
       </Dialog>
 
