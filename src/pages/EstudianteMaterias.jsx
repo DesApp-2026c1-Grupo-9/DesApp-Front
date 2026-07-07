@@ -347,7 +347,9 @@ export const EstudianteMaterias = () => {
         }
       } catch (errorCargar) {
         console.error('Error al cargar datos del estudiante:', errorCargar);
-        setError('Error al cargar los datos del estudiante');
+        setEstudiante(estudianteActual?.usuario || estudianteActual);
+        setSituacionAcademica({ carrera: null });
+        setCarrerasDisponibles(estudianteActual?.carreras || []);
       } finally {
         setLoading(false);
       }
@@ -553,7 +555,7 @@ export const EstudianteMaterias = () => {
   return (
     <PageContainer padding={3}>
       {/* Header */}
-      <Box display="flex" alignItems="center" mb={3}>
+      <Box display="flex" alignItems="center" mb={carrerasDisponibles.length === 0 && !situacionAcademica?.carrera?.nombre ? 1 : 3}>
         <Box flexGrow={1}>
           <Typography variant="h4">
             Materias de {estudiante?.nombre} {estudiante?.apellido}
@@ -620,11 +622,11 @@ export const EstudianteMaterias = () => {
                 ))}
               </Menu>
             </>
-          ) : (
+          ) : situacionAcademica?.carrera?.nombre ? (
             <Typography variant="subtitle1" color="textSecondary">
-              {situacionAcademica?.carrera?.nombre || 'Sin carrera asignada'}
+              {situacionAcademica.carrera.nombre}
             </Typography>
-          )}
+          ) : null}
         </Box>
 
         <Box display="flex" gap={1}>
@@ -646,6 +648,16 @@ export const EstudianteMaterias = () => {
           </Button>
         </Box>
       </Box>
+
+      {carrerasDisponibles.length === 0 && !situacionAcademica?.carrera?.nombre && (
+        <Alert severity="info" sx={{ mb: 3 }}>
+          No tenés ninguna carrera asignada.&nbsp;
+          <Button variant="contained" size="small" onClick={() => navigate('/academico/carreras')} sx={{ ml: 1 }}>
+                Inscribite en una carrera
+              </Button>
+          &nbsp;para ver tus materias.
+        </Alert>
+      )}
 
       {/* Resumen estadísticas */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
