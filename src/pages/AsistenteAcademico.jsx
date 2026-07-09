@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Box, Typography, Card, CardContent, Grid, Chip, Alert, Button,
   LinearProgress, Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, Accordion, AccordionSummary,
+  TableHead, TableRow, Accordion, AccordionSummary,
   AccordionDetails, Divider, Dialog, DialogTitle, DialogContent,
   DialogActions, List, ListItem, ListItemText, ListItemIcon,
   TextField, FormControl, FormControlLabel, InputLabel, Checkbox, IconButton, Snackbar,
@@ -19,12 +19,40 @@ import { useAuth } from '../context/AuthContext';
 import { useImportarMaterias } from '../hooks/useImportarMaterias';
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
-const ESTADO_COLOR = {
-  aprobada: 'success',
-  regularizada: 'warning',
-  cursando: 'info',
-  no_cursada: 'default',
+const CARRERA_COLOR_FALLBACK = {
+  bg: '#f5f5f5',
+  color: '#424242',
+  border: '#bdbdbd',
+  accent: '#757575',
 };
+
+const CARRERA_COLOR_COMPARTIDA = {
+  bg: '#f3e5f5',
+  color: '#6a1b9a',
+  border: '#ce93d8',
+  accent: '#8e24aa',
+};
+
+const CARRERA_COLOR_RULES = [
+  {
+    matchers: ['ia', 'inteligencia artificial'],
+    style: {
+      bg: '#ffebee',
+      color: '#b71c1c',
+      border: '#ef9a9a',
+      accent: '#d32f2f',
+    },
+  },
+  {
+    matchers: ['programacion', 'programación'],
+    style: {
+      bg: '#e3f2fd',
+      color: '#0d47a1',
+      border: '#90caf9',
+      accent: '#1976d2',
+    },
+  },
+];
 
 const formatFechaCorta = (fecha) => {
   if (!fecha) return 'Sin fecha';
@@ -61,26 +89,6 @@ const normalizarTextoExcel = (valor) =>
     .toLowerCase()
     .trim();
 
-const mapearEstadoExcel = (estado) => {
-  const normalizado = normalizarTextoExcel(estado).replace(/\s+/g, '_');
-
-  const alias = {
-    aprobada: 'aprobada',
-    aprobado: 'aprobada',
-    regularizada: 'regularizada',
-    regularizado: 'regularizada',
-    cursando: 'cursando',
-    cursada: 'cursando',
-    cursado: 'cursando',
-    no_cursada: 'no_cursada',
-    no_cursado: 'no_cursada',
-    pendiente: 'no_cursada',
-    libre: 'no_cursada',
-  };
-
-  return alias[normalizado] || normalizado;
-};
-
 const cumpleEstadoCorrelativa = (estado) =>
   estado === 'aprobada' || estado === 'regularizada';
 
@@ -90,6 +98,25 @@ const normalizarTexto = (valor) =>
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
+
+const obtenerColorCarreraPlanificador = (carreras = []) => {
+  if (Array.isArray(carreras) && carreras.length > 1) {
+    return CARRERA_COLOR_COMPARTIDA;
+  }
+
+  const carreraPrincipal = Array.isArray(carreras) ? carreras[0] : null;
+  const carreraNormalizada = normalizarTexto(carreraPrincipal);
+
+  if (!carreraNormalizada) {
+    return CARRERA_COLOR_FALLBACK;
+  }
+
+  const regla = CARRERA_COLOR_RULES.find(({ matchers }) =>
+    matchers.some((matcher) => carreraNormalizada.includes(normalizarTexto(matcher)))
+  );
+
+  return regla?.style || CARRERA_COLOR_FALLBACK;
+};
 
 const agruparPrerequisitosPorCarrera = (materia, prerequisitosIds, materiasPorId) => {
   const carrerasMateria = materia?.carreras || [];
@@ -245,6 +272,7 @@ const generarPlanPorHoras = (materias, horasSemanales) => {
         nombre: m.nombre,
         anio: m.anio,
         cargaHoraria: Number(m.cargaHoraria || 0),
+        carreras: Array.isArray(m.carreras) ? m.carreras : [],
       })),
     });
 
@@ -303,6 +331,7 @@ const generarPlanPorHoras = (materias, horasSemanales) => {
           nombre: m.nombre,
           anio: m.anio,
           cargaHoraria: Number(m.cargaHoraria || 0),
+          carreras: Array.isArray(m.carreras) ? m.carreras : [],
         })),
       });
     }
@@ -573,7 +602,7 @@ export default function AsistenteAcademico() {
   useEffect(() => {
     const idsCursando = materiasCursando.map((m) => m.id);
     setMateriasProyeccionSeleccionadas(idsCursando);
-  }, [analisis?.estudiante?.id, materiasCursando.length]);
+  }, [analisis?.estudiante?.id, materiasCursando]);
 
   useEffect(() => {
     if (!estudianteActual?.id) {
@@ -597,6 +626,9 @@ export default function AsistenteAcademico() {
 
   const carrerasDisponiblesAsistente = analisis?.carrerasDisponibles || [];
   const carrerasSeleccionadasAsistente = analisis?.carrerasSeleccionadas || [];
+  const mostrarCarrerasColoreadasPlanificador =
+    alcancePlanificacion === 'intercalado' &&
+    carrerasSeleccionadasAsistente.length > 1;
 
   const {
     estudiante,
@@ -997,6 +1029,13 @@ export default function AsistenteAcademico() {
                                   borderColor: 'divider',
                                   borderRadius: 1,
                                   mb: 1,
+                                  alignItems: 'flex-start',
+                                  borderLeftWidth: mostrarCarrerasColoreadasPlanificador
+                                    ? 4
+                                    : 1,
+                                  borderLeftColor: mostrarCarrerasColoreadasPlanificador
+                                    ? obtenerColorCarreraPlanificador(m.carreras).accent
+                                    : 'divider',
                                 }}
                                 secondaryAction={(
                                   <Box display="flex" gap={0.5}>
@@ -1044,8 +1083,32 @@ export default function AsistenteAcademico() {
                                 )}
                               >
                                 <ListItemText
-                                  primary={m.nombre}
-                                  secondary={`Carga estimada: ${formatHoras(m.cargaHoraria)} · ${formatearCarrerasMateria(m.carreras)}`}
+                                  primary={(
+                                    <Box>
+                                      <Box display="flex" alignItems="center" gap={1} sx={{ mb: mostrarCarrerasColoreadasPlanificador ? 0.5 : 0 }}>
+                                        {mostrarCarrerasColoreadasPlanificador ? (
+                                          <Box
+                                            sx={{
+                                              width: 10,
+                                              height: 10,
+                                              borderRadius: '50%',
+                                              flexShrink: 0,
+                                              bgcolor: obtenerColorCarreraPlanificador(m.carreras).accent,
+                                              boxShadow: `0 0 0 2px ${obtenerColorCarreraPlanificador(m.carreras).bg}`,
+                                            }}
+                                          />
+                                        ) : null}
+                                        <Typography variant="body1" fontWeight={500}>
+                                          {m.nombre}
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                  )}
+                                  secondary={
+                                    mostrarCarrerasColoreadasPlanificador
+                                      ? `Carga estimada: ${formatHoras(m.cargaHoraria)}`
+                                      : `Carga estimada: ${formatHoras(m.cargaHoraria)} · ${formatearCarrerasMateria(m.carreras)}`
+                                  }
                                 />
                               </ListItem>
                             ))}

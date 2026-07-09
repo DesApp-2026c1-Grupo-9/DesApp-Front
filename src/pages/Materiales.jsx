@@ -58,8 +58,10 @@ const Materiales = () => {
   const [operationError, setOperationError] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchMaterias());
-  }, [dispatch]);
+    if (currentUserId) {
+      dispatch(fetchMaterias(currentUserId));
+    }
+  }, [dispatch, currentUserId]);
 
   useEffect(() => {
     dispatch(

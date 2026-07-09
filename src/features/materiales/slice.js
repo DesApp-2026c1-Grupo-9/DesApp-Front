@@ -24,9 +24,9 @@ export const fetchMateriales = createAsyncThunk(
 
 export const fetchMaterias = createAsyncThunk(
   'materiales/fetchMaterias',
-  async (_, { rejectWithValue }) => {
+  async (estudianteId = null, { rejectWithValue }) => {
     try {
-      const data = await getMaterias();
+      const data = await getMaterias(estudianteId);
       return data;
     } catch (error) {
       const msg = error.response?.data?.error || error.response?.data?.message || error.message;

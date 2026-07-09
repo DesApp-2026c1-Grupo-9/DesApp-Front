@@ -247,9 +247,18 @@ const Home = () => {
   const estudianteId = estudianteActual?.id || estudianteActual?.estudianteId;
 
   const hoy = new Date().toISOString().split('T')[0];
+  const finalesPendientes = analisisAcademico?.finalesPendientes || [];
 
   const proximasFechas = [
     { evento: 'Período de Finales', fecha: 'Julio 1-15, 2026', tipo: 'periodo' },
+    ...finalesPendientes.map((final) => ({
+      evento: `Final pendiente: ${final.nombre}`,
+      fecha: final.fechaVencimientoRegularidad
+        ? `Vence ${format(new Date(final.fechaVencimientoRegularidad), "dd 'de' MMMM yyyy", { locale: es })}`
+        : 'Final pendiente sin vencimiento informado',
+      tipo: 'final_pendiente',
+      materia: final.nombre,
+    })),
     ...sesionesList
       .filter(s => {
         const esParticipante = s.participantes?.some(p => p.estudianteId === estudianteId);
@@ -288,6 +297,7 @@ const Home = () => {
       case 'inscripcion': return <Assignment color="primary" />;
       case 'examen': return <Event color="warning" />;
       case 'periodo': return <CalendarToday color="info" />;
+      case 'final_pendiente': return <EmojiEvents color="warning" />;
       case 'sesion': return <Book color="primary" />;
       default: return <Event />;
     }

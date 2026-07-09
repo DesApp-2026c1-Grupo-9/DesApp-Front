@@ -95,6 +95,9 @@ export const EstudianteMaterias = () => {
     cargaHoraria: materia.cargaHoraria || 0,
     profundidad: materia.profundidad,
     tipo: materia.tipo || 'cuatrimestral',
+    fechaRegularidad: materia.fechaRegularidad || null,
+    fechaVencimientoRegularidad: materia.fechaVencimientoRegularidad || null,
+    regularidadVencida: Boolean(materia.regularidadVencida),
     estado:
       materia.estado === 'aprobada'
         ? 'Aprobada'
@@ -157,17 +160,29 @@ export const EstudianteMaterias = () => {
   };
 
   const obtenerTooltipEstado = (materia) => {
+    const fechaVencimiento = materia.fechaVencimientoRegularidad
+      ? new Date(materia.fechaVencimientoRegularidad).toLocaleDateString('es-AR')
+      : null;
+
     switch (materia.estado) {
       case 'Aprobada':
         return 'Materia finalizada y aprobada.';
       case 'Regularizada':
-        return 'Materia cursada y regularizada. Falta rendir el final.';
+        return fechaVencimiento
+          ? `Materia cursada y regularizada. Falta rendir el final. Vence el ${fechaVencimiento}.`
+          : 'Materia cursada y regularizada. Falta rendir el final.';
       case 'Cursando':
         return 'Materia actualmente en curso.';
       case 'Disponible':
+        if (materia.regularidadVencida && fechaVencimiento) {
+          return `La regularidad anterior venció el ${fechaVencimiento}. Cumple correlativas y puede volver a cursarse.`;
+        }
         return 'Cumple correlativas y puede marcarse como cursando.';
       case 'No Disponible': {
         const reqs = (materia.prerrequisitos || []).map((p) => p.nombre);
+        if (materia.regularidadVencida && fechaVencimiento) {
+          return `La regularidad anterior venció el ${fechaVencimiento}. ${reqs.length > 0 ? `Necesitás aprobar o regularizar: ${reqs.join(', ')}.` : 'No cumple las correlativas necesarias.'}`;
+        }
         return reqs.length > 0
           ? `Necesitás aprobar o regularizar: ${reqs.join(', ')}.`
           : 'No cumple las correlativas necesarias.';
@@ -230,6 +245,15 @@ export const EstudianteMaterias = () => {
                         <Typography sx={{ ml: 1 }}>
                           {materia.nombre}
                         </Typography>
+                        {materia.regularidadVencida && (
+                          <Chip
+                            label="Regularidad vencida"
+                            size="small"
+                            color="warning"
+                            variant="outlined"
+                            sx={{ ml: 1 }}
+                          />
+                        )}
                       </Box>
                     </TableCell>
                     <TableCell>{materia.cargaHoraria || 0} hs</TableCell>

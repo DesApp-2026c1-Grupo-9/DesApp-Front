@@ -72,11 +72,16 @@ const Sesiones = () => {
   const estudianteId = user?.estudianteId || user?.Estudiante?.id || user?.id;
 
   const { data: materias, loading: loadingMaterias, refetch: refetchMaterias } = useFetchData({
-    fetchFn: () => api.get('/api/materias?limit=0').then(res => {
+    fetchFn: () => api.get('/api/materias', {
+      params: {
+        limit: 0,
+        ...(estudianteId ? { estudianteId } : {}),
+      },
+    }).then(res => {
       const lista = res.data?.data || res.data || [];
       return Array.isArray(lista) ? lista : [];
     }),
-    deps: [],
+    deps: [estudianteId],
     timeout: 15000,
   });
 
@@ -98,8 +103,15 @@ const Sesiones = () => {
   }, [user, estudianteId, dispatch]);
 
   const misMateriasIdsArray = Array.isArray(misMateriasIds) ? misMateriasIds : [];
+  const materiasPermitidasIds = Array.isArray(materias)
+    ? materias.map((materia) => materia.id)
+    : [];
 
   const filteredSesiones = sesiones.filter(s => {
+    if (materiasPermitidasIds.length > 0 && !materiasPermitidasIds.includes(s.materiaId)) {
+      return false;
+    }
+
     if (activeTab === 'misMaterias') {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
     }

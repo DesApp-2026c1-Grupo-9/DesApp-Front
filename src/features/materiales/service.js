@@ -10,8 +10,10 @@ export const getMaterialById = async (id) => {
   return response.data.data;
 };
 
-export const getMaterias = async () => {
-  const response = await api.get('/api/materiales/materias');
+export const getMaterias = async (estudianteId = null) => {
+  const response = await api.get('/api/materiales/materias', {
+    params: estudianteId ? { estudianteId } : undefined,
+  });
   return response.data.data;
 };
 
