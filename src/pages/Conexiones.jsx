@@ -175,7 +175,7 @@ export default function Conexiones() {
       )}
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
+        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
           <Tab icon={<People />} iconPosition="start" label={`Mis Conexiones (${list.length})`} />
           <Tab
             icon={<HourglassEmpty />}

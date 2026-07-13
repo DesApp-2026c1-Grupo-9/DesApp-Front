@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import {
   Box, Typography, Card, CardContent, Button, Table, TableBody,
   TableCell, TableContainer, TableHead, TableRow, Paper, Chip,
-  Alert, Tabs, Tab, Grid, Avatar, ButtonGroup,
+  Alert, Tabs, Tab, Grid, Avatar, ButtonGroup, useMediaQuery, useTheme,
   Select, MenuItem, FormControl, Dialog, DialogActions, Menu,
   DialogContent, DialogContentText, DialogTitle, List, ListItem,
   ListItemText, ListItemIcon, Tooltip, CircularProgress
@@ -45,7 +45,11 @@ export const EstudianteMaterias = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [anioSeleccionado, setAnioSeleccionado] = useState('todos');
   
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const inicializado = useRef(false);
   const skipNextCarreraChange = useRef(false);
 
@@ -214,8 +218,87 @@ export const EstudianteMaterias = () => {
       (a, b) => parseInt(a) - parseInt(b)
     );
 
+    const renderAccionMateria = (materia) => (
+      <Tooltip
+        title={
+          materia.estado === 'No Disponible'
+            ? 'No podés cambiar este estado hasta cumplir correlativas.'
+            : 'Actualizá el estado académico de la materia.'
+        }
+        arrow
+      >
+        <Box component="span" sx={{ width: '100%' }}>
+          <FormControl size="small" fullWidth>
+            <Select
+              value={materia.estado}
+              disabled={materia.estado === 'No Disponible'}
+              onChange={(e) => {
+                const nuevoEstado = e.target.value;
+                handleCambiarEstadoMateria(materia.id, nuevoEstado);
+              }}
+              displayEmpty
+              sx={{
+                '& .MuiSelect-select': {
+                  py: 0.5,
+                  fontSize: '0.875rem'
+                }
+              }}
+            >
+              {obtenerOpcionesEstado(materia).map((estado) => (
+                <MenuItem key={`${materia.id}-${estado}`} value={estado}>
+                  {estado}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+      </Tooltip>
+    );
+
+    if (isMobile) {
+      return (
+        <Box>
+          {aniosOrdenados.map((anio) => (
+            <Box key={`anio-${anio}`} sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700, bgcolor: 'grey.100', px: 1.5, py: 1, borderRadius: 1, mb: 1 }}>
+                {anio}° año
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                {materiasPorAnio[anio].map((materia, index) => (
+                  <Card key={materia.id || `${anio}-${index}`} variant="outlined" sx={{ p: 0 }}>
+                    <CardContent sx={{ '&:last-child': { pb: 2 }, py: 1.5, px: 2 }}>
+                      <Box display="flex" alignItems="center" gap={1} mb={1}>
+                        {obtenerIconoEstado(materia.estado)}
+                        <Typography variant="body2" fontWeight="bold" sx={{ flex: 1, minWidth: 0 }}>
+                          {materia.nombre}
+                        </Typography>
+                        {materia.regularidadVencida && (
+                          <Chip label="Vencida" size="small" color="warning" variant="outlined" sx={{ flexShrink: 0 }} />
+                        )}
+                      </Box>
+                      <Box display="flex" alignItems="center" justifyContent="space-between" gap={1} mb={1.5}>
+                        <Typography variant="caption" color="text.secondary">
+                          {materia.cargaHoraria || 0} hs
+                        </Typography>
+                        <Tooltip title={obtenerTooltipEstado(materia)} arrow>
+                          <Box component="span">
+                            <Chip label={materia.estado} color={obtenerColorEstado(materia.estado)} size="small" />
+                          </Box>
+                        </Tooltip>
+                      </Box>
+                      {renderAccionMateria(materia)}
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      );
+    }
+
     return (
-      <TableContainer>
+      <TableContainer sx={{ overflowX: 'auto' }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -233,7 +316,6 @@ export const EstudianteMaterias = () => {
                     <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                       {anio}° año
                     </Typography>
-                    
                   </TableCell>
                 </TableRow>
 
@@ -269,40 +351,7 @@ export const EstudianteMaterias = () => {
                       </Tooltip>
                     </TableCell>
                     <TableCell>
-                      <Tooltip
-                        title={
-                          materia.estado === 'No Disponible'
-                            ? 'No podés cambiar este estado hasta cumplir correlativas.'
-                            : 'Actualizá el estado académico de la materia.'
-                        }
-                        arrow
-                      >
-                        <Box component="span">
-                          <FormControl size="small" sx={{ minWidth: 160 }}>
-                            <Select
-                              value={materia.estado}
-                              disabled={materia.estado === 'No Disponible'}
-                              onChange={(e) => {
-                                const nuevoEstado = e.target.value;
-                                handleCambiarEstadoMateria(materia.id, nuevoEstado);
-                              }}
-                              displayEmpty
-                              sx={{
-                                '& .MuiSelect-select': {
-                                  py: 0.5,
-                                  fontSize: '0.875rem'
-                                }
-                              }}
-                            >
-                              {obtenerOpcionesEstado(materia).map((estado) => (
-                                <MenuItem key={`${materia.id}-${estado}`} value={estado}>
-                                  {estado}
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        </Box>
-                      </Tooltip>
+                      {renderAccionMateria(materia)}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -344,7 +393,8 @@ export const EstudianteMaterias = () => {
       setCarrerasDisponibles([]);
       setCarreraSeleccionadaId('');
       setPlanesDisponibles([]);
-      setPlanSeleccionadoId('');
+    setPlanSeleccionadoId('');
+    setAnioSeleccionado('todos');
       setError(null);
       setLoading(false);
       return;
@@ -535,8 +585,19 @@ export const EstudianteMaterias = () => {
 
   const filtrarMateriasPorEstado = (estado) => {
     if (!situacionAcademica?.materias) return [];
-    return situacionAcademica.materias.filter(m => m.estado === estado);
+    let materias = situacionAcademica.materias.filter(m => m.estado === estado);
+    if (anioSeleccionado !== 'todos') {
+      materias = materias.filter(m => String(m.anio) === String(anioSeleccionado));
+    }
+    return materias;
   };
+
+  const filtrarMateriasPorAnio = (materias) => {
+    if (anioSeleccionado === 'todos') return materias;
+    return materias.filter(m => String(m.anio) === String(anioSeleccionado));
+  };
+
+  const aniosDisponibles = [...new Set((situacionAcademica?.materias || []).map(m => m.anio))].sort((a, b) => a - b);
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -579,8 +640,8 @@ export const EstudianteMaterias = () => {
   return (
     <PageContainer padding={3}>
       {/* Header */}
-      <Box display="flex" alignItems="center" mb={carrerasDisponibles.length === 0 && !situacionAcademica?.carrera?.nombre ? 1 : 3}>
-        <Box flexGrow={1}>
+      <Box display="flex" alignItems="center" flexWrap="wrap" gap={2} mb={carrerasDisponibles.length === 0 && !situacionAcademica?.carrera?.nombre ? 1 : 3}>
+        <Box flexGrow={1} minWidth={0}>
           <Typography variant="h4">
             Materias de {estudiante?.nombre} {estudiante?.apellido}
           </Typography>
@@ -591,7 +652,7 @@ export const EstudianteMaterias = () => {
                 endIcon={<ExpandMoreIcon />}
                 sx={{
                   mt: 0.5,
-                  minWidth: 300,
+                  minWidth: { xs: '100%', md: 300 },
                   justifyContent: 'space-between',
                   bgcolor: 'background.paper',
                   boxShadow: 1,
@@ -653,7 +714,7 @@ export const EstudianteMaterias = () => {
           ) : null}
         </Box>
 
-        <Box display="flex" gap={1}>
+        <Box display="flex" gap={1} flexWrap="wrap" justifyContent="center">
           <Button
             variant="outlined"
             startIcon={importLoading ? <CircularProgress size={16} /> : <UploadFileIcon />}
@@ -749,8 +810,35 @@ export const EstudianteMaterias = () => {
 
       {/* Tabs */}
       <Card sx={{ '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={tabValue} onChange={handleTabChange}>
+        <Box sx={{ px: 2, pt: 2, display: { xs: 'flex', sm: 'none' }, alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>Año:</Typography>
+          <FormControl size="small" sx={{ minWidth: 120 }}>
+            <Select
+              value={anioSeleccionado}
+              onChange={(e) => setAnioSeleccionado(e.target.value)}
+            >
+              <MenuItem value="todos">Todos</MenuItem>
+              {aniosDisponibles.map((anio) => (
+                <MenuItem key={anio} value={anio}>{anio}° año</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', position: 'relative' }}>
+          <Box
+            sx={{
+              position: 'absolute',
+              right: 0,
+              top: 0,
+              bottom: 0,
+              width: 40,
+              background: 'linear-gradient(to right, transparent, #fff)',
+              zIndex: 1,
+              pointerEvents: 'none',
+              display: { xs: 'block', sm: 'none' },
+            }}
+          />
+          <Tabs value={tabValue} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
             <Tab label={`Todas (${situacionAcademica?.materias?.length || 0})`} />
             <Tab label={`Aprobadas (${filtrarMateriasPorEstado('Aprobada').length})`} />
             <Tab label={`Regularizadas (${filtrarMateriasPorEstado('Regularizada').length})`} />
@@ -761,12 +849,12 @@ export const EstudianteMaterias = () => {
         </Box>
 
         <CardContent>
-          {tabValue === 0 && renderTablaMaterias(situacionAcademica?.materias || [])}
-          {tabValue === 1 && renderTablaMaterias(filtrarMateriasPorEstado('Aprobada'))}
-          {tabValue === 2 && renderTablaMaterias(filtrarMateriasPorEstado('Regularizada'))}
-          {tabValue === 3 && renderTablaMaterias(filtrarMateriasPorEstado('Cursando'))}
-          {tabValue === 4 && renderTablaMaterias(filtrarMateriasPorEstado('Disponible'))}
-          {tabValue === 5 && renderTablaMaterias(filtrarMateriasPorEstado('No Disponible'))}
+          {tabValue === 0 && renderTablaMaterias(filtrarMateriasPorAnio(situacionAcademica?.materias || []))}
+          {tabValue === 1 && renderTablaMaterias(filtrarMateriasPorAnio(filtrarMateriasPorEstado('Aprobada')))}
+          {tabValue === 2 && renderTablaMaterias(filtrarMateriasPorAnio(filtrarMateriasPorEstado('Regularizada')))}
+          {tabValue === 3 && renderTablaMaterias(filtrarMateriasPorAnio(filtrarMateriasPorEstado('Cursando')))}
+          {tabValue === 4 && renderTablaMaterias(filtrarMateriasPorAnio(filtrarMateriasPorEstado('Disponible')))}
+          {tabValue === 5 && renderTablaMaterias(filtrarMateriasPorAnio(filtrarMateriasPorEstado('No Disponible')))}
 
         </CardContent>
       </Card>

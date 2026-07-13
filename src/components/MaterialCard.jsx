@@ -54,7 +54,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
         backgroundColor: isDiscord ? '#f5f2ff' : '#fff',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
         <Box
           sx={{
             display: 'flex',
@@ -151,9 +151,10 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
         <Box
           sx={{
             display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'flex-end',
+            flexDirection: { xs: 'row', sm: 'column' },
+            alignItems: { xs: 'center', sm: 'flex-end' },
             gap: 1,
+            flexWrap: 'wrap',
           }}
         >
           <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
@@ -171,7 +172,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               <Button
                 size="small"
                 variant="contained"
-                sx={{ backgroundColor: '#5865F2', '&:hover': { backgroundColor: '#4752C4' }, minWidth: 110 }}
+                sx={{ backgroundColor: '#5865F2', '&:hover': { backgroundColor: '#4752C4' }, minWidth: { xs: 'auto', sm: 110 } }}
                 href={material.url || '#'}
                 target="_blank"
                 rel="noopener"
@@ -183,7 +184,7 @@ const MaterialCard = ({ material, currentUserId, isActive = true, onRate, onEdit
               <Button
                 size="small"
                 startIcon={<OpenInNew />}
-                sx={{ minWidth: 110 }}
+                sx={{ minWidth: { xs: 'auto', sm: 110 } }}
                 href={material.url || '#'}
                 target="_blank"
                 rel="noopener"

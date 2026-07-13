@@ -144,19 +144,19 @@ export const MateriasVisitante = () => {
       </Box>
 
       <Grid container spacing={2} mb={3}>
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={4}>
           <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'success.light', color: 'white' }}>
             <Typography variant="h4" fontWeight="bold">{resumen.aprobadas || 0}</Typography>
             <Typography variant="caption">Aprobadas</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={4}>
           <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.light', color: 'white' }}>
             <Typography variant="h4" fontWeight="bold">{resumen.regularizadas || 0}</Typography>
             <Typography variant="caption">Regularizadas</Typography>
           </Paper>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={12} sm={4}>
           <Paper elevation={0} sx={{ p: 2, textAlign: 'center', bgcolor: 'info.light', color: 'white' }}>
             <Typography variant="h4" fontWeight="bold">{resumen.cursando || 0}</Typography>
             <Typography variant="caption">Cursando</Typography>
@@ -171,7 +171,7 @@ export const MateriasVisitante = () => {
               {anio}° Año
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            <TableContainer component={Paper} elevation={0} variant="outlined">
+            <TableContainer component={Paper} elevation={0} variant="outlined" sx={{ overflowX: 'auto' }}>
               <Table size="small" sx={{ '& .MuiTableRow-root:hover': { backgroundColor: 'transparent' } }}>
                 <TableHead>
                   <TableRow>

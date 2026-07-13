@@ -21,6 +21,9 @@ import {
   Alert,
   AlertTitle,
   Badge,
+  useMediaQuery,
+  useTheme,
+  IconButton,
 } from '@mui/material';
 import {
   Home,
@@ -39,6 +42,7 @@ import {
   Block,
   Notifications,
   Person,
+  ChevronLeft,
 } from '@mui/icons-material';
 import { useSelector, useDispatch } from 'react-redux';
 import { useAuth } from '../context/AuthContext';
@@ -46,10 +50,12 @@ import { fetchContador } from '../features/notificaciones/slice';
 
 const SIDEBAR_WIDTH = 260;
 
-export function Sidebar() {
+export function Sidebar({ mobileOpen, onToggle }) {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user } = useSelector((state) => state.auth);
   const noLeidas = useSelector((state) => state.notificaciones.noLeidas);
   const { estudianteActual, cerrarSesion } = useAuth();
@@ -82,6 +88,11 @@ export function Sidebar() {
     setConfirmOpen(false);
     cerrarSesion();
     navigate('/login');
+  };
+
+  const handleNavigate = (path) => {
+    navigate(path);
+    if (isMobile && onToggle) onToggle();
   };
 
   const menuGroups = [
@@ -170,7 +181,7 @@ export function Sidebar() {
                   <ListItem key={child.label} disablePadding>
                     <ListItemButton
                       selected={selected}
-                      onClick={() => navigate(child.path)}
+                      onClick={() => handleNavigate(child.path)}
                       sx={{ pl: 5, borderRadius: 0, '&.Mui-selected': { bgcolor: 'action.selected', fontWeight: 600 }, '&.Mui-selected .MuiListItemText-primary': { fontWeight: 600 } }}
                     >
                       <ListItemIcon sx={{ minWidth: 36 }}>{child.icon}</ListItemIcon>
@@ -193,7 +204,7 @@ export function Sidebar() {
       <ListItem key={item.label} disablePadding>
         <ListItemButton
           selected={selected}
-          onClick={() => navigate(item.path)}
+          onClick={() => handleNavigate(item.path)}
           sx={{ pl: 2, borderRadius: 0, '&.Mui-selected': { bgcolor: 'primary.light', color: 'primary.contrastText', '&:hover': { bgcolor: 'primary.light' }, '& .MuiListItemIcon-root': { color: 'primary.contrastText' } } }}
         >
           <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
@@ -206,98 +217,134 @@ export function Sidebar() {
     );
   };
 
-  return (
+  const drawerContent = (
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        onClick={() => handleNavigate('/')}
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          px: 2,
+          py: 2.5,
+          cursor: 'pointer',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+        }}
+      >
+        <MenuBook color="primary" sx={{ fontSize: 28 }} />
+        <Box sx={{ flexGrow: 1 }}>
+          <Typography variant="subtitle1" fontWeight="bold" lineHeight={1.2}>
+            Sistema Académico
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            UNAHUR
+          </Typography>
+        </Box>
+        {isMobile && (
+          <IconButton onClick={onToggle} size="small">
+            <ChevronLeft />
+          </IconButton>
+        )}
+      </Box>
+
+      <List sx={{ flexGrow: 1, overflowY: 'auto', pt: 0, pb: 1 }}>
+        {menuGroups.map(renderNavItem)}
+      </List>
+
+      {estudianteActual?.usuario?.activo === false && (
+        <Alert severity="warning" sx={{ mx: 1, mb: 1, py: 0 }} icon={false}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Block fontSize="small" />
+            <AlertTitle sx={{ mb: 0, fontSize: 12 }}>Cuenta desactivada</AlertTitle>
+          </Box>
+        </Alert>
+      )}
+
+      <Divider />
+      <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Avatar
+          src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.nombre || ''}+${user?.apellido || ''}&background=1976d2&color=fff&bold=true`}
+          sx={{ width: 36, height: 36, fontSize: 14 }}
+        >
+          {user?.nombre?.charAt(0)}
+        </Avatar>
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Typography variant="body2" fontWeight={600} noWrap>
+            {user?.nombre} {user?.apellido}
+          </Typography>
+          <Typography variant="caption" color="text.secondary" noWrap display="block">
+            {user?.email}
+          </Typography>
+        </Box>
+      </Box>
+      <List dense disablePadding>
+        <ListItem disablePadding>
+          <ListItemButton onClick={() => setConfirmOpen(true)} sx={{ px: 2, py: 1 }}>
+            <ListItemIcon sx={{ minWidth: 36 }}>
+              <Logout fontSize="small" />
+            </ListItemIcon>
+            <ListItemText primary="Cerrar sesión" primaryTypographyProps={{ fontSize: 13 }} />
+          </ListItemButton>
+        </ListItem>
+      </List>
+    </Box>
+  );
+
+  return isMobile ? (
     <Drawer
-      variant="permanent"
+      variant="temporary"
+      open={mobileOpen}
+      onClose={onToggle}
+      ModalProps={{ keepMounted: true }}
       sx={{
-        width: SIDEBAR_WIDTH,
-        flexShrink: 0,
         '& .MuiDrawer-paper': {
           width: SIDEBAR_WIDTH,
           boxSizing: 'border-box',
           bgcolor: 'background.paper',
-          borderRight: '1px solid',
-          borderColor: 'divider',
         },
       }}
     >
-      <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        <Box
-          onClick={() => navigate('/')}
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            px: 2,
-            py: 2.5,
-            cursor: 'pointer',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-          }}
-        >
-          <MenuBook color="primary" sx={{ fontSize: 28 }} />
-          <Box>
-            <Typography variant="subtitle1" fontWeight="bold" lineHeight={1.2}>
-              Sistema Académico
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              UNAHUR
-            </Typography>
-          </Box>
-        </Box>
-
-        <List sx={{ flexGrow: 1, overflowY: 'auto', pt: 0, pb: 1 }}>
-          {menuGroups.map(renderNavItem)}
-        </List>
-
-        {estudianteActual?.usuario?.activo === false && (
-          <Alert severity="warning" sx={{ mx: 1, mb: 1, py: 0 }} icon={false}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Block fontSize="small" />
-              <AlertTitle sx={{ mb: 0, fontSize: 12 }}>Cuenta desactivada</AlertTitle>
-            </Box>
-          </Alert>
-        )}
-
-        <Divider />
-        <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Avatar
-            src={user?.avatarUrl || `https://ui-avatars.com/api/?name=${user?.nombre || ''}+${user?.apellido || ''}&background=1976d2&color=fff&bold=true`}
-            sx={{ width: 36, height: 36, fontSize: 14 }}
-          >
-            {user?.nombre?.charAt(0)}
-          </Avatar>
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography variant="body2" fontWeight={600} noWrap>
-              {user?.nombre} {user?.apellido}
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap display="block">
-              {user?.email}
-            </Typography>
-          </Box>
-        </Box>
-        <List dense disablePadding>
-          <ListItem disablePadding>
-            <ListItemButton onClick={() => setConfirmOpen(true)} sx={{ px: 2, py: 1 }}>
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                <Logout fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary="Cerrar sesión" primaryTypographyProps={{ fontSize: 13 }} />
-            </ListItemButton>
-          </ListItem>
-        </List>
-      </Box>
-
+      {drawerContent}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
         <DialogTitle>Cerrar sesión</DialogTitle>
         <DialogContent>
           <DialogContentText>¿Estás seguro de que querés cerrar la sesión?</DialogContentText>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
           <Button onClick={handleLogout} color="primary" variant="contained">Cerrar sesión</Button>
         </DialogActions>
       </Dialog>
     </Drawer>
+  ) : (
+    <>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: SIDEBAR_WIDTH,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: SIDEBAR_WIDTH,
+            boxSizing: 'border-box',
+            bgcolor: 'background.paper',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+          },
+        }}
+      >
+        {drawerContent}
+      </Drawer>
+      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
+        <DialogTitle>Cerrar sesión</DialogTitle>
+        <DialogContent>
+          <DialogContentText>¿Estás seguro de que querés cerrar la sesión?</DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+          <Button onClick={handleLogout} color="primary" variant="contained">Cerrar sesión</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 }

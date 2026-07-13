@@ -164,6 +164,8 @@ const Materiales = () => {
           justifyContent: 'space-between',
           alignItems: 'center',
           mb: 3,
+          flexWrap: 'wrap',
+          gap: 2,
         }}
       >
         <Typography variant="h4">Materiales de Estudio</Typography>
@@ -184,7 +186,7 @@ const Materiales = () => {
           placeholder="Buscar por título, tags o materia..."
           value={filters.search}
           onChange={(e) => setFilterValue('search', e.target.value)}
-          sx={{ flex: 1, minWidth: 250 }}
+          sx={{ flex: 1, minWidth: { xs: '100%', md: 250 } }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -194,7 +196,7 @@ const Materiales = () => {
           }}
         />
 
-        <FormControl sx={{ minWidth: 200 }}>
+        <FormControl sx={{ minWidth: { xs: '100%', sm: 200 } }}>
           <InputLabel>Materia</InputLabel>
           <Select
             value={filters.materiaId}
@@ -210,7 +212,7 @@ const Materiales = () => {
           </Select>
         </FormControl>
 
-        <FormControl sx={{ minWidth: 180 }}>
+        <FormControl sx={{ minWidth: { xs: '100%', sm: 180 } }}>
           <InputLabel>Ordenar</InputLabel>
           <Select value={sortBy} label="Ordenar" onChange={(e) => setSortBy(e.target.value)}>
             <MenuItem value={SORT_OPTIONS.FECHA_DESC}>Más recientes</MenuItem>

@@ -130,7 +130,7 @@ const Home = () => {
             elevation={0}
           >
             <CardContent sx={{ p: 4 }}>
-              <Stack direction="row" alignItems="center" spacing={3}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={3}>
                 <Avatar
                   sx={{ width: 90, height: 90, bgcolor: 'rgba(255,255,255,0.2)', border: '3px solid rgba(255,255,255,0.4)' }}
                 >
@@ -418,7 +418,7 @@ const Home = () => {
             {/* Selector de Carrera */}
             {carrerasConPlan.length > 1 && (
               <Box sx={{ mb: 3 }}>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
+                <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="center" useFlexGap>
                   {carrerasConPlan.map((c) => (
                     <Chip
                       key={c.id}

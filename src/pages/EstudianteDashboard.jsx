@@ -172,7 +172,7 @@ export const EstudianteDashboard = () => {
           </Card>
 
           <Grid container spacing={2}>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={4}>
               <Paper
                 sx={{
                   p: 2.5,
@@ -191,7 +191,7 @@ export const EstudianteDashboard = () => {
                 </Typography>
               </Paper>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={4}>
               <Paper
                 sx={{
                   p: 2.5,
@@ -210,7 +210,7 @@ export const EstudianteDashboard = () => {
                 </Typography>
               </Paper>
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={12} sm={4}>
               <Paper
                 sx={{
                   p: 2.5,
@@ -446,7 +446,7 @@ export const EstudianteDashboard = () => {
                     />
                   </Box>
                   <Grid container spacing={2}>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper
                         sx={{
                           p: 2,
@@ -465,7 +465,7 @@ export const EstudianteDashboard = () => {
                         </Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper
                         sx={{
                           p: 2,
@@ -484,7 +484,7 @@ export const EstudianteDashboard = () => {
                         </Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper
                         sx={{
                           p: 2,

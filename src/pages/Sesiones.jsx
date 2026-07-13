@@ -398,6 +398,8 @@ const Sesiones = () => {
       <Tabs 
         value={activeTab} 
         onChange={(e, v) => setActiveTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
         sx={{ mb: 2 }}
       >
         <Tab value="todas" label="TODAS LAS SESIONES" />

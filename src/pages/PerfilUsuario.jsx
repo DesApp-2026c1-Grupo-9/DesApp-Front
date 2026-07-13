@@ -359,7 +359,7 @@ export const PerfilUsuario = () => {
                     />
                   </Box>
                   <Grid container spacing={2}>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper
                         sx={{
                           p: 2,
@@ -378,7 +378,7 @@ export const PerfilUsuario = () => {
                         </Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper
                         sx={{
                           p: 2,
@@ -397,7 +397,7 @@ export const PerfilUsuario = () => {
                         </Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper
                         sx={{
                           p: 2,

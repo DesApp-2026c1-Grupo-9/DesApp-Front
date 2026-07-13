@@ -239,8 +239,8 @@ export function CareerManagementPage() {
         </Alert>
       )}
 
-      <Card sx={{ mb: 3, '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
-        <CardContent>
+      <Card sx={{ mb: 3, overflow: 'auto', '&:hover': { boxShadow: theme => theme.shadows[2] } }}>
+        <CardContent sx={{ minWidth: 0, textAlign: 'center' }}>
           <Typography variant="h6" gutterBottom>
             Mi inscripción a carreras
           </Typography>
@@ -250,9 +250,9 @@ export function CareerManagementPage() {
               Todavía no estás inscripto en ninguna carrera. Seleccioná una de la lista para anotarte.
             </Alert>
           ) : (
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ justifyContent: 'center' }}>
               {carrerasEstudiante.map((carrera) => (
-                <Box key={`carrera-est-${carrera.id}`} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box key={`carrera-est-${carrera.id}`} sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
                   <Chip
                     label={carrera.nombre}
                     color="primary"
@@ -330,7 +330,7 @@ export function CareerManagementPage() {
                     {carrera.instituto} • Duración: {carrera.duracion} años
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mr: 2 }}>
+                <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1, mr: 2 }}>
                   {estaInscripto(carrera.id) ? (
                     <Chip size="small" color="success" label="Inscripto" />
                   ) : (
@@ -421,6 +421,25 @@ export function CareerManagementPage() {
                     </TableContainer>
                   </Grid>
                 </Grid>
+                <Box sx={{ display: { xs: 'flex', sm: 'none' }, justifyContent: 'center', mt: 2 }}>
+                  {estaInscripto(carrera.id) ? (
+                    <Chip size="small" color="success" label="Inscripto" />
+                  ) : (
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleInscribirse(carrera.id);
+                      }}
+                      disabled={
+                        inscripcionLoadingId === carrera.id || bloquearInscripcion(carrera)
+                      }
+                    >
+                      {inscripcionLoadingId === carrera.id ? 'Inscribiendo...' : 'Inscribirme'}
+                    </Button>
+                  )}
+                </Box>
               </AccordionDetails>
             </Accordion>
           ))}

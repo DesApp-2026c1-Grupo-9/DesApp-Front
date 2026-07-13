@@ -153,10 +153,10 @@ export default function MiPerfilPage() {
           ) : (
             <Typography variant="body2" color="text.secondary" mt={0.5}>Estudiante</Typography>
           )}
-          <Box mt={2} display="flex" flexDirection="column" alignItems="center">
-            <Box display="flex" alignItems="center" gap={0.5}>
-              <Email sx={{ fontSize: 18, color: 'text.secondary' }} />
-              <Typography variant="body2">{usuario.email || '-'}</Typography>
+          <Box mt={2} display="flex" flexDirection="column" alignItems="center" sx={{ px: 1 }}>
+            <Box display="flex" alignItems="flex-start" gap={0.5} sx={{ textAlign: 'center' }}>
+              <Email sx={{ fontSize: 18, color: 'text.secondary', flexShrink: 0 }} />
+              <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>{usuario.email || '-'}</Typography>
             </Box>
             <Box display="flex" alignItems="center" gap={0.5} mt={0.5}>
               <Cake sx={{ fontSize: 18, color: 'text.secondary' }} />
@@ -193,19 +193,19 @@ export default function MiPerfilPage() {
                     <LinearProgress variant="determinate" value={progreso} sx={{ height: 8, borderRadius: 4 }} />
                   </Box>
                   <Grid container spacing={2}>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.50', borderRadius: 2, border: '1px solid', borderColor: 'success.200' }}>
                         <Typography variant="h4" fontWeight="bold" color="success.main">{stats.materiasAprobadas || 0}</Typography>
                         <Typography variant="caption" color="text.secondary">Aprobadas</Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'warning.50', borderRadius: 2, border: '1px solid', borderColor: 'warning.200' }}>
                         <Typography variant="h4" fontWeight="bold" color="warning.main">{stats.materiasRegularizaciones || 0}</Typography>
                         <Typography variant="caption" color="text.secondary">Regularizadas</Typography>
                       </Paper>
                     </Grid>
-                    <Grid item xs={4}>
+                    <Grid item xs={12} sm={4}>
                       <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'info.50', borderRadius: 2, border: '1px solid', borderColor: 'info.200' }}>
                         <Typography variant="h4" fontWeight="bold" color="info.main">{stats.materiasCursando || 0}</Typography>
                         <Typography variant="caption" color="text.secondary">Cursando</Typography>
