@@ -526,13 +526,10 @@ const Home = () => {
                       ))}
                     </List>
                   ) : (
-                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                    <Box sx={{ textAlign: 'center', py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                       <Typography variant="body2" color="text.secondary">
                         No estás cursando materias en este cuatrimestre
                       </Typography>
-                      <Button size="small" sx={{ mt: 1 }} onClick={() => navigate('/academico/mis-materias')}>
-                        Ir a Mis Materias
-                      </Button>
                     </Box>
                   )}
                 </SectionCard>
