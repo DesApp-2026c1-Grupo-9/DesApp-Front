@@ -241,11 +241,6 @@ export function Sidebar({ mobileOpen, onToggle }) {
             UNAHUR
           </Typography>
         </Box>
-        {isMobile && (
-          <IconButton onClick={onToggle} size="small">
-            <ChevronLeft />
-          </IconButton>
-        )}
       </Box>
 
       <List sx={{ flexGrow: 1, overflowY: 'auto', pt: 0, pb: 1 }}>

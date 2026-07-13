@@ -7,7 +7,7 @@ import {
   AccordionDetails, Divider, Dialog, DialogTitle, DialogContent,
   DialogActions, List, ListItem, ListItemText, ListItemIcon,
   TextField, FormControl, FormControlLabel, InputLabel, Checkbox, IconButton, Snackbar,
-  CircularProgress, MenuItem, Select, Menu, useMediaQuery, useTheme,
+  CircularProgress, MenuItem, Select, Menu, Collapse, useMediaQuery, useTheme,
 } from '@mui/material';
 import {
   ExpandMore, CheckCircle, Schedule, School, TrendingUp,
@@ -565,6 +565,7 @@ export default function AsistenteAcademico() {
   const [planificadorFeedback, setPlanificadorFeedback] = useState(null);
   const [planActionLoadingId, setPlanActionLoadingId] = useState(null);
   const [planActionFeedback, setPlanActionFeedback] = useState(null);
+  const [expandedFaltaRecibirse, setExpandedFaltaRecibirse] = useState(false);
 
   // Hook compartido para importar materias desde Excel/CSV
   const {
@@ -1285,44 +1286,63 @@ export default function AsistenteAcademico() {
             </CardContent>
           </Card>
 
-          {/* Finales pendientes */}
-          <Card sx={{ mb: 3 }}>
+          {/* Análisis por año */}
+          <Card>
             <CardContent>
               <Typography variant="h6" display="flex" alignItems="center" gap={1} mb={2}>
-                <Schedule color="warning" /> Finales pendientes ({finalesPendientes.length})
+                <EmojiEvents color="primary" /> Análisis por año
               </Typography>
-              {finalesOrdenados.length === 0 ? (
-                <Alert severity="success">No tenés finales pendientes.</Alert>
-              ) : (
-                <TableContainer sx={{ overflowX: 'auto' }}>
-                  <Table size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Materia</TableCell>
-                        <TableCell>Carrera/s</TableCell>
-                        <TableCell>Año</TableCell>
-                        <TableCell>Horas</TableCell>
-                        <TableCell>Fecha regularidad</TableCell>
-                        <TableCell>Vence estimado</TableCell>
-                        <TableCell>Intentos previos</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {finalesOrdenados.map((m) => (
-                        <TableRow key={m.id}>
-                          <TableCell>{m.nombre}</TableCell>
-                          <TableCell>{formatearCarrerasMateria(m.carreras)}</TableCell>
-                          <TableCell>{m.anio}°</TableCell>
-                          <TableCell>{formatHoras(m.cargaHoraria)}</TableCell>
-                          <TableCell>{formatFechaCorta(m.fechaRegularidad)}</TableCell>
-                          <TableCell>{formatFechaCorta(m.fechaVencimientoRegularidad)}</TableCell>
-                          <TableCell>{m.intentosPrevios ?? 'Sin datos'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
+              {analisisPorAnioEntries.map(([anio, datos]) => (
+                  <Accordion key={anio} disableGutters>
+                    <AccordionSummary expandIcon={<ExpandMore />}>
+                      <Box display="flex" flexDirection="column" width="100%" gap={0.5}>
+                        <Box display="flex" alignItems="center" gap={1} width="100%">
+                          <Typography fontWeight="bold" sx={{ whiteSpace: 'nowrap' }}>{anio}° año</Typography>
+                          {datos.completo ? (
+                            <Chip label="Completo" color="success" size="small" icon={<CheckCircle />} />
+                          ) : (
+                            <Chip label={`${datos.faltantes} faltantes`} color="default" size="small" />
+                          )}
+                        </Box>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatHoras(datos.cargaHorariaAprobada + datos.cargaHorariaRegularizada)} de {formatHoras(datos.cargaHorariaTotal)}
+                        </Typography>
+                        <LinearProgress
+                          variant="determinate"
+                          value={datos.total > 0 ? Math.round(((datos.aprobadas + datos.regularizadas) / datos.total) * 100) : 0}
+                          sx={{ width: '100%', height: 6, borderRadius: 3 }}
+                          color="success"
+                        />
+                      </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Grid container spacing={1} sx={{ mb: 1 }}>
+                        {[
+                          { label: 'Aprobadas', value: datos.aprobadas, color: 'success' },
+                          { label: 'Regularizadas', value: datos.regularizadas, color: 'warning' },
+                          { label: 'Cursando', value: datos.cursando, color: 'info' },
+                          { label: 'Faltantes', value: datos.faltantes, color: 'default' },
+                        ].map((s) => (
+                          <Grid item xs={6} key={s.label}>
+                            <Chip label={`${s.value} ${s.label}`} color={s.color} size="small" sx={{ width: '100%', minWidth: 0 }} />
+                          </Grid>
+                        ))}
+                      </Grid>
+                      <Grid container spacing={1}>
+                        {[
+                          { label: 'Horas aprobadas', value: datos.cargaHorariaAprobada },
+                          { label: 'Horas regularizadas', value: datos.cargaHorariaRegularizada },
+                          { label: 'Horas cursando', value: datos.cargaHorariaCursando },
+                          { label: 'Horas pendientes', value: datos.cargaHorariaPendiente },
+                        ].map((s) => (
+                          <Grid item xs={12} sm={6} key={s.label}>
+                            <Chip label={`${s.label}: ${formatHoras(s.value)}`} size="small" variant="outlined" sx={{ width: '100%' }} />
+                          </Grid>
+                        ))}
+                      </Grid>
+                    </AccordionDetails>
+                  </Accordion>
+                ))}
             </CardContent>
           </Card>
         </Grid>
@@ -1406,64 +1426,44 @@ export default function AsistenteAcademico() {
             </CardContent>
           </Card>
 
-          {/* Análisis por año */}
-          <Card>
+          {/* Finales pendientes */}
+          <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" display="flex" alignItems="center" gap={1} mb={2}>
-                <EmojiEvents color="primary" /> Análisis por año
+                <Schedule color="warning" /> Finales pendientes ({finalesPendientes.length})
               </Typography>
-              {analisisPorAnioEntries.map(([anio, datos]) => (
-                  <Accordion key={anio} disableGutters>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Box display="flex" flexDirection="column" width="100%" gap={1}>
-                        <Box display="flex" alignItems="center" gap={2} width="100%">
-                          <Typography fontWeight="bold">{anio}° año</Typography>
-                          {datos.completo ? (
-                            <Chip label="Completo" color="success" size="small" icon={<CheckCircle />} />
-                          ) : (
-                            <Chip label={`${datos.faltantes} faltantes`} color="default" size="small" />
-                          )}
-                          <Box flexGrow={1} />
-                          <Typography variant="caption" color="text.secondary">
-                            {formatHoras(datos.cargaHorariaAprobada + datos.cargaHorariaRegularizada)} de {formatHoras(datos.cargaHorariaTotal)}
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={datos.total > 0 ? Math.round(((datos.aprobadas + datos.regularizadas) / datos.total) * 100) : 0}
-                          sx={{ width: '100%', height: 6, borderRadius: 3 }}
-                          color="success"
-                        />
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Grid container spacing={1} sx={{ mb: 1 }}>
-                        {[
-                          { label: 'Aprobadas', value: datos.aprobadas, color: 'success' },
-                          { label: 'Regularizadas', value: datos.regularizadas, color: 'warning' },
-                          { label: 'Cursando', value: datos.cursando, color: 'info' },
-                          { label: 'Faltantes', value: datos.faltantes, color: 'default' },
-                        ].map((s) => (
-                          <Grid item xs={6} key={s.label}>
-                            <Chip label={`${s.value} ${s.label}`} color={s.color} size="small" sx={{ width: '100%' }} />
-                          </Grid>
-                        ))}
-                      </Grid>
-                      <Grid container spacing={1}>
-                        {[
-                          { label: 'Horas aprobadas', value: datos.cargaHorariaAprobada },
-                          { label: 'Horas regularizadas', value: datos.cargaHorariaRegularizada },
-                          { label: 'Horas cursando', value: datos.cargaHorariaCursando },
-                          { label: 'Horas pendientes', value: datos.cargaHorariaPendiente },
-                        ].map((s) => (
-                          <Grid item xs={6} key={s.label}>
-                            <Chip label={`${s.label}: ${formatHoras(s.value)}`} size="small" variant="outlined" sx={{ width: '100%' }} />
-                          </Grid>
-                        ))}
-                      </Grid>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
+              {finalesOrdenados.length === 0 ? (
+                <Alert severity="success">No tenés finales pendientes.</Alert>
+              ) : (
+                <TableContainer sx={{ overflowX: 'auto' }}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Materia</TableCell>
+                        <TableCell>Carrera/s</TableCell>
+                        <TableCell>Año</TableCell>
+                        <TableCell>Horas</TableCell>
+                        <TableCell>Fecha regularidad</TableCell>
+                        <TableCell>Vence estimado</TableCell>
+                        <TableCell>Intentos previos</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {finalesOrdenados.map((m) => (
+                        <TableRow key={m.id}>
+                          <TableCell>{m.nombre}</TableCell>
+                          <TableCell>{formatearCarrerasMateria(m.carreras)}</TableCell>
+                          <TableCell>{m.anio}°</TableCell>
+                          <TableCell>{formatHoras(m.cargaHoraria)}</TableCell>
+                          <TableCell>{formatFechaCorta(m.fechaRegularidad)}</TableCell>
+                          <TableCell>{formatFechaCorta(m.fechaVencimientoRegularidad)}</TableCell>
+                          <TableCell>{m.intentosPrevios ?? 'Sin datos'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -1471,24 +1471,30 @@ export default function AsistenteAcademico() {
 
       {/* Qué falta para recibirse */}
       <Card sx={{ mt: 3, mb: 3 }}>
-        <CardContent>
-          <Typography variant="h6" display="flex" alignItems="center" gap={1} mb={2}>
-            <School color="primary" /> Qué te falta para recibirse
-          </Typography>
+        <CardContent sx={{ p: { xs: 2, sm: 3 }, pb: expandedFaltaRecibirse ? { xs: 1, sm: 2 } : { xs: 2, sm: 3 } }}>
+          <Box
+            display="flex" alignItems="center" justifyContent="space-between" sx={{ cursor: 'pointer' }}
+            onClick={() => setExpandedFaltaRecibirse((prev) => !prev)}
+          >
+            <Typography variant="h6" display="flex" alignItems="center" gap={1}>
+              <School color="primary" /> Qué te falta para recibirte
+            </Typography>
+            <ExpandMore sx={{ transform: expandedFaltaRecibirse ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+          </Box>
 
-          <Grid container spacing={2} sx={{ mb: 2 }}>
+          <Grid container spacing={1} sx={{ mb: 2 }}>
             {[
               { label: 'Materias por cursar', value: materiasPendientes.length, color: 'primary.main' },
-              { label: 'Materias disponibles', value: puedeCursar.length, color: 'success.main' },
-              { label: 'Finales pendientes', value: finalesPendientes.length, color: 'warning.main' },
-              { label: 'Horas pendientes', value: formatHoras(horasPendientes), color: 'text.primary' },
+              { label: 'Disponibles', value: puedeCursar.length, color: 'success.main' },
+              { label: 'Finales', value: finalesPendientes.length, color: 'warning.main' },
+              { label: 'Horas', value: formatHoras(horasPendientes), color: 'text.primary' },
             ].map((stat) => (
               <Grid item xs={6} sm={3} key={stat.label}>
-                <Box textAlign="center" sx={{ p: 2, borderRadius: 2, bgcolor: 'grey.50' }}>
-                  <Typography variant="h5" color={stat.color} fontWeight="bold">
+                <Box textAlign="center" sx={{ p: { xs: 1, sm: 2 }, borderRadius: 2, bgcolor: 'grey.50' }}>
+                  <Typography variant={{ xs: 'h6', sm: 'h5' }} color={stat.color} fontWeight="bold">
                     {stat.value}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
                     {stat.label}
                   </Typography>
                 </Box>
@@ -1496,45 +1502,82 @@ export default function AsistenteAcademico() {
             ))}
           </Grid>
 
+          <Collapse in={expandedFaltaRecibirse}>
           {materiasPendientes.length === 0 ? (
             <Alert severity="success">No te quedan materias por cursar para completar el plan.</Alert>
           ) : (
-            <TableContainer sx={{ mb: 2 }}>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Materia</TableCell>
-                    <TableCell>Año</TableCell>
-                    <TableCell>Horas</TableCell>
-                    <TableCell>Disponible ahora</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {materiasPendientes.map((m) => (
-                    <TableRow key={m.id}>
-                      <TableCell>{m.nombre}</TableCell>
-                      <TableCell>{m.anio ? `${m.anio}°` : 'Sin año'}</TableCell>
-                      <TableCell>{formatHoras(m.cargaHoraria)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={m.disponible ? 'Sí' : 'No'}
-                          size="small"
-                          color={m.disponible ? 'success' : 'default'}
-                          variant="outlined"
-                        />
-                      </TableCell>
+            <>
+              {/* Desktop table */}
+              <TableContainer sx={{ mb: 2, display: { xs: 'none', sm: 'block' } }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Materia</TableCell>
+                      <TableCell>Año</TableCell>
+                      <TableCell>Horas</TableCell>
+                      <TableCell>Disponible ahora</TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {materiasPendientes.map((m) => (
+                      <TableRow key={m.id}>
+                        <TableCell>{m.nombre}</TableCell>
+                        <TableCell>{m.anio ? `${m.anio}°` : 'Sin año'}</TableCell>
+                        <TableCell>{formatHoras(m.cargaHoraria)}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={m.disponible ? 'Sí' : 'No'}
+                            size="small"
+                            color={m.disponible ? 'success' : 'default'}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {/* Mobile compact list */}
+              <Box sx={{ display: { xs: 'flex', sm: 'none' }, flexDirection: 'column', gap: 1, mb: 2 }}>
+                {materiasPendientes.map((m) => (
+                  <Box
+                    key={m.id}
+                    sx={{
+                      p: 1.5,
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: m.disponible ? 'success.light' : 'grey.300',
+                      bgcolor: m.disponible ? 'success.50' : 'grey.50',
+                    }}
+                  >
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" gap={1}>
+                      <Typography variant="body2" fontWeight={600} sx={{ flex: 1, minWidth: 0 }}>
+                        {m.nombre}
+                      </Typography>
+                      <Chip
+                        label={m.disponible ? 'Disponible' : 'No disponible'}
+                        size="small"
+                        color={m.disponible ? 'success' : 'default'}
+                        variant="outlined"
+                        sx={{ flexShrink: 0, height: 20, '& .MuiChip-label': { fontSize: '0.65rem' } }}
+                      />
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                      {m.anio ? `${m.anio}° año` : 'Sin año'} · {formatHoras(m.cargaHoraria)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
+            </>
           )}
 
           {finalesPendientes.length > 0 && (
-            <Alert severity="info">
+            <Alert severity="info" sx={{ mt: 1 }}>
               Te quedan {finalesPendientes.length} final{finalesPendientes.length > 1 ? 'es' : ''} por rendir sobre materias ya regularizadas.
             </Alert>
           )}
+          </Collapse>
         </CardContent>
       </Card>
 

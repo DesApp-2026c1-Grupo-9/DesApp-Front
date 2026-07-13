@@ -5,7 +5,7 @@ import {
   Typography, Button, Box, FormControl, InputLabel, Select, MenuItem,
   TextField, Dialog, DialogTitle, DialogContent, DialogActions,
   DialogContentText, Tabs, Tab, FormControlLabel, Grid,
-  Chip, Stack
+  Chip, Stack, useTheme, useMediaQuery,
 } from '@mui/material';
 import { Add } from '@mui/icons-material';
 import { LocalizationProvider, DatePicker } from '@mui/x-date-pickers';
@@ -26,6 +26,8 @@ import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 
 const Sesiones = () => {
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user, students, conexiones } = useSelector(state => state.auth);
   const { list: sesiones, loading, error, operationLoading } = useSelector(state => state.sesiones);
 
@@ -286,12 +288,12 @@ const Sesiones = () => {
                 value={filters.materia || ''}
                 onChange={(e) => setFilter('materia', e.target.value || null)}
                 MenuProps={{
-                  PaperProps: { style: { maxHeight: 280, width: materiaMenuWidth || undefined } }
+                  PaperProps: { style: { maxHeight: 280, maxWidth: '90vw', width: materiaMenuWidth || undefined } }
                 }}
               >
                 <MenuItem value="">Todas</MenuItem>
                 {materias?.map(m => (
-                  <MenuItem key={m.id} value={m.id}>
+                  <MenuItem key={m.id} value={m.id} sx={{ whiteSpace: 'normal' }}>
                     {m.nombre}
                   </MenuItem>
                 ))}
@@ -335,7 +337,7 @@ const Sesiones = () => {
           </Grid>
         </Grid>
 
-        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5 }}>
+        <Stack direction="row" spacing={1} sx={{ mb: 2, flexWrap: 'wrap', gap: 0.5, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
           <Chip
             label="Hoy"
             size="small"
@@ -395,18 +397,34 @@ const Sesiones = () => {
       </Box>
 
       {/* Tab bar */}
-      <Tabs 
-        value={activeTab} 
-        onChange={(e, v) => setActiveTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ mb: 2 }}
-      >
-        <Tab value="todas" label="TODAS LAS SESIONES" />
-        <Tab value="misMaterias" label="MIS MATERIAS" />
-        <Tab value="misInscripciones" label="MIS INSCRIPCIONES" />
-        <Tab value="misSesiones" label="MIS SESIONES" />
-      </Tabs>
+      {isMobile ? (
+        <FormControl size="small" sx={{ mb: 2, mt: 1 }} fullWidth>
+          <InputLabel>Sesiones</InputLabel>
+          <Select
+            value={activeTab}
+            label="Sesiones"
+            onChange={(e) => setActiveTab(e.target.value)}
+          >
+            <MenuItem value="todas">Todas las sesiones</MenuItem>
+            <MenuItem value="misMaterias">Mis materias</MenuItem>
+            <MenuItem value="misInscripciones">Mis inscripciones</MenuItem>
+            <MenuItem value="misSesiones">Mis sesiones</MenuItem>
+          </Select>
+        </FormControl>
+      ) : (
+        <Tabs 
+          value={activeTab} 
+          onChange={(e, v) => setActiveTab(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ mb: 2 }}
+        >
+          <Tab value="todas" label="TODAS LAS SESIONES" />
+          <Tab value="misMaterias" label="MIS MATERIAS" />
+          <Tab value="misInscripciones" label="MIS INSCRIPCIONES" />
+          <Tab value="misSesiones" label="MIS SESIONES" />
+        </Tabs>
+      )}
 
       {/* Active Filters Display */}
       {showClearButton && (

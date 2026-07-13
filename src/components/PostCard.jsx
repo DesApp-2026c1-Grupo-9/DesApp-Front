@@ -162,10 +162,10 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
   };
 
   return (
-    <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2, '&:hover': { boxShadow: 2 } }}>
+    <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2, '&:hover': { boxShadow: 2 }, overflow: 'hidden', minWidth: 0 }}>
       {isSesionEvento ? (
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, minWidth: 0 }}>
             <Avatar
               src={post.autor?.avatar}
               sx={{ width: 45, height: 45, cursor: 'pointer' }}
@@ -174,11 +174,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
               {post.autor?.nombre?.charAt(0)}
             </Avatar>
             <Box sx={{ flex: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', minWidth: 0, mb: 0.75 }}>
                 <Typography
                   variant="subtitle1"
                   fontWeight="bold"
-                  sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                  sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' }, fontSize: { xs: '0.9rem', sm: '1rem' } }}
                   onClick={() => navigate('/perfil/' + post.autor?.id)}
                 >
                   {post.autor?.nombre} {post.autor?.apellido || ''}
@@ -206,10 +206,12 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
               borderColor: 'grey.200',
               cursor: 'pointer',
               '&:hover': { borderColor: 'primary.main' },
+              overflow: 'hidden',
+              minWidth: 0,
             }}
             onClick={() => post.sesionId && navigate('/sesiones')}
           >
-            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: { xs: '0.9rem', sm: '1.25rem' } }}>
               <School color="primary" /> {post.materia?.nombre || 'Materia'}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -247,7 +249,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
           </Box>
         </CardContent>
       ) : isEvento ? (
-        <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'hidden', minWidth: 0 }}>
           <Avatar
             src={post.autor?.avatar}
             sx={{ width: 45, height: 45, cursor: 'pointer' }}
@@ -256,11 +258,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
             {post.autor?.nombre?.charAt(0)}
           </Avatar>
           <Box sx={{ flex: 1 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', minWidth: 0, mb: 0.75 }}>
               <Typography
                 variant="subtitle1"
                 fontWeight="bold"
-                sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' }, fontSize: { xs: '0.9rem', sm: '1rem' } }}
                 onClick={() => navigate('/perfil/' + post.autor?.id)}
               >
                 {post.autor?.nombre} {post.autor?.apellido}
@@ -273,7 +275,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                 variant="outlined"
               />
             </Box>
-            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexWrap: 'wrap', minWidth: 0 }}>
               <Typography variant="caption" color="text.secondary">
                 {formatFechaRelative(post.fecha)}
               </Typography>
@@ -305,7 +307,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
             <Typography
               variant="subtitle1"
               fontWeight="bold"
-              sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+              sx={{ cursor: 'pointer', '&:hover': { textDecoration: 'underline' }, fontSize: { xs: '0.9rem', sm: '1rem' } }}
               onClick={() => navigate('/perfil/' + post.autor?.id)}
             >
               {post.autor?.nombre} {post.autor?.apellido}
@@ -330,7 +332,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         />
       )}
 
-      <CardContent sx={{ px: 3 }}>
+      <CardContent sx={{ px: { xs: 2, sm: 3 }, overflow: 'hidden' }}>
         {isEditing ? (
           <Box>
             <TextField
@@ -351,11 +353,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         ) : (
           <>
             {isEvento ? (
-              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: { xs: '0.9rem', sm: '1.25rem' } }}>
                 <School color="primary" /> {post.materia?.nombre}
               </Typography>
             ) : isSesionEvento ? null : (
-              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 {post.contenido}
               </Typography>
             )}
@@ -379,7 +381,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
           {post.likesCount || 0}
         </Typography>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', mr: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mr: 3, overflow: 'hidden' }}>
           {post.likesDetails?.map((user) => (
             <Avatar
               key={user.id}
@@ -405,19 +407,21 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
 
       <Collapse in={showComentarios} keepMounted timeout={475}>
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: '1px solid #eee' }}>
-          <Box sx={{ display: 'flex', gap: 1, mt: 2, mb: 2 }}>
+          <Box sx={{ display: 'flex', gap: 1, mt: 2, mb: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' }, justifyContent: { xs: 'flex-end', sm: 'flex-start' } }}>
             <TextField
               fullWidth
               size="small"
               placeholder="Escribe un comentario..."
               value={nuevoComentario}
               onChange={(e) => setNuevoComentario(e.target.value)}
+              sx={{ minWidth: 0 }}
             />
             <Button
               variant="contained"
               size="small"
               onClick={handleAddComentario}
               disabled={!nuevoComentario.trim()}
+              sx={{ minWidth: { xs: 'auto', sm: 64 } }}
             >
               Enviar
             </Button>
@@ -438,9 +442,10 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
             {comentarios
               .slice(Math.max(0, comentarios.length - visibleCount))
               .map((com) => (
-                <Box key={com.id}>
+                <Box key={com.id} sx={{ minWidth: 0, overflow: 'hidden' }}>
                   <ListItem
                     alignItems="flex-start"
+                    sx={{ overflow: 'hidden', pr: { xs: 1, sm: 7 } }}
                     secondaryAction={
                       String(com.autor?.id) === String(currentUserId) && (
                         <IconButton
@@ -483,7 +488,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                         <ListItemText
                           primary={
                             <Box
-                              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}
+                              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, mb: 0.5 }}
                             >
                               <Typography
                                 variant="subtitle2"
@@ -492,18 +497,20 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                               >
                                 {com.autor?.nombre} {com.autor?.apellido}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                • {formatFechaComentario(com.createdAt)}
-                              </Typography>
-                              {com.editedAt && (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ fontStyle: 'italic' }}
-                                >
-                                  • editado
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatFechaComentario(com.createdAt)}
                                 </Typography>
-                              )}
+                                {com.editedAt && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ fontStyle: 'italic' }}
+                                  >
+                                    • editado
+                                  </Typography>
+                                )}
+                              </Box>
                             </Box>
                           }
                           secondary={
@@ -585,13 +592,14 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                   </ListItem>
 
                   {replyingTo === com.id && (
-                    <Box sx={{ display: 'flex', gap: 1, ml: 7, mb: 1, mt: 1 }}>
+                    <Box sx={{ display: 'flex', gap: 1, ml: { xs: 2, sm: 7 }, mb: 1, mt: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       <TextField
                         fullWidth
                         size="small"
                         placeholder="Escribe una respuesta..."
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
+                        sx={{ minWidth: 0 }}
                       />
                       <Button
                         size="small"
@@ -604,13 +612,14 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                   )}
 
                   {com.respuestas && com.respuestas.length > 0 && (
-                    <List dense sx={{ ml: 4 }}>
+                    <List dense sx={{ ml: { xs: 4, sm: 4 }, minWidth: 0, overflow: 'hidden' }}>
                       {com.respuestas
                         .filter((reply) => reply && reply.id)
                         .map((reply) => (
                           <ListItem
                             key={reply.id}
                             alignItems="flex-start"
+                            sx={{ overflow: 'hidden', pr: { xs: 1, sm: 7 } }}
                             secondaryAction={
                               reply.autor &&
                               String(reply.autor?.id) === String(currentUserId) && (
@@ -656,27 +665,29 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                 <ListItemText
                                   primary={
                                     <Box
-                                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, minWidth: 0 }}
                                     >
-                                      <Typography variant="caption" fontWeight="bold">
-                                        {reply.autor?.nombre} {reply.autor?.apellido}
-                                      </Typography>
-                                      <Typography variant="caption" color="text.secondary">
-                                        • {formatFechaComentario(reply.createdAt)}
-                                      </Typography>
-                                      {reply.editedAt && (
-                                        <Typography
-                                          variant="caption"
-                                          color="text.secondary"
-                                          sx={{ fontStyle: 'italic' }}
-                                        >
-                                          • editado
+                                        <Typography variant="caption" fontWeight="bold">
+                                          {reply.autor?.nombre} {reply.autor?.apellido}
                                         </Typography>
-                                      )}
-                                    </Box>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                          <Typography variant="caption" color="text.secondary">
+                                            {formatFechaComentario(reply.createdAt)}
+                                          </Typography>
+                                          {reply.editedAt && (
+                                            <Typography
+                                              variant="caption"
+                                              color="text.secondary"
+                                              sx={{ fontStyle: 'italic' }}
+                                            >
+                                              • editado
+                                            </Typography>
+                                          )}
+                                        </Box>
+                                      </Box>
                                   }
                                   secondary={
-                                    <Typography variant="body2" color="text.primary">
+                                    <Typography variant="body2" color="text.primary" sx={{ wordBreak: 'break-word' }}>
                                       {reply.contenido}
                                     </Typography>
                                   }

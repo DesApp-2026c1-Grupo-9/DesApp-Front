@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,9 +16,12 @@ import {
   FormGroup,
   Tabs,
   Tab,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { Save, Shield, AutoAwesome, Person, ArrowBack } from '@mui/icons-material';
 import { PageContainer } from '../components/ui';
+import { MobileHeaderActionContext } from '../layouts/PublicLayout';
 import { updateUserData, fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 import { useAuth } from '../context/AuthContext';
 import { useSnackbar } from '../hooks';
@@ -252,12 +255,28 @@ function PreferencesSection() {
 
 export default function ConfiguracionPage() {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const setMobileHeaderAction = useContext(MobileHeaderActionContext);
   const [tab, setTab] = useState(0);
+
+  const mobileHeaderButton = useMemo(() => (
+    <Button startIcon={<ArrowBack />} onClick={() => navigate('/mi-perfil')} variant="outlined" size="small">
+      Mi Perfil
+    </Button>
+  ), [navigate]);
+
+  useEffect(() => {
+    if (setMobileHeaderAction && isMobile) {
+      setMobileHeaderAction(mobileHeaderButton);
+      return () => setMobileHeaderAction(null);
+    }
+  }, [setMobileHeaderAction, mobileHeaderButton, isMobile]);
 
   return (
     <PageContainer maxWidth={1200}>
       <Box>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Box sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'flex-end', mb: 2 }}>
           <Button startIcon={<ArrowBack />} onClick={() => navigate('/mi-perfil')} variant="outlined" size="small" sx={{ minWidth: 0 }}>
             Mi Perfil
           </Button>

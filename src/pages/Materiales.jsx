@@ -12,6 +12,8 @@ import {
   InputLabel,
   Button,
   Alert,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 import { Search, Add } from '@mui/icons-material';
 import {
@@ -34,6 +36,8 @@ import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
 const Materiales = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { list: materiales = [], materias = [], loading, error, filter, operationLoading } =
     useSelector((state) => state.materiales);
   const { user } = useSelector((state) => state.auth);
@@ -183,10 +187,12 @@ const Materiales = () => {
 
       <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
         <TextField
-          placeholder="Buscar por título, tags o materia..."
+          placeholder={isMobile ? "Buscar material..." : "Buscar por título, tags o materia..."}
           value={filters.search}
           onChange={(e) => setFilterValue('search', e.target.value)}
           sx={{ flex: 1, minWidth: { xs: '100%', md: 250 } }}
+          helperText={isMobile ? "Podés buscar por título, tags o nombre de materia" : undefined}
+          inputProps={{ sx: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -202,10 +208,13 @@ const Materiales = () => {
             value={filters.materiaId}
             label="Materia"
             onChange={handleMateriaChange}
+            MenuProps={{
+              PaperProps: { style: { maxHeight: 280, maxWidth: '90vw' } }
+            }}
           >
             <MenuItem value="">Todas</MenuItem>
             {(materias || []).map((m) => (
-              <MenuItem key={m.id} value={m.id}>
+              <MenuItem key={m.id} value={m.id} sx={{ whiteSpace: 'normal' }}>
                 {m.nombre} ({m.codigo})
               </MenuItem>
             ))}
