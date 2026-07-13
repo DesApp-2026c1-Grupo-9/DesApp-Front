@@ -162,7 +162,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
   };
 
   return (
-    <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2, '&:hover': { boxShadow: 2 }, overflow: 'hidden', minWidth: 0 }}>
+    <Card sx={{ mb: 3, borderRadius: 2, boxShadow: 2, '&:hover': { boxShadow: 2 }, minWidth: 0 }}>
       {isSesionEvento ? (
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, minWidth: 0 }}>
@@ -442,12 +442,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
             {comentarios
               .slice(Math.max(0, comentarios.length - visibleCount))
               .map((com) => (
-                <Box key={com.id} sx={{ minWidth: 0, overflow: 'hidden' }}>
+                <Box key={com.id} sx={{ minWidth: 0 }}>
                   <ListItem
                     alignItems="flex-start"
-                    sx={{ overflow: 'hidden', pr: { xs: 1, sm: 7 } }}
                     secondaryAction={
-                      String(com.autor?.id) === String(currentUserId) && (
+                      String(com.autor?.id) === String(user?.id) ? (
                         <IconButton
                           edge="end"
                           size="small"
@@ -458,8 +457,9 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                         >
                           <MoreVert fontSize="small" />
                         </IconButton>
-                      )
+                      ) : null
                     }
+                    sx={{ '& .MuiListItemSecondaryAction-root': { display: 'none' } }}
                   >
                     <ListItemAvatar>
                       <Avatar src={com.autor?.avatarUrl} sx={{ width: 35, height: 35 }}>
@@ -468,20 +468,23 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                     </ListItemAvatar>
 
                     {editandoComentarioId === com.id ? (
-                      <Box sx={{ flex: 1 }}>
+                      <Box sx={{ flex: 1, minWidth: { xs: 0, sm: undefined } }}>
                         <TextField
                           fullWidth
                           size="small"
                           multiline
+                                  minRows={2}
                           value={editComentarioContent}
                           onChange={(e) => setEditComentarioContent(e.target.value)}
                         />
-                        <Button size="small" onClick={handleEditComentario}>
-                          Guardar
-                        </Button>
-                        <Button size="small" onClick={() => setEditandoComentarioId(null)}>
-                          Cancelar
-                        </Button>
+                        <Box sx={{ display: { xs: 'flex', sm: 'block' }, justifyContent: 'flex-end', gap: 1, mt: { xs: 0.5, sm: 0 } }}>
+                          <Button size="small" onClick={() => setEditandoComentarioId(null)}>
+                            Cancelar
+                          </Button>
+                          <Button size="small" variant="contained" onClick={handleEditComentario}>
+                            Guardar
+                          </Button>
+                        </Box>
                       </Box>
                     ) : (
                       <Box sx={{ flex: 1 }}>
@@ -490,13 +493,27 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                             <Box
                               sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, mb: 0.5 }}
                             >
-                              <Typography
-                                variant="subtitle2"
-                                fontWeight="bold"
-                                sx={{ fontSize: '0.85rem' }}
-                              >
-                                {com.autor?.nombre} {com.autor?.apellido}
-                              </Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Typography
+                                  variant="subtitle2"
+                                  fontWeight="bold"
+                                  sx={{ fontSize: '0.85rem' }}
+                                >
+                                  {com.autor?.nombre} {com.autor?.apellido}
+                                </Typography>
+                                {String(com.autor?.id) === String(user?.id) && (
+                                  <IconButton
+                                    size="small"
+                                    sx={{ flexShrink: 0 }}
+                                    onClick={(e) => {
+                                      setComentarioSeleccionado(com);
+                                      setComentarioMenuEl(e.currentTarget);
+                                    }}
+                                  >
+                                    <MoreVert fontSize="small" />
+                                  </IconButton>
+                                )}
+                              </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <Typography variant="caption" color="text.secondary">
                                   {formatFechaComentario(com.createdAt)}
@@ -525,7 +542,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                         >
                           <Tooltip
                             title={
-                              String(com.autor?.id) === String(currentUserId)
+                              String(com.autor?.id) === String(user?.id)
                                 ? 'No puedes dar like a tu propio comentario'
                                 : ''
                             }
@@ -534,10 +551,10 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                               size="small"
                               onClick={() => handleLikeComentario(com.id, com.liked)}
                               color={com.liked ? 'primary' : 'default'}
-                              disabled={String(com.autor?.id) === String(currentUserId)}
+                              disabled={String(com.autor?.id) === String(user?.id)}
                               sx={{
                                 p: 0.5,
-                                ...(String(com.autor?.id) === String(currentUserId)
+                                ...(String(com.autor?.id) === String(user?.id)
                                   ? { opacity: 0.4, cursor: 'not-allowed' }
                                   : {}),
                               }}
@@ -619,10 +636,9 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                           <ListItem
                             key={reply.id}
                             alignItems="flex-start"
-                            sx={{ overflow: 'hidden', pr: { xs: 1, sm: 7 } }}
                             secondaryAction={
                               reply.autor &&
-                              String(reply.autor?.id) === String(currentUserId) && (
+                              String(reply.autor?.id) === String(user?.id) ? (
                                 <IconButton
                                   edge="end"
                                   size="small"
@@ -633,8 +649,9 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                 >
                                   <MoreVert fontSize="small" />
                                 </IconButton>
-                              )
+                              ) : null
                             }
+                    sx={{ px: { xs: 0, sm: undefined }, '& .MuiListItemSecondaryAction-root': { display: 'none' } }}
                           >
                             <ListItemAvatar>
                               <Avatar src={reply.autor?.avatarUrl} sx={{ width: 30, height: 30 }}>
@@ -642,23 +659,23 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                               </Avatar>
                             </ListItemAvatar>
                             {editandoReplyId === reply.id ? (
-                              <Box sx={{ flex: 1 }}>
+                              <Box sx={{ flex: 1, minWidth: { xs: 0, sm: undefined } }}>
                                 <TextField
                                   fullWidth
                                   size="small"
                                   multiline
+                          minRows={2}
                                   value={editReplyContent}
                                   onChange={(e) => setEditReplyContent(e.target.value)}
                                 />
-                                <Button
-                                  size="small"
-                                  onClick={handleEditReply}
-                                >
-                                  Guardar
-                                </Button>
-                                <Button size="small" onClick={() => setEditandoReplyId(null)}>
-                                  Cancelar
-                                </Button>
+                                <Box sx={{ display: { xs: 'flex', sm: 'block' }, justifyContent: 'flex-end', gap: 1, mt: { xs: 0.5, sm: 0 } }}>
+                                  <Button size="small" onClick={() => setEditandoReplyId(null)}>
+                                    Cancelar
+                                  </Button>
+                                  <Button size="small" variant="contained" onClick={handleEditReply}>
+                                    Guardar
+                                  </Button>
+                                </Box>
                               </Box>
                             ) : (
                               <Box sx={{ flex: 1 }}>
@@ -667,9 +684,23 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                     <Box
                                       sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, minWidth: 0 }}
                                     >
-                                        <Typography variant="caption" fontWeight="bold">
-                                          {reply.autor?.nombre} {reply.autor?.apellido}
-                                        </Typography>
+                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                          <Typography variant="caption" fontWeight="bold">
+                                            {reply.autor?.nombre} {reply.autor?.apellido}
+                                          </Typography>
+                                          {reply.autor && String(reply.autor?.id) === String(user?.id) && (
+                                            <IconButton
+                                              size="small"
+                                              sx={{ flexShrink: 0 }}
+                                              onClick={(e) => {
+                                                setReplySeleccionada(reply);
+                                                setReplyMenuEl(e.currentTarget);
+                                              }}
+                                            >
+                                              <MoreVert fontSize="small" />
+                                            </IconButton>
+                                          )}
+                                        </Box>
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                           <Typography variant="caption" color="text.secondary">
                                             {formatFechaComentario(reply.createdAt)}
@@ -697,7 +728,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                 >
                                   <Tooltip
                                     title={
-                                      String(reply.autor?.id) === String(currentUserId)
+                                      String(reply.autor?.id) === String(user?.id)
                                         ? 'No puedes dar like a tu propio comentario'
                                         : ''
                                     }
@@ -706,10 +737,10 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                       size="small"
                                       onClick={() => handleLikeComentario(reply.id, reply.liked)}
                                       color={reply.liked ? 'primary' : 'default'}
-                                      disabled={String(reply.autor?.id) === String(currentUserId)}
+                                      disabled={String(reply.autor?.id) === String(user?.id)}
                                       sx={{
                                         p: 0.5,
-                                        ...(String(reply.autor?.id) === String(currentUserId)
+                                        ...(String(reply.autor?.id) === String(user?.id)
                                           ? { opacity: 0.4, cursor: 'not-allowed' }
                                           : {}),
                                       }}
