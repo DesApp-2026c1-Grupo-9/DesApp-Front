@@ -23,7 +23,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
   const pendingCount = sesion.participantes?.filter(p => p.estado === 'pendiente').length || 0;
 
   // Get materia name from prop or fallback to ID
-  const materiaNombre = materias?.find(m => m.id === sesion.materiaId)?.nombre || `Materia ${sesion.materiaId}`;
+  const materiaNombre = sesion.materia?.nombre || materias?.find(m => m.id === sesion.materiaId)?.nombre || `Materia ${sesion.materiaId}`;
 
   // Get creator display name
   const creador = sesion.creador;
