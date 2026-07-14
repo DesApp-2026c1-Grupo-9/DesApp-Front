@@ -398,7 +398,7 @@ const Sesiones = () => {
             onChange={(e) => setActiveTab(e.target.value)}
           >
             <MenuItem value="todas">Todas las sesiones</MenuItem>
-            <MenuItem value="misMaterias">Mis materias</MenuItem>
+            <MenuItem value="misMaterias">Mis carreras</MenuItem>
             <MenuItem value="misInscripciones">Mis inscripciones</MenuItem>
             <MenuItem value="misSesiones">Mis sesiones</MenuItem>
           </Select>
@@ -412,7 +412,7 @@ const Sesiones = () => {
           sx={{ mb: 2 }}
         >
           <Tab value="todas" label="TODAS LAS SESIONES" />
-          <Tab value="misMaterias" label="MIS MATERIAS" />
+          <Tab value="misMaterias" label="MIS CARRERAS" />
           <Tab value="misInscripciones" label="MIS INSCRIPCIONES" />
           <Tab value="misSesiones" label="MIS SESIONES" />
         </Tabs>
