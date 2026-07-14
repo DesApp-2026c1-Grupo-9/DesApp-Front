@@ -90,8 +90,8 @@ const Sesiones = () => {
   const { data: misMateriasIds, loading: loadingMisMaterias, refetch: refetchMisMaterias } = useFetchData({
     fetchFn: () => api.get(`/api/estudiantes/${user.usuarioId || user.id}/materias-ids`)
       .then(res => res.data?.data || []),
-    deps: [activeTab, user?.id],
-    immediate: activeTab === 'misMaterias' && !!user?.id,
+    deps: [user?.id],
+    immediate: !!user?.id,
     timeout: 10000,
   });
 
@@ -260,7 +260,7 @@ const Sesiones = () => {
     setSelectedSesion(null);
   };
 
-  const showLoading = loading || loadingMaterias || (activeTab === 'misMaterias' && loadingMisMaterias);
+  const showLoading = loading || loadingMaterias || (activeTab === 'misMaterias' && (loadingMisMaterias || misMateriasIds === null));
 
   return (
     <PageContainer maxWidth={1200}>
