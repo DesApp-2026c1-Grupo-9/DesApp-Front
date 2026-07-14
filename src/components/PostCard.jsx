@@ -405,7 +405,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         {loadingComentarios && <CircularProgress size={20} sx={{ ml: 1 }} />}
       </Box>
 
-      <Collapse in={showComentarios} keepMounted timeout={475}>
+      <Collapse in={showComentarios} timeout={475}>
         <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: '1px solid #eee' }}>
           <Box sx={{ display: 'flex', gap: 1, mt: 2, mb: 2, flexWrap: { xs: 'wrap', sm: 'nowrap' }, justifyContent: { xs: 'flex-end', sm: 'flex-start' } }}>
             <TextField
