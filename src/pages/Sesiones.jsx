@@ -105,15 +105,7 @@ const Sesiones = () => {
   }, [user, estudianteId, dispatch]);
 
   const misMateriasIdsArray = Array.isArray(misMateriasIds) ? misMateriasIds : [];
-  const materiasPermitidasIds = Array.isArray(materias)
-    ? materias.map((materia) => materia.id)
-    : [];
-
   const filteredSesiones = sesiones.filter(s => {
-    if (materiasPermitidasIds.length > 0 && !materiasPermitidasIds.includes(s.materiaId)) {
-      return false;
-    }
-
     if (activeTab === 'misMaterias') {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
     }
