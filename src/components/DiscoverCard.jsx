@@ -32,7 +32,7 @@ const DiscoverCard = ({ student, onInvite, isInviting, isPending }) => {
                 {student.nombre} {student.apellido}
               </Typography>
             </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, overflowWrap: 'anywhere', ml: { xs: 0, sm: 6.5 }, mt: { xs: 0, sm: 0.25 } }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, overflowWrap: 'anywhere', textAlign: { xs: 'center', sm: 'left' }, ml: { xs: 0, sm: 6.5 }, mt: { xs: 0, sm: 0.25 } }}>
               {student.email}
             </Typography>
           </Box>
