@@ -11,7 +11,7 @@ import {
   InputAdornment,
   IconButton,
 } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { Visibility, VisibilityOff, MenuBook } from '@mui/icons-material';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { registerUser } from '../features/auth/slice';
@@ -65,7 +65,19 @@ const Register = () => {
     <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
       <Card sx={{ maxWidth: 420, width: '100%' }}>
         <CardContent sx={{ p: 4 }}>
-          <Typography variant="h5" gutterBottom align="center">
+          <Box display="flex" alignItems="center" justifyContent="center" gap={1.5} mb={2}>
+            <MenuBook color="primary" sx={{ fontSize: 36 }} />
+            <Box>
+              <Typography variant="subtitle1" fontWeight="bold" lineHeight={1.2}>
+                Sistema Académico
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                UNAHUR
+              </Typography>
+            </Box>
+          </Box>
+
+          <Typography variant="h5" gutterBottom align="left">
             Crear Cuenta
           </Typography>
 
