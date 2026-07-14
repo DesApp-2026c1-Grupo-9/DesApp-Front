@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchComentarios as fetchComentariosThunk,
@@ -10,11 +10,22 @@ import {
   clearNovedadComentarios,
 } from '../features/feed/comentariosSlice';
 
+const EMPTY_ARRAY = [];
+
 export default function useComentarios(post, currentUserId) {
   const dispatch = useDispatch();
 
-  const comentarios = useSelector((state) => state.comentarios.byNovedad[post.id] || []);
-  const loadingComentarios = useSelector((state) => state.comentarios.loadingByNovedad[post.id] || false);
+  const selectComentarios = useCallback(
+    (state) => state.comentarios.byNovedad[post.id] || EMPTY_ARRAY,
+    [post.id]
+  );
+  const selectLoading = useCallback(
+    (state) => state.comentarios.loadingByNovedad[post.id] || false,
+    [post.id]
+  );
+
+  const comentarios = useSelector(selectComentarios);
+  const loadingComentarios = useSelector(selectLoading);
 
   const [showComentarios, setShowComentarios] = useState(false);
   const [visibleCount, setVisibleCount] = useState(1);
@@ -36,7 +47,7 @@ export default function useComentarios(post, currentUserId) {
     setShowComentarios(false);
   }, [currentUserId, post.id, dispatch]);
 
-  const comentariosCount = showComentarios && comentarios.length > 0
+  const comentariosCount = comentarios.length > 0
     ? comentarios.reduce((acc, c) => acc + 1 + (c.respuestas?.length || 0), 0)
     : post.comentariosCount ?? 0;
 

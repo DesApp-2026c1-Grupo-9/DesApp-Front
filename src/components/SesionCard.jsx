@@ -37,14 +37,14 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
   });
 
   return (
-    <Card sx={{ transition: 'none', boxShadow: theme => theme.shadows[2], '&:hover': { boxShadow: theme => theme.shadows[2] }, opacity: isCanceled ? 0.55 : 1, height: '100%' }}>
+    <Card sx={{ transition: 'none', boxShadow: theme => theme.shadows[2], '&:hover': { boxShadow: theme => theme.shadows[2] }, opacity: isCanceled ? 0.55 : 1, height: '100%', overflow: 'hidden' }}>
       <CardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h6" gutterBottom>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', minWidth: 0 }}>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h6" gutterBottom sx={{ wordBreak: 'break-word' }}>
               {sesion.tema}
             </Typography>
-            <Typography color="textSecondary" gutterBottom>
+            <Typography color="textSecondary" gutterBottom sx={{ wordBreak: 'break-word' }}>
               {materiaNombre} • {fecha}
             </Typography>
 
@@ -82,17 +82,17 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
             </Box>
 
             {sesion.tipo === 'virtual' ? (
-              <Typography variant="body2" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ mb: 1, wordBreak: 'break-all' }}>
                 <strong>Link:</strong> {sesion.link}
               </Typography>
             ) : (
-              <Typography variant="body2" sx={{ mb: 1 }}>
+              <Typography variant="body2" sx={{ mb: 1, wordBreak: 'break-word' }}>
                 <strong>Ubicación:</strong> {sesion.ubicacion}
               </Typography>
             )}
 
             {sesion.descripcion && (
-              <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 1, wordBreak: 'break-word' }}>
                 {sesion.descripcion}
               </Typography>
             )}
@@ -103,7 +103,7 @@ const SesionCard = ({ sesion, currentUser, materias, operationLoading, visibilid
           </Box>
         </Box>
 
-        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap', minWidth: 0, justifyContent: { xs: 'center', sm: 'flex-start' } }}>
           {isCreator ? (
             <>
               <Button size="small" variant="outlined" onClick={() => onEdit(sesion)} disabled={isCanceled}>

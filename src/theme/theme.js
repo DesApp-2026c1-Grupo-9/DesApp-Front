@@ -48,27 +48,27 @@ const theme = createTheme({
   typography: {
     fontFamily: '"Inter", "Helvetica", "Arial", sans-serif',
     h1: {
-      fontSize: '2.5rem',
+      fontSize: { xs: '1.75rem', md: '2.5rem' },
       fontWeight: 500,
       lineHeight: 1.2,
     },
     h2: {
-      fontSize: '2rem',
+      fontSize: { xs: '1.5rem', md: '2rem' },
       fontWeight: 500,
       lineHeight: 1.3,
     },
     h3: {
-      fontSize: '1.75rem',
+      fontSize: { xs: '1.25rem', md: '1.75rem' },
       fontWeight: 500,
       lineHeight: 1.3,
     },
     h4: {
-      fontSize: '1.5rem',
+      fontSize: { xs: '1.125rem', md: '1.5rem' },
       fontWeight: 500,
       lineHeight: 1.4,
     },
     h5: {
-      fontSize: '1.25rem',
+      fontSize: { xs: '1rem', md: '1.25rem' },
       fontWeight: 500,
       lineHeight: 1.4,
     },

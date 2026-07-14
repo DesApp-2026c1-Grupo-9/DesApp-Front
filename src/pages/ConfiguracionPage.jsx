@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -15,9 +16,12 @@ import {
   FormGroup,
   Tabs,
   Tab,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
-import { Save, Shield, AutoAwesome, Person } from '@mui/icons-material';
+import { Save, Shield, AutoAwesome, Person, ArrowBack } from '@mui/icons-material';
 import { PageContainer } from '../components/ui';
+import { MobileHeaderActionContext } from '../layouts/PublicLayout';
 import { updateUserData, fetchPreferencias, updatePreferencias } from '../features/auth/slice';
 import { useAuth } from '../context/AuthContext';
 import { useSnackbar } from '../hooks';
@@ -90,23 +94,23 @@ function ProfileSection() {
           <Typography variant="h6" fontWeight="bold" mb={2}>Datos personales</Typography>
           <Box component="form" onSubmit={handleSubmit}>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: 250 }}>
+              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: 250 } }}>
                 <TextField fullWidth label="Nombre" name="nombre" value={form.nombre} onChange={handleChange} required />
               </Box>
-              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: 250 }}>
+              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: 250 } }}>
                 <TextField fullWidth label="Apellido" name="apellido" value={form.apellido} onChange={handleChange} required />
               </Box>
-              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: 250 }}>
+              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: 250 } }}>
                 <TextField fullWidth label="Email" name="email" type="email" value={form.email} onChange={handleChange} required />
               </Box>
-              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: 250 }}>
+              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: 250 } }}>
                 <TextField fullWidth select label="Género" name="genero" value={form.genero} onChange={handleChange}>
                   {generos.map((g) => (
                     <MenuItem key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1)}</MenuItem>
                   ))}
                 </TextField>
               </Box>
-              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: 250 }}>
+              <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: { xs: '100%', sm: 250 } }}>
                 <TextField fullWidth label="Fecha de Nacimiento" name="fechaNacimiento" type="date" value={form.fechaNacimiento} onChange={handleChange} InputLabelProps={{ shrink: true }} />
                 {form.fechaNacimiento && (
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
@@ -250,13 +254,35 @@ function PreferencesSection() {
 }
 
 export default function ConfiguracionPage() {
+  const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const setMobileHeaderAction = useContext(MobileHeaderActionContext);
   const [tab, setTab] = useState(0);
+
+  const mobileHeaderButton = useMemo(() => (
+    <Button startIcon={<ArrowBack />} onClick={() => navigate('/mi-perfil')} variant="outlined" size="small">
+      Mi Perfil
+    </Button>
+  ), [navigate]);
+
+  useEffect(() => {
+    if (setMobileHeaderAction && isMobile) {
+      setMobileHeaderAction(mobileHeaderButton);
+      return () => setMobileHeaderAction(null);
+    }
+  }, [setMobileHeaderAction, mobileHeaderButton, isMobile]);
 
   return (
     <PageContainer maxWidth={1200}>
       <Box>
+        <Box sx={{ display: { xs: 'none', sm: 'flex' }, justifyContent: 'flex-end', mb: 2 }}>
+          <Button startIcon={<ArrowBack />} onClick={() => navigate('/mi-perfil')} variant="outlined" size="small" sx={{ minWidth: 0 }}>
+            Mi Perfil
+          </Button>
+        </Box>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs value={tab} onChange={(_, v) => setTab(v)}>
+          <Tabs value={tab} onChange={(_, v) => setTab(v)} variant="scrollable" scrollButtons="auto">
             <Tab icon={<Person />} label="Datos personales" iconPosition="start" />
             <Tab icon={<Shield />} label="Privacidad" iconPosition="start" />
           </Tabs>

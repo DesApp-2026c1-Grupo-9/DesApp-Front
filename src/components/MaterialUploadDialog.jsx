@@ -236,9 +236,12 @@ const MaterialUploadDialog = ({
               value={formData.materiaId}
               label="Materia"
               onChange={(e) => setFormData({ ...formData, materiaId: e.target.value })}
+              MenuProps={{
+                PaperProps: { style: { maxHeight: 280, maxWidth: '90vw' } }
+              }}
             >
               {materias.map((m) => (
-                <MenuItem key={m.id} value={m.id}>
+                <MenuItem key={m.id} value={m.id} sx={{ whiteSpace: 'normal' }}>
                   {m.nombre} ({m.codigo})
                 </MenuItem>
               ))}

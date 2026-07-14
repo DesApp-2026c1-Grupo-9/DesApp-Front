@@ -17,7 +17,13 @@ import {
   DialogContentText,
   DialogActions,
   Grid,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import {
   PersonAdd,
   Delete,
@@ -45,6 +51,8 @@ import { TabPanel, PageContainer, LoadingSpinner, EmptyState } from '../componen
 
 export default function Conexiones() {
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { list, requests, loading, error } = useSelector((state) => state.conexiones);
   const { user, students } = useSelector((state) => state.auth);
 
@@ -174,17 +182,30 @@ export default function Conexiones() {
         </Alert>
       )}
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)}>
-          <Tab icon={<People />} iconPosition="start" label={`Mis Conexiones (${list.length})`} />
-          <Tab
-            icon={<HourglassEmpty />}
-            iconPosition="start"
-            label={`Pendientes (${requests.filter((r) => r.contactoId === estudianteId).length})`}
-          />
-          <Tab icon={<Search />} iconPosition="start" label="Descubrir" />
-        </Tabs>
-      </Box>
+      {isMobile ? (
+        <FormControl fullWidth sx={{ mb: 2 }}>
+          <Select
+            value={tabValue}
+            onChange={(e) => setTabValue(e.target.value)}
+          >
+            <MenuItem value={0}>Mis Conexiones ({list.length})</MenuItem>
+            <MenuItem value={1}>Pendientes ({requests.filter((r) => r.contactoId === estudianteId).length})</MenuItem>
+            <MenuItem value={2}>Descubrir</MenuItem>
+          </Select>
+        </FormControl>
+      ) : (
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} variant="scrollable" scrollButtons="auto">
+            <Tab icon={<People />} iconPosition="start" label={`Mis Conexiones (${list.length})`} />
+            <Tab
+              icon={<HourglassEmpty />}
+              iconPosition="start"
+              label={`Pendientes (${requests.filter((r) => r.contactoId === estudianteId).length})`}
+            />
+            <Tab icon={<Search />} iconPosition="start" label="Descubrir" />
+          </Tabs>
+        </Box>
+      )}
 
       <TabPanel value={tabValue} index={0}>
         {loading ? (
@@ -242,7 +263,8 @@ export default function Conexiones() {
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar por nombre o apellido..."
+            placeholder={isMobile ? 'Buscar...' : 'Buscar por nombre o apellido...'}
+            helperText={isMobile ? 'Buscar por nombre o apellido' : ''}
             value={filters.search}
             onChange={(e) => setFilter('search', e.target.value)}
           />

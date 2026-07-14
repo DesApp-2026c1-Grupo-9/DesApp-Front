@@ -154,6 +154,10 @@ const comentariosSlice = createSlice({
       })
       .addCase(editComentario.fulfilled, (state, action) => {
         const { novedadId, comentario } = action.payload;
+        avatarFallback(comentario.autor);
+        if (comentario.respuestas) {
+          comentario.respuestas.forEach(r => avatarFallback(r.autor));
+        }
         if (state.byNovedad[novedadId]) {
           const parent = state.byNovedad[novedadId].find(c => c.id === comentario.id);
           if (parent) {

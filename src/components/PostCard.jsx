@@ -25,6 +25,11 @@ import {
   Typography,
   Snackbar,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import {
   ThumbUp,
@@ -83,10 +88,13 @@ const formatFechaComentario = (fecha) => formatFechaRelative(fecha);
 function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
+  const usuarioId = user?.usuarioId || user?.id;
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.contenido || '');
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDeleteTarget, setConfirmDeleteTarget] = useState(null);
   const isOwner = Boolean(post.autor?.id && user?.id && String(post.autor?.id) === String(user?.id));
 
   const {
@@ -138,6 +146,33 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
   const handleDelete = () => {
     onDelete(post.id);
     handleMenuClose();
+  };
+
+  const requestDeleteComentario = (com) => {
+    setConfirmDeleteTarget({ type: 'comentario', data: com });
+    setConfirmDeleteOpen(true);
+    setComentarioMenuEl(null);
+  };
+
+  const requestDeleteReply = (reply) => {
+    setConfirmDeleteTarget({ type: 'respuesta', data: reply });
+    setConfirmDeleteOpen(true);
+    setReplyMenuEl(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (confirmDeleteTarget?.type === 'comentario') {
+      handleDeleteComentario();
+    } else if (confirmDeleteTarget?.type === 'respuesta') {
+      handleDeleteReply();
+    }
+    setConfirmDeleteOpen(false);
+    setConfirmDeleteTarget(null);
+  };
+
+  const handleCancelDelete = () => {
+    setConfirmDeleteOpen(false);
+    setConfirmDeleteTarget(null);
   };
 
   const handleEditSubmit = () => {
@@ -255,7 +290,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
           >
             {post.autor?.nombre?.charAt(0)}
           </Avatar>
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Typography
                 variant="subtitle1"
@@ -271,6 +306,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                 size="small"
                 color="primary"
                 variant="outlined"
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               />
             </Box>
             <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -288,6 +324,14 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                 </Typography>
               )}
             </Box>
+            <Chip
+              icon={getIconForTipoEvento(post.tipoEvento)}
+              label={getLabelForTipoEvento(post.tipoEvento)}
+              size="small"
+              color="primary"
+              variant="outlined"
+              sx={{ display: { xs: 'inline-flex', sm: 'none' }, mt: 0.5, width: 'fit-content' }}
+            />
           </Box>
         </CardContent>
       ) : (
@@ -351,11 +395,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         ) : (
           <>
             {isEvento ? (
-              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                 <School color="primary" /> {post.materia?.nombre}
               </Typography>
             ) : isSesionEvento ? null : (
-              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                 {post.contenido}
               </Typography>
             )}
@@ -366,14 +410,16 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
       <Divider />
       <Box sx={{ display: 'flex', alignItems: 'center', p: 1.5 }}>
         <Tooltip title={isOwner ? 'No puedes dar like a tu propia publicación' : ''}>
-          <IconButton
-            onClick={() => !isOwner && onToggleLike(post.id, post.liked)}
-            color={post.liked ? 'primary' : 'default'}
-            disabled={isOwner}
-            sx={isOwner ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
-          >
-            <ThumbUp fontSize="small" />
-          </IconButton>
+          <span>
+            <IconButton
+              onClick={() => !isOwner && onToggleLike(post.id, post.liked)}
+              color={post.liked ? 'primary' : 'default'}
+              disabled={isOwner}
+              sx={isOwner ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+            >
+              <ThumbUp fontSize="small" />
+            </IconButton>
+          </span>
         </Tooltip>
         <Typography variant="body2" sx={{ mr: 1 }}>
           {post.likesCount || 0}
@@ -403,8 +449,8 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         {loadingComentarios && <CircularProgress size={20} sx={{ ml: 1 }} />}
       </Box>
 
-      <Collapse in={showComentarios} keepMounted timeout={475}>
-        <Box sx={{ p: 2, bgcolor: 'grey.50', borderTop: '1px solid #eee' }}>
+      <Collapse in={showComentarios} timeout={475}>
+        <Box sx={{ p: { xs: 0.5, sm: 2 }, bgcolor: 'grey.50', borderTop: '1px solid #eee' }}>
           <Box sx={{ display: 'flex', gap: 1, mt: 2, mb: 2 }}>
             <TextField
               fullWidth
@@ -441,20 +487,6 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                 <Box key={com.id}>
                   <ListItem
                     alignItems="flex-start"
-                    secondaryAction={
-                      String(com.autor?.id) === String(currentUserId) && (
-                        <IconButton
-                          edge="end"
-                          size="small"
-                          onClick={(e) => {
-                            setComentarioSeleccionado(com);
-                            setComentarioMenuEl(e.currentTarget);
-                          }}
-                        >
-                          <MoreVert fontSize="small" />
-                        </IconButton>
-                      )
-                    }
                   >
                     <ListItemAvatar>
                       <Avatar src={com.autor?.avatarUrl} sx={{ width: 35, height: 35 }}>
@@ -463,46 +495,63 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                     </ListItemAvatar>
 
                     {editandoComentarioId === com.id ? (
-                      <Box sx={{ flex: 1 }}>
-                        <TextField
-                          fullWidth
-                          size="small"
-                          multiline
-                          value={editComentarioContent}
-                          onChange={(e) => setEditComentarioContent(e.target.value)}
-                        />
-                        <Button size="small" onClick={handleEditComentario}>
-                          Guardar
-                        </Button>
-                        <Button size="small" onClick={() => setEditandoComentarioId(null)}>
-                          Cancelar
-                        </Button>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexDirection: { xs: 'column', sm: 'row' } }}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            multiline
+                            value={editComentarioContent}
+                            onChange={(e) => setEditComentarioContent(e.target.value)}
+                          />
+                          <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={handleEditComentario}
+                              sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, textTransform: 'none', borderRadius: 2, px: { xs: 1.5, sm: 2 }, minWidth: 'auto' }}
+                            >
+                              Guardar
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => setEditandoComentarioId(null)}
+                              sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, textTransform: 'none', borderRadius: 2, px: { xs: 1.5, sm: 2 }, minWidth: 'auto' }}
+                            >
+                              Cancelar
+                            </Button>
+                          </Box>
+                        </Box>
                       </Box>
                     ) : (
                       <Box sx={{ flex: 1 }}>
                         <ListItemText
                           primary={
-                            <Box
-                              sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}
-                            >
-                              <Typography
-                                variant="subtitle2"
-                                fontWeight="bold"
-                                sx={{ fontSize: '0.85rem' }}
-                              >
-                                {com.autor?.nombre} {com.autor?.apellido}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                • {formatFechaComentario(com.createdAt)}
-                              </Typography>
-                              {com.editedAt && (
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Box>
                                 <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  sx={{ fontStyle: 'italic' }}
+                                  variant="subtitle2"
+                                  fontWeight="bold"
+                                  sx={{ fontSize: '0.85rem' }}
                                 >
-                                  • editado
+                                  {com.autor?.nombre} {com.autor?.apellido}
                                 </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {formatFechaComentario(com.createdAt)}
+                                  {com.editedAt && ' · editado'}
+                                </Typography>
+                              </Box>
+                              {String(com.autor?.id) === String(usuarioId) && (
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    setComentarioSeleccionado(com);
+                                    setComentarioMenuEl(e.currentTarget);
+                                  }}
+                                >
+                                  <MoreVert fontSize="small" />
+                                </IconButton>
                               )}
                             </Box>
                           }
@@ -518,28 +567,30 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                         >
                           <Tooltip
                             title={
-                              String(com.autor?.id) === String(currentUserId)
+                              String(com.autor?.id) === String(usuarioId)
                                 ? 'No puedes dar like a tu propio comentario'
                                 : ''
                             }
                           >
-                            <IconButton
-                              size="small"
-                              onClick={() => handleLikeComentario(com.id, com.liked)}
-                              color={com.liked ? 'primary' : 'default'}
-                              disabled={String(com.autor?.id) === String(currentUserId)}
-                              sx={{
-                                p: 0.5,
-                                ...(String(com.autor?.id) === String(currentUserId)
-                                  ? { opacity: 0.4, cursor: 'not-allowed' }
-                                  : {}),
-                              }}
-                            >
-                              <ThumbUp
-                                fontSize="inherit"
-                                style={{ fontSize: '1.1rem' }}
-                              />
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                size="small"
+                                onClick={() => handleLikeComentario(com.id, com.liked)}
+                                color={com.liked ? 'primary' : 'default'}
+                                disabled={String(com.autor?.id) === String(usuarioId)}
+                                sx={{
+                                  p: 0.5,
+                                  ...(String(com.autor?.id) === String(usuarioId)
+                                    ? { opacity: 0.4, cursor: 'not-allowed' }
+                                    : {}),
+                                }}
+                              >
+                                <ThumbUp
+                                  fontSize="inherit"
+                                  style={{ fontSize: '1.1rem' }}
+                                />
+                              </IconButton>
+                            </span>
                           </Tooltip>
 
                           <Typography variant="caption" sx={{ fontWeight: '500' }}>
@@ -604,28 +655,13 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                   )}
 
                   {com.respuestas && com.respuestas.length > 0 && (
-                    <List dense sx={{ ml: 4 }}>
+                    <List dense sx={{ ml: { xs: 1, sm: 4 } }}>
                       {com.respuestas
                         .filter((reply) => reply && reply.id)
                         .map((reply) => (
                           <ListItem
                             key={reply.id}
                             alignItems="flex-start"
-                            secondaryAction={
-                              reply.autor &&
-                              String(reply.autor?.id) === String(currentUserId) && (
-                                <IconButton
-                                  edge="end"
-                                  size="small"
-                                  onClick={(e) => {
-                                    setReplySeleccionada(reply);
-                                    setReplyMenuEl(e.currentTarget);
-                                  }}
-                                >
-                                  <MoreVert fontSize="small" />
-                                </IconButton>
-                              )
-                            }
                           >
                             <ListItemAvatar>
                               <Avatar src={reply.autor?.avatarUrl} sx={{ width: 30, height: 30 }}>
@@ -633,45 +669,59 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                               </Avatar>
                             </ListItemAvatar>
                             {editandoReplyId === reply.id ? (
-                              <Box sx={{ flex: 1 }}>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  multiline
-                                  value={editReplyContent}
-                                  onChange={(e) => setEditReplyContent(e.target.value)}
-                                />
-                                <Button
-                                  size="small"
-                                  onClick={handleEditReply}
-                                >
-                                  Guardar
-                                </Button>
-                                <Button size="small" onClick={() => setEditandoReplyId(null)}>
-                                  Cancelar
-                                </Button>
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexDirection: { xs: 'column', sm: 'row' } }}>
+                                  <TextField
+                                    fullWidth
+                                    size="small"
+                                    multiline
+                                    value={editReplyContent}
+                                    onChange={(e) => setEditReplyContent(e.target.value)}
+                                  />
+                                  <Box sx={{ display: 'flex', gap: 1, flexShrink: 0 }}>
+                                    <Button
+                                      variant="contained"
+                                      size="small"
+                                      onClick={handleEditReply}
+                                      sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, textTransform: 'none', borderRadius: 2, px: { xs: 1.5, sm: 2 }, minWidth: 'auto' }}
+                                    >
+                                      Guardar
+                                    </Button>
+                                    <Button
+                                      variant="outlined"
+                                      size="small"
+                                      onClick={() => setEditandoReplyId(null)}
+                                      sx={{ fontSize: { xs: '0.7rem', sm: '0.8125rem' }, textTransform: 'none', borderRadius: 2, px: { xs: 1.5, sm: 2 }, minWidth: 'auto' }}
+                                    >
+                                      Cancelar
+                                    </Button>
+                                  </Box>
+                                </Box>
                               </Box>
                             ) : (
-                              <Box sx={{ flex: 1 }}>
+                              <Box sx={{ flex: 1, minWidth: 0, wordBreak: 'break-word' }}>
                                 <ListItemText
                                   primary={
-                                    <Box
-                                      sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                                    >
-                                      <Typography variant="caption" fontWeight="bold">
-                                        {reply.autor?.nombre} {reply.autor?.apellido}
-                                      </Typography>
-                                      <Typography variant="caption" color="text.secondary">
-                                        • {formatFechaComentario(reply.createdAt)}
-                                      </Typography>
-                                      {reply.editedAt && (
-                                        <Typography
-                                          variant="caption"
-                                          color="text.secondary"
-                                          sx={{ fontStyle: 'italic' }}
-                                        >
-                                          • editado
+                                    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                                      <Box>
+                                        <Typography variant="caption" fontWeight="bold">
+                                          {reply.autor?.nombre} {reply.autor?.apellido}
                                         </Typography>
+                                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                          {formatFechaComentario(reply.createdAt)}
+                                          {reply.editedAt && ' · editado'}
+                                        </Typography>
+                                      </Box>
+                                      {reply.autor && String(reply.autor?.id) === String(usuarioId) && (
+                                        <IconButton
+                                          size="small"
+                                          onClick={(e) => {
+                                            setReplySeleccionada(reply);
+                                            setReplyMenuEl(e.currentTarget);
+                                          }}
+                                        >
+                                          <MoreVert fontSize="small" />
+                                        </IconButton>
                                       )}
                                     </Box>
                                   }
@@ -686,28 +736,30 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                 >
                                   <Tooltip
                                     title={
-                                      String(reply.autor?.id) === String(currentUserId)
+                                      String(reply.autor?.id) === String(usuarioId)
                                         ? 'No puedes dar like a tu propio comentario'
                                         : ''
                                     }
                                   >
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleLikeComentario(reply.id, reply.liked)}
-                                      color={reply.liked ? 'primary' : 'default'}
-                                      disabled={String(reply.autor?.id) === String(currentUserId)}
-                                      sx={{
-                                        p: 0.5,
-                                        ...(String(reply.autor?.id) === String(currentUserId)
-                                          ? { opacity: 0.4, cursor: 'not-allowed' }
-                                          : {}),
-                                      }}
-                                    >
-                                      <ThumbUp
-                                        fontSize="inherit"
-                                        style={{ fontSize: '1rem' }}
-                                      />
-                                    </IconButton>
+                                    <span>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleLikeComentario(reply.id, reply.liked)}
+                                        color={reply.liked ? 'primary' : 'default'}
+                                        disabled={String(reply.autor?.id) === String(usuarioId)}
+                                        sx={{
+                                          p: 0.5,
+                                          ...(String(reply.autor?.id) === String(usuarioId)
+                                            ? { opacity: 0.4, cursor: 'not-allowed' }
+                                            : {}),
+                                        }}
+                                      >
+                                        <ThumbUp
+                                          fontSize="inherit"
+                                          style={{ fontSize: '1rem' }}
+                                        />
+                                      </IconButton>
+                                    </span>
                                   </Tooltip>
                                   <Typography variant="caption">{reply.likesCount || 0}</Typography>
 
@@ -741,8 +793,8 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         </Box>
       </Collapse>
 
-      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-        <MenuItem onClick={handleDelete}>
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose} disableRestoreFocus disableAutoFocus disableEnforceFocus>
+        <MenuItem onClick={() => { handleDelete(); document.activeElement?.blur(); }}>
           <Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar
         </MenuItem>
         {!post.esAutomatica && (
@@ -750,6 +802,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
             onClick={() => {
               setIsEditing(true);
               handleMenuClose();
+              document.activeElement?.blur();
             }}
           >
             <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
@@ -761,17 +814,20 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         anchorEl={comentarioMenuEl}
         open={Boolean(comentarioMenuEl)}
         onClose={() => setComentarioMenuEl(null)}
+        disableRestoreFocus disableAutoFocus disableEnforceFocus
       >
         <MenuItem
           onClick={() => {
-            setEditandoComentarioId(comentarioSeleccionado.id);
+                                     setEditandoComentarioId(comentarioSeleccionado.id);
+                                     setEditandoReplyId(null);
             setEditComentarioContent(comentarioSeleccionado.contenido);
             setComentarioMenuEl(null);
+            document.activeElement?.blur();
           }}
         >
           <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
         </MenuItem>
-        <MenuItem onClick={handleDeleteComentario}>
+        <MenuItem onClick={() => { requestDeleteComentario(comentarioSeleccionado); document.activeElement?.blur(); }}>
           <Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar
         </MenuItem>
       </Menu>
@@ -780,20 +836,38 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
         anchorEl={replyMenuEl}
         open={Boolean(replyMenuEl)}
         onClose={() => setReplyMenuEl(null)}
+        disableRestoreFocus disableAutoFocus disableEnforceFocus
       >
         <MenuItem
           onClick={() => {
-            setEditandoReplyId(replySeleccionada.id);
+                                     setEditandoReplyId(replySeleccionada.id);
+                                     setEditandoComentarioId(null);
             setEditReplyContent(replySeleccionada.contenido);
             setReplyMenuEl(null);
+            document.activeElement?.blur();
           }}
         >
           <Edit fontSize="small" sx={{ mr: 1 }} /> Editar
         </MenuItem>
-        <MenuItem onClick={handleDeleteReply}>
+        <MenuItem onClick={() => { requestDeleteReply(replySeleccionada); document.activeElement?.blur(); }}>
           <Delete fontSize="small" sx={{ mr: 1 }} /> Eliminar
         </MenuItem>
       </Menu>
+
+      <Dialog open={confirmDeleteOpen} onClose={handleCancelDelete}>
+        <DialogTitle>Eliminar {confirmDeleteTarget?.type === 'comentario' ? 'comentario' : 'respuesta'}</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            ¿Estás seguro de que querés eliminar este {confirmDeleteTarget?.type === 'comentario' ? 'comentario' : 'respuesta'}? Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete}>Cancelar</Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained">
+            Eliminar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Snackbar open={!!error} autoHideDuration={4000} onClose={handleClearError} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
         <Alert onClose={handleClearError} severity="error" variant="filled">
