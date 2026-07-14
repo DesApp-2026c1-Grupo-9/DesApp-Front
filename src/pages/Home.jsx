@@ -15,6 +15,7 @@ import {
   Chip,
   List,
   ListItem,
+  ListItemButton,
   ListItemText,
   ListItemIcon,
   Divider,
@@ -250,7 +251,7 @@ const Home = () => {
   const finalesPendientes = analisisAcademico?.finalesPendientes || [];
 
   const proximasFechas = [
-    { evento: 'Período de Finales', fecha: 'Julio 1-15, 2026', tipo: 'periodo' },
+    { evento: 'Período de Finales', fecha: 'Julio 15-31, 2026', tipo: 'periodo' },
     ...finalesPendientes.map((final) => ({
       evento: `Final pendiente: ${final.nombre}`,
       fecha: final.fechaVencimientoRegularidad
@@ -266,6 +267,7 @@ const Home = () => {
         return esParticipante && s.estado !== 'cancelada' && fechaSesion >= hoy;
       })
       .map(s => ({
+        id: s.id,
         evento: s.tema,
         fecha: format(new Date(s.fechaHora), "dd 'de' MMMM yyyy - HH:mm", { locale: es }),
         tipo: 'sesion',
@@ -548,17 +550,35 @@ const Home = () => {
                       {proximasFechas.map((item, i) => (
                         <React.Fragment key={i}>
                           {i > 0 && <Divider component="li" />}
-                          <ListItem disablePadding sx={{ py: 0.75 }}>
-                            <ListItemIcon sx={{ minWidth: 36 }}>
-                              {getEventIcon(item.tipo)}
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={item.evento}
-                              secondary={item.fecha}
-                              primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
-                              secondaryTypographyProps={{ variant: 'caption' }}
-                            />
-                          </ListItem>
+                          {item.tipo === 'sesion' ? (
+                            <ListItemButton
+                              disablePadding
+                              sx={{ py: 0.75, px: 0, borderRadius: 1 }}
+                              onClick={() => navigate(`/sesiones/${item.id}`)}
+                            >
+                              <ListItemIcon sx={{ minWidth: 36 }}>
+                                {getEventIcon(item.tipo)}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={item.evento}
+                                secondary={item.fecha}
+                                primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                                secondaryTypographyProps={{ variant: 'caption' }}
+                              />
+                            </ListItemButton>
+                          ) : (
+                            <ListItem disablePadding sx={{ py: 0.75 }}>
+                              <ListItemIcon sx={{ minWidth: 36 }}>
+                                {getEventIcon(item.tipo)}
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={item.evento}
+                                secondary={item.fecha}
+                                primaryTypographyProps={{ variant: 'body2', fontWeight: 500 }}
+                                secondaryTypographyProps={{ variant: 'caption' }}
+                              />
+                            </ListItem>
+                          )}
                         </React.Fragment>
                       ))}
                     </List>

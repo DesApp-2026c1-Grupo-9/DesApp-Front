@@ -90,8 +90,8 @@ const Sesiones = () => {
   const { data: misMateriasIds, loading: loadingMisMaterias, refetch: refetchMisMaterias } = useFetchData({
     fetchFn: () => api.get(`/api/estudiantes/${user.usuarioId || user.id}/materias-ids`)
       .then(res => res.data?.data || []),
-    deps: [activeTab, user?.id],
-    immediate: activeTab === 'misMaterias' && !!user?.id,
+    deps: [user?.id],
+    immediate: !!user?.id,
     timeout: 10000,
   });
 
@@ -105,15 +105,7 @@ const Sesiones = () => {
   }, [user, estudianteId, dispatch]);
 
   const misMateriasIdsArray = Array.isArray(misMateriasIds) ? misMateriasIds : [];
-  const materiasPermitidasIds = Array.isArray(materias)
-    ? materias.map((materia) => materia.id)
-    : [];
-
   const filteredSesiones = sesiones.filter(s => {
-    if (materiasPermitidasIds.length > 0 && !materiasPermitidasIds.includes(s.materiaId)) {
-      return false;
-    }
-
     if (activeTab === 'misMaterias') {
       if (!misMateriasIdsArray.includes(s.materiaId)) return false;
     }
@@ -260,7 +252,7 @@ const Sesiones = () => {
     setSelectedSesion(null);
   };
 
-  const showLoading = loading || loadingMaterias || (activeTab === 'misMaterias' && loadingMisMaterias);
+  const showLoading = loading || loadingMaterias || (activeTab === 'misMaterias' && (loadingMisMaterias || misMateriasIds === null));
 
   return (
     <PageContainer maxWidth={1200}>
@@ -406,7 +398,7 @@ const Sesiones = () => {
             onChange={(e) => setActiveTab(e.target.value)}
           >
             <MenuItem value="todas">Todas las sesiones</MenuItem>
-            <MenuItem value="misMaterias">Mis materias</MenuItem>
+            <MenuItem value="misMaterias">Mis carreras</MenuItem>
             <MenuItem value="misInscripciones">Mis inscripciones</MenuItem>
             <MenuItem value="misSesiones">Mis sesiones</MenuItem>
           </Select>
@@ -420,7 +412,7 @@ const Sesiones = () => {
           sx={{ mb: 2 }}
         >
           <Tab value="todas" label="TODAS LAS SESIONES" />
-          <Tab value="misMaterias" label="MIS MATERIAS" />
+          <Tab value="misMaterias" label="MIS CARRERAS" />
           <Tab value="misInscripciones" label="MIS INSCRIPCIONES" />
           <Tab value="misSesiones" label="MIS SESIONES" />
         </Tabs>
