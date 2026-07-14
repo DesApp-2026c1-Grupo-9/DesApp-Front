@@ -29,12 +29,19 @@ export default function SesionDetalle() {
   const [aprobacionModalOpen, setAprobacionModalOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
+  const transformSesion = (data) => ({ ...data, materia: data.Materia || data.materia });
+
+  const fetchSesion = async () => {
+    const res = await getSesionById(id, estudianteId);
+    setSesion(transformSesion(res.data));
+  };
+
   useEffect(() => {
     if (!estudianteId || !id) return;
     setLoading(true);
     getSesionById(id, estudianteId)
       .then((res) => {
-        setSesion(res.data);
+        setSesion(transformSesion(res.data));
         setError(null);
       })
       .catch((err) => {
@@ -45,16 +52,14 @@ export default function SesionDetalle() {
 
   const handleJoin = async () => {
     await dispatch(joinToSesion({ sesionId: sesion.id, estudianteId }));
-    const res = await getSesionById(id, estudianteId);
-    setSesion(res.data);
+    await fetchSesion();
   };
 
   const handleLeave = async () => {
     const p = sesion.participantes?.find(p => p.estudianteId === estudianteId);
     if (!p) return;
     await dispatch(leaveSesionThunk({ sesionId: sesion.id, participanteId: p.id, estudianteId }));
-    const res = await getSesionById(id, estudianteId);
-    setSesion(res.data);
+    await fetchSesion();
   };
 
   const handleEdit = () => {
@@ -64,8 +69,7 @@ export default function SesionDetalle() {
   const handleSaveEdit = async (sesionData) => {
     await dispatch(editSesion({ sesionId: sesion.id, sesionData, estudianteId }));
     setEditModalOpen(false);
-    const res = await getSesionById(id, estudianteId);
-    setSesion(res.data);
+    await fetchSesion();
   };
 
   const handleDeleteClick = () => {
@@ -84,14 +88,12 @@ export default function SesionDetalle() {
 
   const handleApprove = async (sesionId, participanteId) => {
     await dispatch(approveParticipanteThunk({ sesionId, participanteId, estudianteId }));
-    const res = await getSesionById(id, estudianteId);
-    setSesion(res.data);
+    await fetchSesion();
   };
 
   const handleReject = async (sesionId, participanteId) => {
     await dispatch(rejectParticipanteThunk({ sesionId, participanteId, estudianteId }));
-    const res = await getSesionById(id, estudianteId);
-    setSesion(res.data);
+    await fetchSesion();
   };
 
   if (loading) return <LoadingSpinner fullScreen message="Cargando sesión..." />;
