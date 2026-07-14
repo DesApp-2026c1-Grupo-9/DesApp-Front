@@ -445,21 +445,7 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                 <Box key={com.id} sx={{ minWidth: 0 }}>
                   <ListItem
                     alignItems="flex-start"
-                    secondaryAction={
-                      String(com.autor?.id) === String(user?.id) ? (
-                        <IconButton
-                          edge="end"
-                          size="small"
-                          onClick={(e) => {
-                            setComentarioSeleccionado(com);
-                            setComentarioMenuEl(e.currentTarget);
-                          }}
-                        >
-                          <MoreVert fontSize="small" />
-                        </IconButton>
-                      ) : null
-                    }
-                    sx={{ '& .MuiListItemSecondaryAction-root': { display: 'none' } }}
+                    disablePadding
                   >
                     <ListItemAvatar>
                       <Avatar src={com.autor?.avatarUrl} sx={{ width: 35, height: 35 }}>
@@ -487,13 +473,8 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                         </Box>
                       </Box>
                     ) : (
-                      <Box sx={{ flex: 1 }}>
-                        <ListItemText
-                          primary={
-                            <Box
-                              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, mb: 0.5 }}
-                            >
-                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                 <Typography
                                   variant="subtitle2"
                                   fontWeight="bold"
@@ -528,14 +509,9 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                   </Typography>
                                 )}
                               </Box>
-                            </Box>
-                          }
-                          secondary={
-                            <Typography variant="body2" color="text.primary">
-                              {com.contenido}
-                            </Typography>
-                          }
-                        />
+                              <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                                {com.contenido}
+                              </Typography>
 
                         <Box
                           sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
@@ -636,25 +612,11 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                           <ListItem
                             key={reply.id}
                             alignItems="flex-start"
-                            secondaryAction={
-                              reply.autor &&
-                              String(reply.autor?.id) === String(user?.id) ? (
-                                <IconButton
-                                  edge="end"
-                                  size="small"
-                                  onClick={(e) => {
-                                    setReplySeleccionada(reply);
-                                    setReplyMenuEl(e.currentTarget);
-                                  }}
-                                >
-                                  <MoreVert fontSize="small" />
-                                </IconButton>
-                              ) : null
-                            }
-                    sx={{ px: { xs: 0, sm: undefined }, '& .MuiListItemSecondaryAction-root': { display: 'none' } }}
+                            disablePadding
+                            sx={{ px: { xs: 0, sm: undefined } }}
                           >
                             <ListItemAvatar>
-                              <Avatar src={reply.autor?.avatarUrl} sx={{ width: 30, height: 30 }}>
+                              <Avatar src={reply.autor?.avatarUrl} sx={{ width: 35, height: 35 }}>
                                 {reply.autor?.nombre?.charAt(0)}
                               </Avatar>
                             </ListItemAvatar>
@@ -678,99 +640,88 @@ function PostCard({ post, currentUserId, onDelete, onToggleLike, onEdit }) {
                                 </Box>
                               </Box>
                             ) : (
-                              <Box sx={{ flex: 1 }}>
-                                <ListItemText
-                                  primary={
-                                    <Box
-                                      sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 0, minWidth: 0 }}
-                                    >
-                                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                          <Typography variant="caption" fontWeight="bold">
-                                            {reply.autor?.nombre} {reply.autor?.apellido}
-                                          </Typography>
-                                          {reply.autor && String(reply.autor?.id) === String(user?.id) && (
-                                            <IconButton
-                                              size="small"
-                                              sx={{ flexShrink: 0 }}
-                                              onClick={(e) => {
-                                                setReplySeleccionada(reply);
-                                                setReplyMenuEl(e.currentTarget);
-                                              }}
-                                            >
-                                              <MoreVert fontSize="small" />
-                                            </IconButton>
-                                          )}
-                                        </Box>
-                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                          <Typography variant="caption" color="text.secondary">
-                                            {formatFechaComentario(reply.createdAt)}
-                                          </Typography>
-                                          {reply.editedAt && (
-                                            <Typography
-                                              variant="caption"
-                                              color="text.secondary"
-                                              sx={{ fontStyle: 'italic' }}
-                                            >
-                                              • editado
-                                            </Typography>
-                                          )}
-                                        </Box>
-                                      </Box>
-                                  }
-                                  secondary={
-                                    <Typography variant="body2" color="text.primary" sx={{ wordBreak: 'break-word' }}>
-                                      {reply.contenido}
+                              <Box sx={{ flex: 1, minWidth: 0 }}>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                    <Typography variant="caption" fontWeight="bold">
+                                      {reply.autor?.nombre} {reply.autor?.apellido}
                                     </Typography>
-                                  }
-                                />
-                                <Box
-                                  sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
-                                >
-                                  <Tooltip
-                                    title={
-                                      String(reply.autor?.id) === String(user?.id)
-                                        ? 'No puedes dar like a tu propio comentario'
-                                        : ''
-                                    }
-                                  >
-                                    <IconButton
-                                      size="small"
-                                      onClick={() => handleLikeComentario(reply.id, reply.liked)}
-                                      color={reply.liked ? 'primary' : 'default'}
-                                      disabled={String(reply.autor?.id) === String(user?.id)}
-                                      sx={{
-                                        p: 0.5,
-                                        ...(String(reply.autor?.id) === String(user?.id)
-                                          ? { opacity: 0.4, cursor: 'not-allowed' }
-                                          : {}),
-                                      }}
-                                    >
-                                      <ThumbUp
-                                        fontSize="inherit"
-                                        style={{ fontSize: '1rem' }}
-                                      />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Typography variant="caption">{reply.likesCount || 0}</Typography>
-
-                                  <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
-                                    {reply.likesDetails &&
-                                      reply.likesDetails.map((user) => (
-                                        <Avatar
-                                          key={user.id}
-                                          src={user.avatar || 'default.jpg'}
-                                          sx={{
-                                            width: 16,
-                                            height: 16,
-                                            ml: -0.5,
-                                            border: '1px solid white',
-                                          }}
-                                        >
-                                          {user.nombre?.charAt(0)}
-                                        </Avatar>
-                                      ))}
+                                    {reply.autor && String(reply.autor?.id) === String(user?.id) && (
+                                      <IconButton
+                                        size="small"
+                                        sx={{ flexShrink: 0 }}
+                                        onClick={(e) => {
+                                          setReplySeleccionada(reply);
+                                          setReplyMenuEl(e.currentTarget);
+                                        }}
+                                      >
+                                        <MoreVert fontSize="small" />
+                                      </IconButton>
+                                    )}
                                   </Box>
-                                </Box>
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                    <Typography variant="caption" color="text.secondary">
+                                      {formatFechaComentario(reply.createdAt)}
+                                    </Typography>
+                                    {reply.editedAt && (
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                        sx={{ fontStyle: 'italic' }}
+                                      >
+                                        • editado
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                  <Typography variant="body2" color="text.primary" sx={{ mt: 0.5 }}>
+                                    {reply.contenido}
+                                  </Typography>
+                                  <Box
+                                    sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
+                                  >
+                                    <Tooltip
+                                      title={
+                                        String(reply.autor?.id) === String(user?.id)
+                                          ? 'No puedes dar like a tu propio comentario'
+                                          : ''
+                                      }
+                                    >
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => handleLikeComentario(reply.id, reply.liked)}
+                                        color={reply.liked ? 'primary' : 'default'}
+                                        disabled={String(reply.autor?.id) === String(user?.id)}
+                                        sx={{
+                                          p: 0.5,
+                                          ...(String(reply.autor?.id) === String(user?.id)
+                                            ? { opacity: 0.4, cursor: 'not-allowed' }
+                                            : {}),
+                                        }}
+                                      >
+                                        <ThumbUp
+                                          fontSize="inherit"
+                                          style={{ fontSize: '1rem' }}
+                                        />
+                                      </IconButton>
+                                    </Tooltip>
+                                    <Typography variant="caption">{reply.likesCount || 0}</Typography>
+                                    <Box sx={{ display: 'flex', alignItems: 'center', ml: 1 }}>
+                                      {reply.likesDetails &&
+                                        reply.likesDetails.map((user) => (
+                                          <Avatar
+                                            key={user.id}
+                                            src={user.avatar || 'default.jpg'}
+                                            sx={{
+                                              width: 16,
+                                              height: 16,
+                                              ml: -0.5,
+                                              border: '1px solid white',
+                                            }}
+                                          >
+                                            {user.nombre?.charAt(0)}
+                                          </Avatar>
+                                        ))}
+                                    </Box>
+                                  </Box>
                               </Box>
                             )}
                           </ListItem>
