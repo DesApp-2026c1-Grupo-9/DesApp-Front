@@ -155,7 +155,7 @@ class AcademicService {
         { id: 5, nombre: 'Estructuras de Datos', año: 1, cuatrimestre: 2, correlativas: ['Introducción a la Programación'], cargaHoraria: 8, area: 'TC' },
         { id: 6, nombre: 'Programación con Objetos I', año: 1, cuatrimestre: 2, correlativas: ['Introducción a la Programación'], cargaHoraria: 8, area: 'AyL' },
         { id: 7, nombre: 'Bases de Datos', año: 1, cuatrimestre: 2, correlativas: ['Introducción a la Programación'], cargaHoraria: 6, area: 'ISBDySI' },
-        { id: 8, nombre: 'Inglés I', año: 1, cuatrimestre: 2, correlativas: [], cargaHoraria: 2, area: 'Otros' },
+        { id: 8, nombre: 'Inglés I', año: 1, cuatrimestre: 2, correlativas: [], cargaHoraria: 6, area: 'Otros' },
         // Segundo Año
         { id: 9, nombre: 'Matemática II', año: 2, cuatrimestre: 1, correlativas: ['Matemática I'], cargaHoraria: 4, area: 'CB' },
         { id: 10, nombre: 'Programación con Objetos II', año: 2, cuatrimestre: 1, correlativas: ['Programación con Objetos I'], cargaHoraria: 6, area: 'AyL' },

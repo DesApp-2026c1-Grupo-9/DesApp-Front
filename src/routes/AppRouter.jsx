@@ -10,9 +10,7 @@ import SocialPage from '../pages/SocialPage';
 import AcademicoPage from '../pages/AcademicoPage';
 import Feed from '../pages/Feed';
 import Conexiones from '../pages/Conexiones';
-import { StudentProfilePage } from '../pages/StudentProfilePage';
 import { CareerManagementPage } from '../pages/CareerManagementPage';
-import { SubjectManagementPage } from '../pages/SubjectManagementPage';
 import ConfiguracionPage from '../pages/ConfiguracionPage';
 import MiPerfilPage from '../pages/MiPerfilPage';
 import { PerfilUsuario } from '../pages/PerfilUsuario';
@@ -88,7 +86,6 @@ const AppRouter = () => {
                 <Route path="carreras" element={<CareerManagementPage />} />
               </Route>
               <Route path="/asistente" element={<AsistenteAcademico />} />
-              <Route path="/materias" element={<SubjectManagementPage />} />
               <Route path="/notificaciones" element={<Notificaciones />} />
             </Route>
             <Route element={<AdminLayout />}>

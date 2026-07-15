@@ -36,7 +36,7 @@ const CARRERA_COLOR_COMPARTIDA = {
 
 const CARRERA_COLOR_RULES = [
   {
-    matchers: ['ia', 'inteligencia artificial'],
+    matchers: ['licenciatura en informática', 'informatica', 'informática', 'programacion', 'programación'],
     style: {
       bg: '#ffebee',
       color: '#b71c1c',
@@ -45,7 +45,7 @@ const CARRERA_COLOR_RULES = [
     },
   },
   {
-    matchers: ['programacion', 'programación'],
+    matchers: ['tecnicatura en inteligencia artificial', 'inteligencia artificial', 'ia'],
     style: {
       bg: '#e3f2fd',
       color: '#0d47a1',
@@ -100,12 +100,39 @@ const normalizarTexto = (valor) =>
     .toLowerCase()
     .trim();
 
-const obtenerColorCarreraPlanificador = (carreras = []) => {
-  if (Array.isArray(carreras) && carreras.length > 1) {
+const mismaCarrera = (a, b) => normalizarTexto(a) === normalizarTexto(b);
+
+const obtenerColorCarreraPlanificador = (carreras = [], carrerasSeleccionadas = []) => {
+  const materiasCarreras = Array.isArray(carreras) ? carreras : [];
+  const carrerasActivas = Array.isArray(carrerasSeleccionadas) ? carrerasSeleccionadas : [];
+
+  if (materiasCarreras.length > 1) {
     return CARRERA_COLOR_COMPARTIDA;
   }
 
-  const carreraPrincipal = Array.isArray(carreras) ? carreras[0] : null;
+  if (carrerasActivas.length > 0 && materiasCarreras.length > 0) {
+    const coincidencias = carrerasActivas.filter((carreraSeleccionada) =>
+      materiasCarreras.some((carreraMateria) => mismaCarrera(carreraMateria, carreraSeleccionada))
+    );
+
+    if (coincidencias.length > 1) {
+      return CARRERA_COLOR_COMPARTIDA;
+    }
+
+    const indiceCoincidencia = carrerasActivas.findIndex((carreraSeleccionada) =>
+      materiasCarreras.some((carreraMateria) => mismaCarrera(carreraMateria, carreraSeleccionada))
+    );
+
+    if (indiceCoincidencia === 1) {
+      return CARRERA_COLOR_RULES[1].style;
+    }
+
+    if (indiceCoincidencia === 0) {
+      return CARRERA_COLOR_RULES[0].style;
+    }
+  }
+
+  const carreraPrincipal = materiasCarreras[0] || carrerasActivas[0] || null;
   const carreraNormalizada = normalizarTexto(carreraPrincipal);
 
   if (!carreraNormalizada) {
@@ -1068,7 +1095,7 @@ export default function AsistenteAcademico() {
                                   mb: 1,
                                   borderLeftWidth: mostrarCarrerasColoreadasPlanificador ? 4 : 1,
                                   borderLeftColor: mostrarCarrerasColoreadasPlanificador
-                                    ? obtenerColorCarreraPlanificador(m.carreras).accent
+                                    ? obtenerColorCarreraPlanificador(m.carreras, carrerasSeleccionadasAsistente).accent
                                     : 'divider',
                                   p: 1,
                                 }}
@@ -1082,8 +1109,8 @@ export default function AsistenteAcademico() {
                                           height: 10,
                                           borderRadius: '50%',
                                           flexShrink: 0,
-                                          bgcolor: obtenerColorCarreraPlanificador(m.carreras).accent,
-                                          boxShadow: `0 0 0 2px ${obtenerColorCarreraPlanificador(m.carreras).bg}`,
+                                          bgcolor: obtenerColorCarreraPlanificador(m.carreras, carrerasSeleccionadasAsistente).accent,
+                                          boxShadow: `0 0 0 2px ${obtenerColorCarreraPlanificador(m.carreras, carrerasSeleccionadasAsistente).bg}`,
                                         }}
                                       />
                                     ) : null}
