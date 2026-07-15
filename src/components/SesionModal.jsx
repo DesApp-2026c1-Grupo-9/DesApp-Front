@@ -7,6 +7,7 @@ import {
 import { LocalizationProvider, DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import api from '../api/axiosConfig';
+import { deduplicarMaterias } from '../utils';
 
 const SesionModal = ({ open, sesion, onSave, onCancel }) => {
   const [materias, setMaterias] = useState([]);
@@ -20,7 +21,7 @@ const SesionModal = ({ open, sesion, onSave, onCancel }) => {
       .then(res => {
         const lista = res.data?.data || res.data || [];
         const mapped = Array.isArray(lista) 
-          ? lista.map(m => ({ id: m.id, nombre: m.nombre }))
+          ? deduplicarMaterias(lista).map(m => ({ id: m.id, nombre: m.nombre }))
           : [];
         setMaterias(mapped);
       })

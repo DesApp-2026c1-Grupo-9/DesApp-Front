@@ -23,6 +23,7 @@ import { fetchConexiones } from '../features/auth/slice';
 
 import { useFetchData, useFilter } from '../hooks';
 import { PageContainer, LoadingSpinner, EmptyState } from '../components/ui';
+import { deduplicarMaterias } from '../utils';
 
 const Sesiones = () => {
   const dispatch = useDispatch();
@@ -81,7 +82,7 @@ const Sesiones = () => {
       },
     }).then(res => {
       const lista = res.data?.data || res.data || [];
-      return Array.isArray(lista) ? lista : [];
+      return Array.isArray(lista) ? deduplicarMaterias(lista) : [];
     }),
     deps: [estudianteId],
     timeout: 15000,

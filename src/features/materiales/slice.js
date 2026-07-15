@@ -8,6 +8,7 @@ import {
   rateMaterial
 } from './service';
 import { SORT_OPTIONS } from './constants';
+import { deduplicarMaterias } from '../../utils';
 
 export const fetchMateriales = createAsyncThunk(
   'materiales/fetchMateriales',
@@ -129,7 +130,7 @@ const materialesSlice = createSlice({
       })
       .addCase(fetchMaterias.fulfilled, (state, action) => {
         state.loading = false;
-        state.materias = action.payload;
+        state.materias = deduplicarMaterias(action.payload);
       })
       .addCase(fetchMaterias.rejected, (state, action) => {
         state.loading = false;
