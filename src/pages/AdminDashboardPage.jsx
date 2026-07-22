@@ -164,7 +164,7 @@ export default function AdminDashboardPage() {
                         <TableRow key={d.id} sx={{ '&:last-child td': { border: 0 } }}>
                           <TableCell sx={{ color: 'text.secondary' }}>#{d.id}</TableCell>
                           <TableCell>{d.material?.titulo}</TableCell>
-                          <TableCell>{d.denunciante?.nombre} {d.denunciante?.apellido}</TableCell>
+                          <TableCell>{d.denunciante?.Usuario?.nombre} {d.denunciante?.Usuario?.apellido}</TableCell>
                           <TableCell><Chip label={d.motivo?.nombre} size="small" variant="outlined" /></TableCell>
                         </TableRow>
                       ))
@@ -199,7 +199,7 @@ export default function AdminDashboardPage() {
                           <TableCell sx={{ color: 'text.secondary' }}>#{m.id}</TableCell>
                           <TableCell>{m.titulo}</TableCell>
                           <TableCell>{m.materia?.nombre || '-'}</TableCell>
-                          <TableCell>{m.creador?.nombre} {m.creador?.apellido}</TableCell>
+                          <TableCell>{m.creador?.Usuario?.nombre} {m.creador?.Usuario?.apellido}</TableCell>
                         </TableRow>
                       ))
                     )}
