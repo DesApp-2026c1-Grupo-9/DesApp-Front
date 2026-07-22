@@ -36,12 +36,21 @@ const CARRERA_COLOR_COMPARTIDA = {
 
 const CARRERA_COLOR_RULES = [
   {
-    matchers: ['licenciatura en informática', 'informatica', 'informática', 'programacion', 'programación'],
+    matchers: ['licenciatura en informática', 'informatica', 'informática'],
     style: {
       bg: '#ffebee',
       color: '#b71c1c',
       border: '#ef9a9a',
       accent: '#d32f2f',
+    },
+  },
+  {
+    matchers: ['tecnicatura en programacion', 'programación'],
+    style: {
+      bg: '#feebff',
+      color: '#b71caf',
+      border: '#ef9aeb',
+      accent: '#d32fc5',
     },
   },
   {
@@ -51,6 +60,46 @@ const CARRERA_COLOR_RULES = [
       color: '#0d47a1',
       border: '#90caf9',
       accent: '#1976d2',
+    },
+  },
+  {
+    matchers: ['licenciatura en biotecnologia', 'biotecnologia'],
+    style: {
+      bg: '#e8f5e9',
+      color: '#1b5e20',
+      border: '#a5d6a7',
+      accent: '#2e7d32',
+    },
+  },
+  {
+    matchers: ['licenciatura en desarrollo agrario', 'desarrollo agrario'],
+    style: {
+      bg: '#fff8e1',
+      color: '#e65100',
+      border: '#ffcc80',
+      accent: '#f57c00',
+    },
+  },
+  {
+    matchers: [
+      'tecnicatura universitaria en produccion agroecologica periurbana',
+      'produccion agroecologica periurbana',
+      'agroecologica periurbana',
+    ],
+    style: {
+      bg: '#e0f7fa',
+      color: '#006064',
+      border: '#80deea',
+      accent: '#00838f',
+    },
+  },
+  {
+    matchers: ['tecnicatura universitaria en viverismo', 'viverismo'],
+    style: {
+      bg: '#f1f8e9',
+      color: '#33691e',
+      border: '#c5e1a5',
+      accent: '#558b2f',
     },
   },
 ];
@@ -100,11 +149,31 @@ const normalizarTexto = (valor) =>
     .toLowerCase()
     .trim();
 
+const extraerNombreCarrera = (carrera) =>
+  typeof carrera === 'string'
+    ? carrera
+    : carrera?.nombre || carrera?.name || '';
+
 const mismaCarrera = (a, b) => normalizarTexto(a) === normalizarTexto(b);
 
+const obtenerReglaColorCarrera = (carreraNombre) => {
+  const carreraNormalizada = normalizarTexto(carreraNombre);
+  if (!carreraNormalizada) return null;
+
+  return (
+    CARRERA_COLOR_RULES.find(({ matchers }) =>
+      matchers.some((matcher) => carreraNormalizada.includes(normalizarTexto(matcher)))
+    ) || null
+  );
+};
+
 const obtenerColorCarreraPlanificador = (carreras = [], carrerasSeleccionadas = []) => {
-  const materiasCarreras = Array.isArray(carreras) ? carreras : [];
-  const carrerasActivas = Array.isArray(carrerasSeleccionadas) ? carrerasSeleccionadas : [];
+  const materiasCarreras = (Array.isArray(carreras) ? carreras : [])
+    .map(extraerNombreCarrera)
+    .filter(Boolean);
+  const carrerasActivas = (Array.isArray(carrerasSeleccionadas) ? carrerasSeleccionadas : [])
+    .map(extraerNombreCarrera)
+    .filter(Boolean);
 
   if (materiasCarreras.length > 1) {
     return CARRERA_COLOR_COMPARTIDA;
@@ -119,29 +188,16 @@ const obtenerColorCarreraPlanificador = (carreras = [], carrerasSeleccionadas = 
       return CARRERA_COLOR_COMPARTIDA;
     }
 
-    const indiceCoincidencia = carrerasActivas.findIndex((carreraSeleccionada) =>
-      materiasCarreras.some((carreraMateria) => mismaCarrera(carreraMateria, carreraSeleccionada))
-    );
-
-    if (indiceCoincidencia === 1) {
-      return CARRERA_COLOR_RULES[1].style;
-    }
-
-    if (indiceCoincidencia === 0) {
-      return CARRERA_COLOR_RULES[0].style;
+    if (coincidencias.length === 1) {
+      const reglaCoincidencia = obtenerReglaColorCarrera(coincidencias[0]);
+      if (reglaCoincidencia) {
+        return reglaCoincidencia.style;
+      }
     }
   }
 
   const carreraPrincipal = materiasCarreras[0] || carrerasActivas[0] || null;
-  const carreraNormalizada = normalizarTexto(carreraPrincipal);
-
-  if (!carreraNormalizada) {
-    return CARRERA_COLOR_FALLBACK;
-  }
-
-  const regla = CARRERA_COLOR_RULES.find(({ matchers }) =>
-    matchers.some((matcher) => carreraNormalizada.includes(normalizarTexto(matcher)))
-  );
+  const regla = obtenerReglaColorCarrera(carreraPrincipal);
 
   return regla?.style || CARRERA_COLOR_FALLBACK;
 };
