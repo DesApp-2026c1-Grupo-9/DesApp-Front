@@ -269,7 +269,7 @@ function ListaDenuncias({ showSuccess, showError }) {
                   <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {d.material?.titulo || `Material #${d.materialId}`}
                   </TableCell>
-                  <TableCell>{d.denunciante?.nombre} {d.denunciante?.apellido}</TableCell>
+                  <TableCell>{d.denunciante?.Usuario?.nombre} {d.denunciante?.Usuario?.apellido}</TableCell>
                   <TableCell>{d.motivo?.nombre}</TableCell>
                   <TableCell>
                     <Chip
@@ -334,7 +334,7 @@ function ListaDenuncias({ showSuccess, showError }) {
                     )}
                   </Box>
                   <Typography variant="caption" display="block" sx={{ mt: 1 }}>
-                    Publicado por: {selectedDenuncia.material?.creador?.nombre} {selectedDenuncia.material?.creador?.apellido} ({selectedDenuncia.material?.creador?.email})
+                    Publicado por: {selectedDenuncia.material?.creador?.Usuario?.nombre} {selectedDenuncia.material?.creador?.Usuario?.apellido} ({selectedDenuncia.material?.creador?.Usuario?.email})
                   </Typography>
                 </Grid>
 
@@ -345,10 +345,10 @@ function ListaDenuncias({ showSuccess, showError }) {
                 <Grid item xs={6}>
                   <Typography variant="subtitle2" color="text.secondary">Denunciante</Typography>
                   <Typography variant="body1">
-                    {selectedDenuncia.denunciante?.nombre} {selectedDenuncia.denunciante?.apellido}
+                    {selectedDenuncia.denunciante?.Usuario?.nombre} {selectedDenuncia.denunciante?.Usuario?.apellido}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {selectedDenuncia.denunciante?.email}
+                    {selectedDenuncia.denunciante?.Usuario?.email}
                   </Typography>
                 </Grid>
 
@@ -371,7 +371,7 @@ function ListaDenuncias({ showSuccess, showError }) {
                     <Divider />
                     <Box sx={{ mt: 1 }}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Moderado por: {selectedDenuncia.moderador?.nombre} {selectedDenuncia.moderador?.apellido}
+                        Moderado por: {selectedDenuncia.moderador?.Usuario?.nombre} {selectedDenuncia.moderador?.Usuario?.apellido}
                       </Typography>
                       {selectedDenuncia.fechaModeracion && (
                         <Typography variant="caption" color="text.secondary">
