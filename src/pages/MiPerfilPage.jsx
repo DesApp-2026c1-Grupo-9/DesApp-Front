@@ -11,7 +11,6 @@ import {
   Divider,
   Grid,
   Paper,
-  LinearProgress,
   Chip,
   Alert,
   Snackbar,
@@ -179,19 +178,11 @@ export default function MiPerfilPage() {
             </Box>
             {situacionAcademica.map((acad, idx) => {
               const stats = acad.estadisticas || {};
-              const total = stats.materiasAprobadas + stats.materiasRegularizaciones + stats.materiasCursando || 1;
-              const progreso = Math.round((stats.materiasAprobadas / total) * 100);
               return (
                 <Box key={idx}>
                   {idx > 0 && <Divider sx={{ my: 3 }} />}
                   <Typography variant="subtitle1" fontWeight="bold" color="primary.main" gutterBottom>{acad.carrera}</Typography>
-                  <Box mb={2}>
-                    <Box display="flex" justifyContent="space-between" mb={0.5}>
-                      <Typography variant="caption" color="text.secondary">Progreso general</Typography>
-                      <Typography variant="caption" fontWeight="bold" color="success.main">{progreso}%</Typography>
-                    </Box>
-                    <LinearProgress variant="determinate" value={progreso} sx={{ height: 8, borderRadius: 4 }} />
-                  </Box>
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={4}>
                       <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'success.50', borderRadius: 2, border: '1px solid', borderColor: 'success.200' }}>
